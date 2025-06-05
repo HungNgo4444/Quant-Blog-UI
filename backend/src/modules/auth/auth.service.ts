@@ -343,14 +343,14 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
     const session = await this.sessionRepository.findOne({
       where: { refreshToken, active: true },
-      relations: ['user'],
+      
     });
 
     if (!session || session.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    const payload = { sub: session.user.id, email: session.user.email };
+    const payload = { sub: session.userId, email: session.userId };
     const accessToken = this.jwtService.sign(payload);
 
     // Update session activity

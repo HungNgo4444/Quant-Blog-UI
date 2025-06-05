@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  const accessToken = request.cookies.get('accessToken');
+  const accessToken = request.cookies.get('access_token');
   
   // Các route cần authentication
   const protectedPaths = ['/dashboard', '/posts/create', '/profile'];

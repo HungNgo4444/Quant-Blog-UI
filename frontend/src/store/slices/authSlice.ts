@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, User, LoginCredentials, RegisterCredentials } from '../../types';
-import { TokenService } from '../../services/TokenService';
+import { clientCookies } from '../../services/TokenService';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -30,7 +30,7 @@ const processQueue = (error: any, token: string | null = null) => {
 // Cấu hình axios interceptor để tự động thêm token vào header
 axios.interceptors.request.use(
   (config) => {
-    const token = TokenService.getAccessToken();
+    const token = clientCookies.getAuthTokens()?.access_token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -79,9 +79,9 @@ axios.interceptors.response.use(
         const { accessToken } = response.data;
         
         // Cập nhật token trong TokenService (cho client-side access)
-        const refreshToken = TokenService.getRefreshToken();
+        const refreshToken = clientCookies.getAuthTokens()?.refresh_token;
         if (refreshToken) {
-          TokenService.setTokens(accessToken, refreshToken);
+          clientCookies.setAuthTokens({ access_token: accessToken, refresh_token: refreshToken });
         }
 
         processQueue(null, accessToken);
@@ -91,7 +91,7 @@ axios.interceptors.response.use(
       } catch (refreshError) {
         // Nếu refresh thất bại, clear tokens và redirect
         processQueue(refreshError, null);
-        TokenService.removeTokens();
+        clientCookies.clearAuthTokens();
         
         // Chỉ redirect nếu không phải server-side
         if (typeof window !== 'undefined') {
@@ -110,7 +110,7 @@ axios.interceptors.response.use(
 
 const initialState: AuthState = {
   user: null,
-  isAuthenticated: TokenService.isAuthenticated(),
+  isAuthenticated: !!clientCookies.getAuthTokens(),
   loading: false,
   error: null,
 };
@@ -125,7 +125,7 @@ export const loginUser = createAsyncThunk(
       const { user, accessToken, refreshToken } = response.data;
       
       // Lưu token vào TokenService
-      TokenService.setTokens(accessToken, refreshToken);
+      clientCookies.setAuthTokens({ access_token: accessToken, refresh_token: refreshToken });
       
       return user;
     } catch (error: any) {
@@ -152,10 +152,10 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authAxios.post('/auth/logout');
-      TokenService.removeTokens();
+      clientCookies.clearAuthTokens();
     } catch (error: any) {
       // Vẫn remove tokens ngay cả khi logout API thất bại
-      TokenService.removeTokens();
+      clientCookies.clearAuthTokens();
       return rejectWithValue(error.response?.data?.message || 'Đăng xuất thất bại');
     }
   }
@@ -194,7 +194,7 @@ export const checkAuth = createAsyncThunk(
       const response = await authAxios.get('/auth/me');
       return response.data.user;
     } catch (error: any) {
-      TokenService.removeTokens();
+      clientCookies.clearAuthTokens();
       return rejectWithValue(error.response?.data?.message || 'Phiên đăng nhập hết hạn');
     }
   }

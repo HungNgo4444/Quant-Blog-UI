@@ -48,6 +48,9 @@ export class Comment {
   @Column({ name: 'ip_address', nullable: true })
   ipAddress: string;
 
+  @Column({ name: 'image_url', nullable: true })
+  imageUrl: string;
+
   @Column({ default: true })
   active: boolean;
 
@@ -64,12 +67,15 @@ export class Comment {
   @Column({ name: 'post_id' })
   postId: string;
 
-  // Relations
-  @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
-  user: User;
+  @Column({ name: 'parent_id', nullable: true })
+  parentId: string;
 
-  @ManyToOne(() => Post, (post) => post.comments, { onDelete: 'CASCADE' })
-  post: Post;
+  // Relations
+  // @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
+  // user: User;
+
+  // @ManyToOne(() => Post, (post) => post.comments, { onDelete: 'CASCADE' })
+  // post: Post;
 
   @TreeChildren()
   children: Comment[];

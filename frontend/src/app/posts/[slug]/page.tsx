@@ -29,6 +29,11 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { formatDate, calculateReadingTime } from '../../../lib/utils';
+import axios from 'axios';
+import { clientCookies } from '../../../services/TokenService';
+import PostComment from '../../../components/Posts/PostComment';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Post {
   id: string;
@@ -38,8 +43,8 @@ interface Post {
   slug: string;
   featuredImage?: string;
   publishedAt: string;
-  views: number;
-  likes: number;
+  viewCount: number;
+  likeCount: number;
   category: {
     name: string;
     slug: string;
@@ -64,28 +69,40 @@ export default function PostDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const tokens = clientCookies.getAuthTokens();
+    setIsAuthenticated(!!tokens?.access_token);
+  }, []);
 
   useEffect(() => {
     if (slug) {
-      fetchPost();
-      trackView();
+      fetchPost();           // 1. Load post data
+      trackView();           // 2. Track view (anonymous)
+      
+      // 3. Only check like status if user is authenticated
+      if (isAuthenticated) {
+        checkLikeStatus();   // Check if user liked this post
+      }
     }
-  }, [slug]);
+  }, [slug, isAuthenticated]);
 
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/posts/${slug}`);
-      if (!response.ok) {
-        throw new Error('Post not found');
-      }
-
-      const data = await response.json();
-      setPost(data);
-      setLikeCount(data.likes || 0);
+      const response = await axios.get(`${API_URL}/posts/${slug}`);
+      
+      setPost(response.data);
+      setLikeCount(response.data.likeCount || 0);
       setError(null);
-    } catch (err) {
-      setError('Không thể tải bài viết');
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setError('Bài viết không tồn tại');
+      } else {
+        setError('Không thể tải bài viết');
+      }
       console.error('Error fetching post:', err);
     } finally {
       setLoading(false);
@@ -94,27 +111,70 @@ export default function PostDetailPage() {
 
   const trackView = async () => {
     try {
-      await fetch(`/posts/${slug}/view`, {
-        method: 'POST',
-      });
+      await axios.post(`${API_URL}/posts/${slug}/view`);
     } catch (err) {
       console.error('Error tracking view:', err);
     }
   };
 
-  const handleLike = async () => {
+  const checkLikeStatus = async () => {
     try {
-      const response = await fetch(`/api/posts/${slug}/like`, {
-        method: 'POST',
+      // Lấy token từ cookies
+      const tokens = clientCookies.getAuthTokens();
+      if (!tokens?.access_token) {
+        // Không có token = chưa đăng nhập = chưa like
+        setLiked(false);
+        return;
+      }
+
+      const response = await axios.get(`${API_URL}/posts/${slug}/like-status`, {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setLiked(data.liked);
-        setLikeCount(data.likes);
+      if (response.data) {
+        setLiked(response.data.liked);
+        // Cập nhật like count từ server (đảm bảo sync)
+        setLikeCount(response.data.likeCount);
       }
-    } catch (err) {
-      console.error('Error liking post:', err);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        // Token hết hạn hoặc không hợp lệ = chưa đăng nhập = chưa like
+        setLiked(false);
+      } else {
+        console.error('Error checking like status:', err);
+        setLiked(false); // Default to not liked on error
+      }
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      // Lấy token từ cookies
+      const tokens = clientCookies.getAuthTokens();
+      if (!tokens?.access_token) {
+        alert('Bạn cần đăng nhập để thích bài viết');
+        return;
+      }
+
+      const response = await axios.post(`${API_URL}/posts/${slug}/like`, {}, {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`
+        }
+      });
+
+      if (response.data) {
+        setLiked(response.data.liked);
+        setLikeCount(response.data.likeCount);
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        alert('Bạn cần đăng nhập để thích bài viết');
+      } else {
+        console.error('Error liking post:', err);
+        alert('Có lỗi xảy ra khi thích bài viết');
+      }
     }
   };
 
@@ -210,7 +270,7 @@ export default function PostDetailPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Visibility fontSize="small" color="action" />
           <Typography variant="body2" color="text.secondary">
-            {post.views} lượt xem
+            {post.viewCount} lượt xem
           </Typography>
         </Box>
         <Typography variant="body2" color="text.secondary">
@@ -322,6 +382,7 @@ export default function PostDetailPage() {
           </IconButton>
         </Box>
       </Box>
+      <PostComment postId={post.id} />
     </Container>
   );
-} 
+}

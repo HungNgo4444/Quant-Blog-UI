@@ -1,16 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { Post, PostStatus } from '../../entities/post.entity';
 import { PaginatedPostsResponseDto, PostResponseDto } from './dto/post.dto';
 import { User } from '../../entities/user.entity';
 import { Category } from '../../entities/category.entity';
+import { View } from '../../entities/view.entity';
+import { Like } from '../../entities/like.entity';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    @InjectRepository(View)
+    private readonly viewRepository: Repository<View>,
+    @InjectRepository(Like)
+    private readonly likeRepository: Repository<Like>,
   ) {}
 
   async findAll(
@@ -238,6 +244,8 @@ export class PostsService {
         slug: r.tag_slug
       }));
 
+    
+
     return {
       id: post.id,
       title: post.title,
@@ -279,6 +287,123 @@ export class PostsService {
         color: post.category_color
       },
       tags
+    };
+  }
+
+  async trackView(slug: string, ipAddress: string, userAgent: string): Promise<{ success: boolean; viewCount: number }> {
+    // Tìm post theo slug
+    const post = await this.postRepository.findOne({
+      where: { slug, status: PostStatus.PUBLISHED, active: true }
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with slug "${slug}" not found`);
+    }
+
+    // Kiểm tra xem đã có view từ IP này trong 24h chưa (để tránh spam)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existingView = await this.viewRepository.findOne({
+      where: {
+        postId: post.id,
+        ipAddress,
+        viewedAt: MoreThan(twentyFourHoursAgo)
+      }
+    });
+
+    if (!existingView) {
+      // Tạo view record mới
+      const view = this.viewRepository.create({
+        postId: post.id,
+        ipAddress,
+        userAgent,
+      });
+      await this.viewRepository.save(view);
+
+      // Cập nhật view count
+      await this.postRepository.update(post.id, {
+        viewCount: post.viewCount + 1
+      });
+
+      return {
+        success: true,
+        viewCount: post.viewCount + 1
+      };
+    }
+
+    return {
+      success: true,
+      viewCount: post.viewCount
+    };
+  }
+
+  async toggleLike(slug: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
+    // Tìm post theo slug
+    const post = await this.postRepository.findOne({
+      where: { slug, status: PostStatus.PUBLISHED, active: true }
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with slug "${slug}" not found`);
+    }
+
+    // Kiểm tra xem user đã like chưa
+    const existingLike = await this.likeRepository.findOne({
+      where: {
+        postId: post.id,
+        userId
+      }
+    });
+
+    if (existingLike) {
+      // Unlike - xóa like
+      await this.likeRepository.remove(existingLike);
+      await this.postRepository.update(post.id, {
+        likeCount: Math.max(0, post.likeCount - 1)
+      });
+
+      return {
+        liked: false,
+        likeCount: Math.max(0, post.likeCount - 1)
+      };
+    } else {
+      // Like - tạo like mới
+      const like = this.likeRepository.create({
+        postId: post.id,
+        userId
+      });
+      await this.likeRepository.save(like);
+      await this.postRepository.update(post.id, {
+        likeCount: post.likeCount + 1
+      });
+
+      return {
+        liked: true,
+        likeCount: post.likeCount + 1
+      };
+    }
+  }
+
+  async getLikeStatus(slug: string, userId: string): Promise<{ liked: boolean; likeCount: number }> {
+    // Tìm post theo slug
+    const post = await this.postRepository.findOne({
+      where: { slug, status: PostStatus.PUBLISHED, active: true }
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with slug "${slug}" not found`);
+    }
+
+    // Kiểm tra xem user đã like chưa
+    const existingLike = await this.likeRepository.findOne({
+      where: {
+        postId: post.id,
+        userId
+      }
+    });
+
+    return {
+      liked: !!existingLike,
+      likeCount: post.likeCount
     };
   }
 }

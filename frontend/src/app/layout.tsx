@@ -3,18 +3,17 @@ import Providers from '../components/Providers';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: {
-    default: 'AdvancedBlog',
-    template: '%s | AdvancedBlog'
+  title: "Quant Blog",
+  description: "Quant Blog - Blog",
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
   },
-  description: 'Nền tảng blog hiện đại với editor markdown, SEO tối ưu và nhiều tính năng tiên tiến',
   openGraph: {
-    title: 'AdvancedBlog',
-    description: 'Nền tảng blog hiện đại với editor markdown, SEO tối ưu và nhiều tính năng tiên tiến',
-    url: '/',
-    siteName: 'AdvancedBlog',
-    locale: 'vi_VN',
-    type: 'website',
+    title: "Quant Blog",
+    description: "Quant Blog - Blog",
+    images: ['/logo.png'],
   },
 };
 

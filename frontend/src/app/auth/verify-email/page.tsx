@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Box, Typography, CircularProgress, Button } from '@mui/material';
 import { CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 import Link from 'next/link';
-import verifyEmail from 'frontend/src/services/AuthService';
+import { verifyEmail } from '../../../services/AuthService';
 
 export default function VerifyEmailPage() {
   const router = useRouter();

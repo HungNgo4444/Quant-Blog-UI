@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { checkAuth, setUser } from '../../store/slices/authSlice';
-import { TokenService } from '../../services/TokenService';
+import { clientCookies } from '../../services/TokenService';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialUser }) =>
     }
     
     // Nếu có token nhưng chưa có user, check auth
-    else if (TokenService.isAuthenticated() && !user && !initialUser) {
+    else if (clientCookies.getAuthTokens() && !user && !initialUser) {
       dispatch(checkAuth());
     }
   }, [dispatch, user, initialUser]);

@@ -1,7 +1,9 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PaginatedPostsResponseDto, PostResponseDto } from './dto/post.dto';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Request } from 'express';
 
 @ApiTags('posts')
 @Controller('/posts')
@@ -32,5 +34,47 @@ export class PostsController {
   @ApiResponse({ status: 404, description: 'Post not found' })
   async findOne(@Param('slug') slug: string): Promise<PostResponseDto> {
     return this.postsService.findOneBySlug(slug);
+  }
+
+  @Get(':slug/like-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Check if current user has liked the post' })
+  @ApiResponse({ status: 200, description: 'Like status retrieved' })
+  @ApiResponse({ status: 404, description: 'Post not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getLikeStatus(
+    @Param('slug') slug: string,
+    @Req() request: any,
+  ): Promise<{ liked: boolean; likeCount: number }> {
+    const userId = request.user.id; // From JWT payload
+    return this.postsService.getLikeStatus(slug, userId);
+  }
+
+  @Post(':slug/view')
+  @ApiOperation({ summary: 'Track post view' })
+  @ApiResponse({ status: 200, description: 'View tracked successfully' })
+  @ApiResponse({ status: 404, description: 'Post not found' })
+  async trackView(
+    @Param('slug') slug: string,
+    @Req() request: Request,
+  ): Promise<{ success: boolean; viewCount: number }> {
+    const userAgent = request.get('User-Agent') || '';
+    const ipAddress = request.ip || request.connection.remoteAddress || '';
+    
+    return this.postsService.trackView(slug, ipAddress, userAgent);
+  }
+
+  @Post(':slug/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Like or unlike a post' })
+  @ApiResponse({ status: 200, description: 'Like status updated' })
+  @ApiResponse({ status: 404, description: 'Post not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async toggleLike(
+    @Param('slug') slug: string,
+    @Req() request: any,
+  ): Promise<{ liked: boolean; likeCount: number }> {
+    const userId = request.user.id; // From JWT payload
+    return this.postsService.toggleLike(slug, userId);
   }
 }

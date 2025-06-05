@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Grid, Avatar, Skeleton } from '@mui/material';
 import { TrendingUp, Visibility, Group, Category } from '@mui/icons-material';
 import { DashboardStats, ApiResponse } from '../../types';
+import instanceApi from 'frontend/src/lib/axios';
 
 const ClientSideStats = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -14,15 +15,9 @@ const ClientSideStats = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, {
-          next: { revalidate: 300 }, // Cache for 5 minutes
-        });
+        const res = await instanceApi.get(`/dashboard/stats`);
 
-        if (!res.ok) {
-          throw new Error('Failed to fetch statistics');
-        }
-
-        const response: ApiResponse<DashboardStats> = await res.json();
+        const response: ApiResponse<DashboardStats> = res.data;
         setStats(response.data);
       } catch (err) {
         console.error('Error fetching stats:', err);

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import instanceApi from '../lib/axios';
+import { clientCookies } from './TokenService';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -12,17 +14,37 @@ export const verifyEmail = async (token: string) => {
     }
 };
 
-export const getUser = async (token: string) => {
+// Client-side function - SỬ DỤNG instanceApi để có auto refresh token
+export const getUser = async () => {
     try {
-        const response = await axios.get(`${API_URL}/auth/me`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        return response.data;
+        const response = await instanceApi.get('/auth/me');
+        return response.data.user;
     } catch (error) {
         console.error('Error getting user:', error);
         throw error;
     }
-    
 };
+
+// Server-side function để sử dụng trong Server Components
+export const getUserServer = async () => {
+    try {
+        const accessToken = clientCookies.getAuthTokens()?.access_token;
+        
+        if (!accessToken) {
+            return null;
+        }
+
+        const response = await axios.get(`${API_URL}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        return response.data.user;
+    } catch (error) {
+        console.error('Error getting user on server:', error);
+        return null;
+    }
+};
+

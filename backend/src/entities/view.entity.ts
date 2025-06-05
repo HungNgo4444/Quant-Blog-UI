@@ -6,45 +6,30 @@ import {
   ManyToOne,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
 import { Post } from './post.entity';
 
 @Entity('views')
-@Index(['postId', 'ipAddress', 'createdAt'])
-@Index(['userId', 'postId'])
+@Index(['postId', 'ipAddress', 'userAgent'])
 export class View {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'ip_address' })
+  @Column({ name: 'post_id' })
+  postId: string;
+
+  @Column({ name: 'ip_address', nullable: true })
   ipAddress: string;
 
   @Column({ name: 'user_agent', nullable: true })
   userAgent: string;
 
-  @Column({ nullable: true })
-  referrer: string;
-
-  @Column({ name: 'session_id', nullable: true })
-  sessionId: string;
-
-  @Column({ name: 'reading_time', nullable: true })
-  readingTime: number; // Time spent reading in seconds
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  // Foreign Keys
   @Column({ name: 'user_id', nullable: true })
   userId: string;
 
-  @Column({ name: 'post_id' })
-  postId: string;
+  @CreateDateColumn({ name: 'viewed_at' })
+  viewedAt: Date;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.views, { onDelete: 'SET NULL' })
-  user: User;
-
-  @ManyToOne(() => Post, (post) => post.views, { onDelete: 'CASCADE' })
-  post: Post;
+  // @ManyToOne(() => Post, (post) => post.views, { onDelete: 'CASCADE' })
+  // post: Post;
 } 

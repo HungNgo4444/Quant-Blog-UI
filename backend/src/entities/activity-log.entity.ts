@@ -76,6 +76,6 @@ export class ActivityLog {
   userId: string;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.activityLogs, { onDelete: 'SET NULL' })
-  user: User;
+  // @ManyToOne(() => User, (user) => user.activityLogs, { onDelete: 'SET NULL' })
+  // user: User;
 } 

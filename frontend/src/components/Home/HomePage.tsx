@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -29,29 +29,45 @@ import ClientSidePosts from './ClientSidePosts';
 import { Post, User } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { setUser } from '../../store/slices/authSlice';
+import { getUser } from '../../services/AuthService';
+import { clientCookies } from '../../services/TokenService';
 
 interface HomePageProps {
-  initialData: {
-    posts: Post[];
-    user: User | null;
-  };
+  postsData: Post[];
 }
 
-const HomePage = ({ initialData }: HomePageProps) => {
+const HomePage = ({ postsData }: HomePageProps) => {
   const dispatch = useAppDispatch();
   const { user: reduxUser, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { posts = [], user: serverUser } = initialData;
+  const posts = postsData;
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
 
-  // Sync server-side user data với Redux state
+  // Fetch user trên client-side để có refresh token functionality
   useEffect(() => {
-    if (serverUser && !reduxUser) {
-      dispatch(setUser(serverUser));
-    }
-  }, [serverUser, reduxUser, dispatch]);
+    const fetchUserIfAuthenticated = async () => {
+      // Chỉ fetch nếu có token và chưa có user trong Redux
+      if (clientCookies.getAuthTokens() && !reduxUser && !isLoadingUser) {
+        setIsLoadingUser(true);
+        try {
+          const userData = await getUser();
+          
+          if (userData) {
+            dispatch(setUser(userData));
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+        } finally {
+          setIsLoadingUser(false);
+        }
+      }
+    };
+    
+    fetchUserIfAuthenticated();
+  }, [reduxUser, dispatch, isLoadingUser]);
 
   // Sử dụng Redux user nếu có, fallback về server user
-  const user = reduxUser || serverUser;
-  const userIsAuthenticated = isAuthenticated || !!user;
+  const user = reduxUser;
+  const userIsAuthenticated = user;
   const canCreatePost = user?.role === 'admin';
 
   // Đảm bảo posts là một mảng
@@ -183,11 +199,13 @@ const HomePage = ({ initialData }: HomePageProps) => {
                   <Card className="h-full hover:shadow-xl transition-shadow duration-300">
                     {post.featuredImage && (
                       <Box className="h-48 bg-gray-200 dark:bg-gray-700 relative overflow-hidden">
-                        <img
-                          src={post.featuredImage}
-                          alt={post.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
+                        <Box component={Link} href={`/posts/${post.slug}`}>
+                          <img
+                            src={post.featuredImage}
+                            alt={post.title}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </Box> 
                       </Box>
                     )}
                     <CardContent className="flex-1">
@@ -255,14 +273,6 @@ const HomePage = ({ initialData }: HomePageProps) => {
                     </CardContent>
                     
                     <CardActions>
-                      <Button
-                        component={Link}
-                        href={`/posts/${post.slug}`}
-                        size="small"
-                        endIcon={<ArrowForward />}
-                      >
-                        Đọc tiếp
-                      </Button>
                       {canCreatePost && post.author?.id === user?.id && (
                         <Button
                           component={Link}

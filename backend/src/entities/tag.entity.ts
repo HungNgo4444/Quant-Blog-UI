@@ -38,6 +38,6 @@ export class Tag {
   updatedAt: Date;
 
   // Relations
-  @ManyToMany(() => Post, (post) => post.tags)
-  posts: Post[];
+  // @ManyToMany(() => Post, (post) => post.tags)
+  // posts: Post[];
 } 

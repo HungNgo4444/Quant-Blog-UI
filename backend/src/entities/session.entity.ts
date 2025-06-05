@@ -54,6 +54,6 @@ export class Session {
   userId: string;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.sessions, { onDelete: 'CASCADE' })
-  user: User;
+  // @ManyToOne(() => User, (user) => user.sessions, { onDelete: 'CASCADE' })
+  // user: User;
 } 

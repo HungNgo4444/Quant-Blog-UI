@@ -144,11 +144,17 @@ const Header: React.FC = () => {
                     anchorEl={userMenuAnchor}
                     open={Boolean(userMenuAnchor)}
                     onClose={handleUserMenuClose}
-                    className="mt-2"
+                    className="mt-2 flex flex-col gap-2"
                   >
                     <MenuItem component={Link} href="/profile" onClick={handleUserMenuClose}>
-                      <Person className="mr-2" />
-                      Hồ sơ
+                      <Avatar
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 mr-2"
+                      >
+                        {user.name.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <span className="font-bold">{user.name}</span>
                     </MenuItem>
                     {user.role === 'admin' && (
                       <>
@@ -156,12 +162,12 @@ const Header: React.FC = () => {
                           <Dashboard className="mr-2" />
                           Quản trị
                         </MenuItem>
-                        <MenuItem component={Link} href="/my-posts" onClick={handleUserMenuClose}>
-                          <Article className="mr-2" />
-                          Bài viết của tôi
-                        </MenuItem>
                       </>
                     )}
+                    <MenuItem component={Link} href="/my-posts" onClick={handleUserMenuClose}>
+                      <Article className="mr-2" />
+                      Bài viết của tôi
+                    </MenuItem>
                     <MenuItem onClick={handleLogout}>
                       <Logout className="mr-2" />
                       Đăng xuất

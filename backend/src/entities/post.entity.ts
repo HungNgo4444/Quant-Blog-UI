@@ -120,26 +120,26 @@ export class Post {
   categoryId: string;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
-  author: User;
+  // @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
+  // author: User;
 
-  @ManyToOne(() => Category, (category) => category.posts, { onDelete: 'SET NULL' })
-  category: Category;
+  // @ManyToOne(() => Category, (category) => category.posts, { onDelete: 'SET NULL' })
+  // category: Category;
 
-  @ManyToMany(() => Tag, (tag) => tag.posts)
-  @JoinTable({
-    name: 'post_tags',
-    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
-  })
-  tags: Tag[];
+  // @ManyToMany(() => Tag, (tag) => tag.posts)
+  // @JoinTable({
+  //   name: 'post_tags',
+  //   joinColumn: { name: 'post_id', referencedColumnName: 'id' },
+  //   inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+  // })
+  // tags: Tag[];
 
-  @OneToMany(() => Comment, (comment) => comment.post)
-  comments: Comment[];
+  // @OneToMany(() => Comment, (comment) => comment.post)
+  // comments: Comment[];
 
-  @OneToMany(() => Like, (like) => like.post)
-  likes: Like[];
+  // @OneToMany(() => Like, (like) => like.post)
+  // likes: Like[];
 
-  @OneToMany(() => View, (view) => view.post)
-  views: View[];
+  // @OneToMany(() => View, (view) => view.post)
+  // views: View[];
 } 

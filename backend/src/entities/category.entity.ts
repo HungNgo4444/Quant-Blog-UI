@@ -41,6 +41,6 @@ export class Category {
   updatedAt: Date;
 
   // Relations
-  @OneToMany(() => Post, (post) => post.category)
-  posts: Post[];
+  // @OneToMany(() => Post, (post) => post.category)
+  // posts: Post[];
 } 
