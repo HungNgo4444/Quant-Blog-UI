@@ -42,6 +42,6 @@ import { SharedModule } from 'src/shared/shared.module';
     ActivityLogService,
     RedisService,
   ],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  exports: [AuthService, JwtStrategy, PassportModule, JwtModule],
 })
 export class AuthModule {} 

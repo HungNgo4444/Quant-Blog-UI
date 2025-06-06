@@ -5,6 +5,7 @@ import { Container, Typography, Box, Grid, Avatar, Skeleton } from '@mui/materia
 import { TrendingUp, Visibility, Group, Category } from '@mui/icons-material';
 import { DashboardStats, ApiResponse } from '../../types';
 import instanceApi from 'frontend/src/lib/axios';
+import axios from 'axios';
 
 const ClientSideStats = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -15,8 +16,7 @@ const ClientSideStats = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await instanceApi.get(`/dashboard/stats`);
-
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`);
         const response: ApiResponse<DashboardStats> = res.data;
         setStats(response.data);
       } catch (err) {

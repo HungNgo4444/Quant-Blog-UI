@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -24,17 +24,19 @@ import {
   Send as SendIcon,
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import axios from 'axios';
 import instanceApi from '../../lib/axios';
 import { clientCookies } from '../../services/TokenService';
+import CommentItem from './CommentItem';
+import { readFile } from 'frontend/src/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-interface Comment {
+export interface Comment {
   id: string;
   content: string;
   imageUrl?: string;
@@ -54,12 +56,13 @@ interface PostCommentProps {
   postId: string;
 }
 
+
 export default function PostComment({ postId }: PostCommentProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -70,7 +73,8 @@ export default function PostComment({ postId }: PostCommentProps) {
   // Check authentication
   useEffect(() => {
     const tokens = clientCookies.getAuthTokens();
-    setIsAuthenticated(!!tokens?.access_token);
+    console.log(tokens);
+    setIsAuthenticated(!!tokens?.accessToken);
   }, []);
 
   // Fetch comments
@@ -101,19 +105,11 @@ export default function PostComment({ postId }: PostCommentProps) {
     }
   };
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setSelectedImage(event.target.files[0]);
+      const base64File= await readFile(event.target.files[0])
+      setSelectedImage(base64File)
     }
-  };
-
-  const uploadImage = async (file: File): Promise<string> => {
-    // Tạm thời return mock URL, sau này sẽ implement upload thật
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(`https://example.com/uploads/${file.name}`);
-      }, 1000);
-    });
   };
 
   const submitComment = async () => {
@@ -125,16 +121,11 @@ export default function PostComment({ postId }: PostCommentProps) {
 
     try {
       setSubmitting(true);
-      
-      let imageUrl = '';
-      if (selectedImage) {
-        imageUrl = await uploadImage(selectedImage);
-      }
 
       const commentData = {
         content: newComment,
         postId,
-        imageUrl: imageUrl || undefined
+        imageUrl: selectedImage || undefined
       };
 
       const response = await instanceApi.post('/comments', commentData);
@@ -142,7 +133,7 @@ export default function PostComment({ postId }: PostCommentProps) {
       // Add new comment to top of list
       setComments(prev => [response.data, ...prev]);
       setNewComment('');
-      setSelectedImage(null);
+      setSelectedImage('');
       setError(null);
     } catch (err: any) {
       console.error('Error submitting comment:', err);
@@ -196,118 +187,24 @@ export default function PostComment({ postId }: PostCommentProps) {
     }
   };
 
-  const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => (
-    <Paper 
-      elevation={isReply ? 1 : 2} 
-      sx={{ 
-        p: 2, 
-        mb: isReply ? 1 : 2,
-        ml: isReply ? 4 : 0,
-        borderLeft: isReply ? '3px solid #1976d2' : 'none'
-      }}
-    >
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Avatar
-          src={comment.author.avatar}
-          alt={comment.author.name}
-          sx={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40 }}
-        />
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              {comment.author.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { 
-                addSuffix: true, 
-                locale: vi 
-              })}
-            </Typography>
-          </Box>
+  // Sử dụng useCallback để tránh re-creation của handlers
+  const handleReplyToggle = useCallback((commentId: string) => {
+    setReplyTo(replyTo === commentId ? null : commentId);
+    setReplyContent('');
+  }, [replyTo]);
 
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            {comment.content}
-          </Typography>
+  const handleReplyContentChange = useCallback((content: string) => {
+    setReplyContent(content);
+  }, []);
 
-          {comment.imageUrl && (
-            <Box sx={{ mb: 2 }}>
-              <img
-                src={comment.imageUrl}
-                alt="Comment attachment"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '300px',
-                  borderRadius: '8px',
-                  objectFit: 'cover'
-                }}
-              />
-            </Box>
-          )}
+  const handleSubmitReply = useCallback((parentId: string) => {
+    submitReply(parentId);
+  }, [replyContent, isAuthenticated, postId]);
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton size="small">
-              <ThumbUpOutlinedIcon fontSize="small" />
-            </IconButton>
-            <Typography variant="caption">
-              {comment.likeCount} thích
-            </Typography>
-
-            {!isReply && (
-              <Button
-                size="small"
-                startIcon={<ReplyIcon />}
-                onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                disabled={!isAuthenticated}
-              >
-                Trả lời ({comment.replyCount})
-              </Button>
-            )}
-          </Box>
-
-          {/* Reply Form */}
-          <Collapse in={replyTo === comment.id}>
-            <Box sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={2}
-                placeholder="Viết trả lời..."
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                variant="outlined"
-                size="small"
-              />
-              <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => submitReply(comment.id)}
-                  disabled={submitting || !replyContent.trim()}
-                >
-                  {submitting ? <CircularProgress size={16} /> : 'Gửi'}
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => setReplyTo(null)}
-                >
-                  Hủy
-                </Button>
-              </Box>
-            </Box>
-          </Collapse>
-
-          {/* Replies */}
-          {comment.children && comment.children.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              {comment.children.map((reply) => (
-                <CommentItem key={reply.id} comment={reply} isReply />
-              ))}
-            </Box>
-          )}
-        </Box>
-      </Box>
-    </Paper>
-  );
+  const handleCancelReply = useCallback(() => {
+    setReplyTo(null);
+    setReplyContent('');
+  }, []);
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -337,12 +234,12 @@ export default function PostComment({ postId }: PostCommentProps) {
 
           {selectedImage && (
             <Box sx={{ mb: 2 }}>
-              <Chip
-                label={selectedImage.name}
-                onDelete={() => setSelectedImage(null)}
-                color="primary"
-                variant="outlined"
-              />
+              <span style={{position: 'relative', display: 'inline-block'}}>
+                <img src={selectedImage} alt="Selected" style={{ width: 'auto', height: '70px', borderRadius: '8px', border: '1px solid #aaa' }} />
+                <IconButton sx={{ '&:hover': { backgroundColor: '#ddd' }, position: 'absolute', top: 4, right: 4, backgroundColor: 'white', borderRadius: '50%', padding: '2px', border: '1px solid red'}} onClick={() => setSelectedImage('')}>
+                  <CloseIcon sx={{ color: 'red', fontSize: '14px' }} />
+                </IconButton>
+              </span>
             </Box>
           )}
 
@@ -386,7 +283,18 @@ export default function PostComment({ postId }: PostCommentProps) {
       ) : (
         <>
           {comments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} />
+            <CommentItem 
+              key={comment.id} 
+              comment={comment}
+              replyTo={replyTo}
+              replyContent={replyContent}
+              submitting={submitting}
+              isAuthenticated={isAuthenticated}
+              onReplyToggle={handleReplyToggle}
+              onReplyContentChange={handleReplyContentChange}
+              onSubmitReply={handleSubmitReply}
+              onCancelReply={handleCancelReply}
+            />
           ))}
 
           {/* Load More Button */}

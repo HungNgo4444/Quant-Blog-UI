@@ -1,13 +1,13 @@
 export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   role?: string;
 }
 
 // Cookie names
 export const COOKIE_NAMES = {
-  ACCESS_TOKEN: 'access_token',
-  REFRESH_TOKEN: 'refresh_token',
+  ACCESS_TOKEN: 'accessToken',
+  REFRESH_TOKEN: 'refreshToken',
   USER_ROLE: 'user_role',
 } as const;
 
@@ -44,8 +44,10 @@ export const clientCookies = {
     
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
+    
     if (parts.length === 2) {
-      return parts.pop()?.split(';').shift() || null;
+      const result = parts.pop()?.split(';').shift() || null;
+      return result;
     }
     return null;
   },
@@ -55,10 +57,10 @@ export const clientCookies = {
   },
 
   setAuthTokens: (tokens: AuthTokens) => {
-    clientCookies.set(COOKIE_NAMES.ACCESS_TOKEN, tokens.access_token, {
-      maxAge: 60 * 60, // 1 hour
+    clientCookies.set(COOKIE_NAMES.ACCESS_TOKEN, tokens.accessToken, {
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
-    clientCookies.set(COOKIE_NAMES.REFRESH_TOKEN, tokens.refresh_token, {
+    clientCookies.set(COOKIE_NAMES.REFRESH_TOKEN, tokens.refreshToken, {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
     if (tokens.role) {
@@ -69,15 +71,15 @@ export const clientCookies = {
   },
 
   getAuthTokens: (): AuthTokens | null => {
-    const access_token = clientCookies.get(COOKIE_NAMES.ACCESS_TOKEN);
-    const refresh_token = clientCookies.get(COOKIE_NAMES.REFRESH_TOKEN);
+    const accessToken = clientCookies.get(COOKIE_NAMES.ACCESS_TOKEN);
+    const refreshToken = clientCookies.get(COOKIE_NAMES.REFRESH_TOKEN);
     const role = clientCookies.get(COOKIE_NAMES.USER_ROLE);
 
-    if (!access_token || !refresh_token) return null;
+    if (!accessToken || !refreshToken) return null;
 
     return {
-      access_token,
-      refresh_token,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       role: role || undefined,
     };
   },

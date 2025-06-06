@@ -3,6 +3,7 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -11,6 +12,10 @@ async function bootstrap() {
 
   // Cookie parser middleware
   app.use(cookieParser());
+
+  // Tăng giới hạn payload cho base64 images (50MB)
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // Enable CORS
   app.enableCors({
@@ -58,9 +63,9 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT;
-  await app.listen(port);
-  
-  console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  await app.listen(port, () => {
+    console.log(`🚀 Application is running on: http://localhost:${port}`);
+    console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  });
 }
 bootstrap();

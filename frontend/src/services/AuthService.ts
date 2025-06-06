@@ -28,7 +28,7 @@ export const getUser = async () => {
 // Server-side function để sử dụng trong Server Components
 export const getUserServer = async () => {
     try {
-        const accessToken = clientCookies.getAuthTokens()?.access_token;
+        const accessToken = clientCookies.getAuthTokens()?.accessToken;
         
         if (!accessToken) {
             return null;

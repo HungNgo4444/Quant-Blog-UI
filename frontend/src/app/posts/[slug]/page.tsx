@@ -74,7 +74,7 @@ export default function PostDetailPage() {
   // Check authentication status
   useEffect(() => {
     const tokens = clientCookies.getAuthTokens();
-    setIsAuthenticated(!!tokens?.access_token);
+    setIsAuthenticated(!!tokens?.accessToken);
   }, []);
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function PostDetailPage() {
     try {
       // Lấy token từ cookies
       const tokens = clientCookies.getAuthTokens();
-      if (!tokens?.access_token) {
+      if (!tokens?.accessToken) {
         // Không có token = chưa đăng nhập = chưa like
         setLiked(false);
         return;
@@ -129,7 +129,7 @@ export default function PostDetailPage() {
 
       const response = await axios.get(`${API_URL}/posts/${slug}/like-status`, {
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`
+          Authorization: `Bearer ${tokens.accessToken}`
         }
       });
 
@@ -153,14 +153,14 @@ export default function PostDetailPage() {
     try {
       // Lấy token từ cookies
       const tokens = clientCookies.getAuthTokens();
-      if (!tokens?.access_token) {
+      if (!tokens?.accessToken) {
         alert('Bạn cần đăng nhập để thích bài viết');
         return;
       }
 
       const response = await axios.post(`${API_URL}/posts/${slug}/like`, {}, {
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`
+          Authorization: `Bearer ${tokens.accessToken}`
         }
       });
 

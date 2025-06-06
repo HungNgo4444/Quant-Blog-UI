@@ -6,14 +6,12 @@ import { PostsController } from './posts.controller';
 import { Post } from '../../entities/post.entity';
 import { View } from '../../entities/view.entity';
 import { Like } from '../../entities/like.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, View, Like]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '1h' },
-    }),
+    AuthModule
   ],
   controllers: [PostsController],
   providers: [PostsService],

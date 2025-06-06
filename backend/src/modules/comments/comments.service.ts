@@ -5,6 +5,8 @@ import { CreateCommentDto, CommentResponseDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment, CommentStatus } from '../../entities/comment.entity';
 import { Post, PostStatus } from '../../entities/post.entity';
+import { ImageService } from 'src/shared/services/image.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class CommentsService {
@@ -13,6 +15,8 @@ export class CommentsService {
     private readonly commentRepository: TreeRepository<Comment>,
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    private readonly imageService: ImageService,
+    private readonly userService: UsersService
   ) {}
 
   async create(createCommentDto: CreateCommentDto, userId: string, userAgent?: string, ipAddress?: string): Promise<CommentResponseDto> {
@@ -45,12 +49,17 @@ export class CommentsService {
       }
     }
 
+    let commentImageUrl = null;
+    if(createCommentDto.imageUrl){
+      commentImageUrl= await this.imageService.uploadBase64Image(createCommentDto.imageUrl, 'comment');
+    }
+
     // Tạo comment mới
     const comment = this.commentRepository.create({
       content: createCommentDto.content,
       postId: createCommentDto.postId,
       userId,
-      imageUrl: createCommentDto.imageUrl,
+      imageUrl: commentImageUrl,
       userAgent,
       ipAddress,
       parent: parentComment,
@@ -181,7 +190,7 @@ export class CommentsService {
 
   private async mapToResponseDto(comment: Comment): Promise<CommentResponseDto> {
     // Lấy thông tin user từ database
-    const userInfo = await this.getUserInfo(comment.userId);
+    const userInfo = await this.userService.getById(comment.userId);
 
     return {
       id: comment.id,
@@ -192,7 +201,11 @@ export class CommentsService {
       imageUrl: comment.imageUrl,
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
-      author: userInfo
+      author: {
+        id: userInfo.id,
+        name: userInfo.name || `User ${userInfo.id.substring(0, 8)}`,
+        avatar: userInfo.avatar || null
+      }
     };
   }
 
@@ -208,12 +221,4 @@ export class CommentsService {
     return dto;
   }
 
-  private async getUserInfo(userId: string): Promise<{ id: string; name: string; avatar?: string }> {
-    // Tạm thời trả về mock data, sau này sẽ query từ User table
-    return {
-      id: userId,
-      name: `User ${userId.substring(0, 8)}`,
-      avatar: null
-    };
-  }
 }

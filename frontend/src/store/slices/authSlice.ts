@@ -2,111 +2,7 @@ import axios from 'axios';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState, User, LoginCredentials, RegisterCredentials } from '../../types';
 import { clientCookies } from '../../services/TokenService';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Tạo axios instance riêng cho auth requests (không có interceptor)
-const authAxios = axios.create({
-  baseURL: `${API_URL}`,
-  withCredentials: true,
-});
-
-// Flag để tránh multiple refresh cùng lúc
-let isRefreshing = false;
-let failedQueue: any[] = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token);
-    }
-  });
-  
-  failedQueue = [];
-};
-
-// Cấu hình axios interceptor để tự động thêm token vào header
-axios.interceptors.request.use(
-  (config) => {
-    const token = clientCookies.getAuthTokens()?.access_token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Thêm interceptor để xử lý refresh token
-axios.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Không retry nếu:
-    // 1. Request đã được retry
-    // 2. Request là refresh endpoint 
-    // 3. Không phải lỗi 401
-    if (
-      error.response?.status === 401 && 
-      !originalRequest._retry &&
-      !originalRequest.url?.includes('/auth/refresh') &&
-      !originalRequest.url?.includes('/auth/login')
-    ) {
-      
-      if (isRefreshing) {
-        // Nếu đang refresh, thêm request vào queue
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => {
-          return axios(originalRequest);
-        }).catch((err) => {
-          return Promise.reject(err);
-        });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        // Sử dụng authAxios để tránh trigger interceptor
-        const response = await authAxios.post('/auth/refresh');
-
-        const { accessToken } = response.data;
-        
-        // Cập nhật token trong TokenService (cho client-side access)
-        const refreshToken = clientCookies.getAuthTokens()?.refresh_token;
-        if (refreshToken) {
-          clientCookies.setAuthTokens({ access_token: accessToken, refresh_token: refreshToken });
-        }
-
-        processQueue(null, accessToken);
-        
-        // Retry original request
-        return axios(originalRequest);
-      } catch (refreshError) {
-        // Nếu refresh thất bại, clear tokens và redirect
-        processQueue(refreshError, null);
-        clientCookies.clearAuthTokens();
-        
-        // Chỉ redirect nếu không phải server-side
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
-        }
-        
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
+import instanceApi from 'frontend/src/lib/axios';
 
 const initialState: AuthState = {
   user: null,
@@ -120,12 +16,12 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
-      const response = await authAxios.post('/auth/login', credentials);
+      const response = await instanceApi.post('/auth/login', credentials);
       
       const { user, accessToken, refreshToken } = response.data;
       
       // Lưu token vào TokenService
-      clientCookies.setAuthTokens({ access_token: accessToken, refresh_token: refreshToken });
+      clientCookies.setAuthTokens({ accessToken, refreshToken });
       
       return user;
     } catch (error: any) {
@@ -138,7 +34,7 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (credentials: RegisterCredentials, { rejectWithValue }) => {
     try {
-      const response = await authAxios.post('/auth/register', credentials);
+      const response = await instanceApi.post('/auth/register', credentials);
 
       return response.data.user;
     } catch (error: any) {
@@ -151,7 +47,7 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await authAxios.post('/auth/logout');
+      await instanceApi.post('/auth/logout');
       clientCookies.clearAuthTokens();
     } catch (error: any) {
       // Vẫn remove tokens ngay cả khi logout API thất bại
@@ -165,7 +61,7 @@ export const verifyEmail = createAsyncThunk(
   'auth/verifyEmail',
   async (token: string, { rejectWithValue }) => {
     try {
-      const response = await authAxios.post('/auth/verify-email', { token });
+      const response = await instanceApi.post('/auth/verify-email', { token });
 
       return response.data.user;
     } catch (error: any) {
@@ -178,7 +74,7 @@ export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await authAxios.post('/auth/forgot-password', { email });
+      const response = await instanceApi.post('/auth/forgot-password', { email });
 
       return response.data;
     } catch (error: any) {
@@ -191,7 +87,7 @@ export const checkAuth = createAsyncThunk(
   'auth/check',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await authAxios.get('/auth/me');
+      const response = await instanceApi.get('/auth/me');
       return response.data.user;
     } catch (error: any) {
       clientCookies.clearAuthTokens();

@@ -5,6 +5,7 @@ import { RedisService } from './services/redis.service';
 import { EmailService } from './services/email.service';
 import { ActivityLogService } from './services/activity-log.service';
 import { ActivityLog } from '../entities/activity-log.entity';
+import { ImageService } from './services/image.service';
 
 @Global()
 @Module({
@@ -12,7 +13,7 @@ import { ActivityLog } from '../entities/activity-log.entity';
     ConfigModule,
     TypeOrmModule.forFeature([ActivityLog]),
   ],
-  providers: [RedisService, EmailService, ActivityLogService],
-  exports: [RedisService, EmailService, ActivityLogService],
+  providers: [RedisService, EmailService, ActivityLogService, ImageService],
+  exports: [RedisService, EmailService, ActivityLogService, ImageService],
 })
 export class SharedModule {} 

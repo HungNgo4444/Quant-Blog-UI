@@ -42,29 +42,6 @@ const HomePage = ({ postsData }: HomePageProps) => {
   const posts = postsData;
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
-  // Fetch user trên client-side để có refresh token functionality
-  useEffect(() => {
-    const fetchUserIfAuthenticated = async () => {
-      // Chỉ fetch nếu có token và chưa có user trong Redux
-      if (clientCookies.getAuthTokens() && !reduxUser && !isLoadingUser) {
-        setIsLoadingUser(true);
-        try {
-          const userData = await getUser();
-          
-          if (userData) {
-            dispatch(setUser(userData));
-          }
-        } catch (error) {
-          console.error('Error fetching user:', error);
-        } finally {
-          setIsLoadingUser(false);
-        }
-      }
-    };
-    
-    fetchUserIfAuthenticated();
-  }, [reduxUser, dispatch, isLoadingUser]);
-
   // Sử dụng Redux user nếu có, fallback về server user
   const user = reduxUser;
   const userIsAuthenticated = user;
