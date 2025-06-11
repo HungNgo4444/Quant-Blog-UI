@@ -45,7 +45,7 @@ const ClientSideStats = () => {
     },
     {
       label: 'Tác giả',
-      value: stats?.users.authors.toLocaleString('vi-VN') || '0',
+      value: stats?.users.total.toLocaleString('vi-VN') || '0',
       icon: <Group />,
       loading: loading,
     },

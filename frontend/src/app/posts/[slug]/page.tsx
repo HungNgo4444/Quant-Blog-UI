@@ -309,7 +309,7 @@ export default function PostDetailPage() {
 
       {/* Author */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <div>
+        <div className='flex-1 flex items-center gap-2'>
           <Avatar
             src={post.author.avatar}
             alt={post.author.name}
@@ -423,9 +423,6 @@ export default function PostDetailPage() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-            Chia sẻ:
-          </Typography>
           <IconButton 
             size="small" 
             onClick={() => handleShare('facebook')}

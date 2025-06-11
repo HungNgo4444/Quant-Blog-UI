@@ -27,6 +27,7 @@ import {
   togglePostSave, 
   optimisticToggleSave 
 } from '../../store/slices/postsSlice';
+import { toast } from 'react-toastify';
 
 interface ClientSidePostsProps {
   initialPosts: Post[];
@@ -90,7 +91,13 @@ const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
     dispatch(optimisticToggleSave({ slug, saved: !currentSaved }));
     
     // Thực hiện API call
-    dispatch(togglePostSave(slug));
+    dispatch(togglePostSave(slug)).then((response: any) => {
+      if (response.payload.message) {
+        toast.success(response.payload.message);
+      } else {
+        toast.error(response.payload.message);
+      }
+    });
   };
 
   if (error) {

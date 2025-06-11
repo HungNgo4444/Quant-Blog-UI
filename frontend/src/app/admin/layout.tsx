@@ -32,6 +32,7 @@ import {
   Logout,
   AccountCircle,
 } from '@mui/icons-material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../store';
@@ -221,9 +222,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <Typography variant="h6" noWrap component="div" className="flex-1">
             {adminMenuItems.find(item => isActive(item.href))?.text || 'Dashboard'}
           </Typography>
-
+          <Typography onClick={() => router.push('/')} noWrap component="div" sx={{ mr: 2, cursor: 'pointer' }}>
+            Trang chủ
+          </Typography>
           {/* User Menu */}
-          <Box className="flex items-center">
+          <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
             <IconButton onClick={handleUserMenuOpen} className="ml-2">
               <Avatar
                 src={user?.avatar}
@@ -232,6 +235,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 {user?.name?.charAt(0).toUpperCase()}
               </Avatar>
+              <KeyboardArrowDownIcon sx={{ position: 'absolute', right: 4, bottom: 4, width: 16, height: 16, backgroundColor: '#555', color: 'white', borderRadius: '50%', border: '1px solid #333' }} />
             </IconButton>
             
             <Menu

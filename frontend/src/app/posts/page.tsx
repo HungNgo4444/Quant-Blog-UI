@@ -44,6 +44,7 @@ import {
   optimisticToggleSave 
 } from '../../store/slices/postsSlice';
 import { Post } from '../../types';
+import { toast } from 'react-toastify';
 
 // Custom hook để debounce search
 function useDebounce(value: string, delay: number) {
@@ -73,7 +74,7 @@ export default function PostsPage() {
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
   // Debounce search term để tránh gọi API quá nhiều khi user đang gõ
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
 
   // Memoize params để tránh re-render không cần thiết
   const apiParams = useMemo(() => {
@@ -169,9 +170,15 @@ export default function PostsPage() {
 
     // Optimistic update
     dispatch(optimisticToggleSave({ slug, saved: !currentSaved }));
-    
     // Thực hiện API call
-    dispatch(togglePostSave(slug));
+    dispatch(togglePostSave(slug)).then((response: any) => {
+      if (response.payload.message) {
+        toast.success(response.payload.message);
+      } else {
+        toast.error(response.payload.message);
+      }
+    });
+
   }, [dispatch, isAuthenticated]);
 
   if (loading && !hasInitialLoad) {

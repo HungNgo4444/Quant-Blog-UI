@@ -218,20 +218,46 @@ const PostEditor: React.FC<PostEditorProps> = ({
   }, [onPublish, postData]);
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', pb: 2 }}>
       {/* Header */}
       <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' }, 
+          mb: 2,
+          gap: { xs: 2, sm: 0 }
+        }}>
           <Typography variant="h5" fontWeight="bold">
             {initialData ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới'}
           </Typography>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' }
+          }}>
             <Tooltip title={previewMode ? 'Chế độ chỉnh sửa' : 'Chế độ xem trước'}>
-              <IconButton onClick={() => setPreviewMode(!previewMode)}>
+              <IconButton 
+                onClick={() => setPreviewMode(!previewMode)}
+                sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+              >
                 {previewMode ? <Edit /> : <Preview />}
               </IconButton>
             </Tooltip>
+            
+            {/* Mobile preview toggle */}
+            <Button
+              variant="outlined"
+              startIcon={previewMode ? <Edit /> : <Preview />}
+              onClick={() => setPreviewMode(!previewMode)}
+              sx={{ display: { xs: 'flex', md: 'none' } }}
+              size="small"
+            >
+              {previewMode ? 'Chỉnh sửa' : 'Xem trước'}
+            </Button>
             
             {onSave && (
               <Button
@@ -239,6 +265,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 startIcon={<Save />}
                 onClick={handleSave}
                 disabled={loading}
+                size="small"
               >
                 Lưu nháp
               </Button>
@@ -249,6 +276,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               startIcon={<Publish />}
               onClick={handlePublish}
               disabled={loading || !postData.title || !postData.content}
+              size="small"
             >
               Xuất bản
             </Button>
@@ -264,7 +292,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
           onChange={(e) => handleInputChange('title', e.target.value)}
           sx={{
             '& .MuiOutlinedInput-root': {
-              fontSize: '1.5rem',
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
               fontWeight: 'bold',
             },
           }}
@@ -272,20 +300,35 @@ const PostEditor: React.FC<PostEditorProps> = ({
       </Paper>
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, display: 'flex', gap: 2 }}>
+      <Box sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: { xs: 'column', lg: 'row' },
+        gap: 2, 
+        minHeight: 'calc(100vh - 300px)' 
+      }}>
         {/* Editor Panel */}
         <Paper 
           elevation={1} 
           sx={{ 
-            flex: previewMode ? 0 : 1,
-            display: previewMode ? 'none' : 'flex',
+            flex: { xs: 1, lg: previewMode ? 0 : 1 },
+            display: { xs: previewMode ? 'none' : 'flex', lg: previewMode ? 'none' : 'flex' },
             flexDirection: 'column',
             overflow: 'hidden',
+            minHeight: { xs: '400px', md: '600px' },
           }}
         >
           {/* Toolbar */}
           <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider' }}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1, 
+              flexWrap: 'wrap', 
+              alignItems: 'center',
+              '& .MuiIconButton-root': {
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }
+            }}>
               
               <Divider orientation="vertical" flexItem />
 
@@ -314,26 +357,28 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 </IconButton>
               </Tooltip>
               
-              <Divider orientation="vertical" flexItem />
+              <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
 
-              {/* Text Alignment */}
-              <Tooltip title="Căn trái">
-                <IconButton size="small" onClick={() => insertAlignment('left')}>
-                  <FormatAlignLeft />
-                </IconButton>
-              </Tooltip>
+              {/* Text Alignment - Hidden on mobile */}
+              <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
+                <Tooltip title="Căn trái">
+                  <IconButton size="small" onClick={() => insertAlignment('left')}>
+                    <FormatAlignLeft />
+                  </IconButton>
+                </Tooltip>
 
-              <Tooltip title="Căn giữa">
-                <IconButton size="small" onClick={() => insertAlignment('center')}>
-                  <FormatAlignCenter />
-                </IconButton>
-              </Tooltip>
+                <Tooltip title="Căn giữa">
+                  <IconButton size="small" onClick={() => insertAlignment('center')}>
+                    <FormatAlignCenter />
+                  </IconButton>
+                </Tooltip>
 
-              <Tooltip title="Căn phải">
-                <IconButton size="small" onClick={() => insertAlignment('right')}>
-                  <FormatAlignRight />
-                </IconButton>
-              </Tooltip>
+                <Tooltip title="Căn phải">
+                  <IconButton size="small" onClick={() => insertAlignment('right')}>
+                    <FormatAlignRight />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               
               <Divider orientation="vertical" flexItem />
               
@@ -360,7 +405,13 @@ const PostEditor: React.FC<PostEditorProps> = ({
           </Box>
 
           {/* Content Editor */}
-          <Box sx={{ flex: 1, p: 2 }}>
+          <Box sx={{ 
+            flex: 1, 
+            p: { xs: 1, sm: 2 },
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%'
+          }}>
             <TextField
               id="content-editor"
               fullWidth
@@ -370,16 +421,18 @@ const PostEditor: React.FC<PostEditorProps> = ({
               value={postData.content}
               onChange={(e) => handleInputChange('content', e.target.value)}
               sx={{
-                height: '100%',
+                flex: 1,
                 '& .MuiOutlinedInput-root': {
                   height: '100%',
+                  minHeight: '330px',
                   alignItems: 'flex-start',
                   fontFamily: selectedFont,
-                  fontSize: '14px',
+                  fontSize: { xs: '12px', sm: '14px' },
                   lineHeight: 1.6,
                 },
                 '& .MuiOutlinedInput-input': {
                   height: '100% !important',
+                  minHeight: '330px',
                   overflow: 'auto !important',
                   fontFamily: selectedFont,
                 },
@@ -392,10 +445,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
         <Paper 
           elevation={1} 
           sx={{ 
-            flex: 1,
-            display: 'flex',
+            flex: { xs: 1, lg: 1 },
+            display: { xs: previewMode ? 'flex' : 'none', lg: 'flex' },
             flexDirection: 'column',
             overflow: 'hidden',
+            minHeight: { xs: '400px', md: '600px' },
           }}
         >
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -405,9 +459,15 @@ const PostEditor: React.FC<PostEditorProps> = ({
             </Typography>
           </Box>
           
-          <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
+          <Box sx={{ flex: 1, p: { xs: 2, sm: 3 }, overflow: 'auto' }}>
             {postData.title && (
-              <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                gutterBottom 
+                fontWeight="bold"
+                sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}
+              >
                 {postData.title}
               </Typography>
             )}
@@ -460,15 +520,31 @@ const PostEditor: React.FC<PostEditorProps> = ({
           </Box>
         </Paper>
 
-        {/* Settings Panel */}
-        <Paper elevation={1} sx={{ width: 350, overflow: 'auto' }}>
-          <Tabs value={tabValue} onChange={(_, value) => setTabValue(value)}>
+        {/* Settings Panel - Mobile: Bottom sheet style, Desktop: Side panel */}
+        <Paper 
+          elevation={1} 
+          sx={{ 
+            width: { xs: '100%', lg: 350 }, 
+            minHeight: { xs: 'auto', md: '600px' },
+            overflow: 'auto'
+          }}
+        >
+          <Tabs 
+            value={tabValue} 
+            onChange={(_, value) => setTabValue(value)}
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }
+            }}
+          >
             <Tab label="Cài đặt" />
-            <Tab label="SEO (Tùy chọn)" />
+            <Tab label="SEO" />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
-            <Box sx={{ p: 2, space: 2 }}>
+            <Box sx={{ p: { xs: 1, sm: 2 }, space: 2 }}>
               {/* Category */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Danh mục</InputLabel>
@@ -476,6 +552,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   value={postData.categoryId}
                   label="Danh mục"
                   onChange={(e) => handleInputChange('categoryId', e.target.value)}
+                  size="small"
                 >
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
@@ -493,14 +570,22 @@ const PostEditor: React.FC<PostEditorProps> = ({
                   value={postData.tags}
                   label="Thẻ"
                   onChange={(e) => handleTagsChange(e.target.value as string[])}
+                  size="small"
                   renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
                       {selected.map((value: string) => {
                         const tag = tags.find(t => t.id === value);
                         return <Chip key={value} label={tag?.name} size="small" />;
                       })}
                     </Box>
                   )}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 250,
+                      },
+                    },
+                  }}
                 >
                   {tags.map((tag) => (
                     <MenuItem key={tag.id} value={tag.id}>
@@ -513,6 +598,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               {/* Featured Image */}
               <TextField
                 fullWidth
+                size="small"
                 label="Ảnh đại diện"
                 placeholder="URL ảnh đại diện"
                 value={postData.featuredImage}
@@ -525,6 +611,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 fullWidth
                 multiline
                 rows={3}
+                size="small"
                 label="Tóm tắt"
                 placeholder="Tóm tắt ngắn về bài viết..."
                 value={postData.excerpt}
@@ -534,8 +621,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
               {/* Settings */}
               <FormControlLabel
+                className="ml-1 mb-3"
                 control={
                   <Switch
+                    size="small"
                     checked={postData.allowComments}
                     onChange={(e) => handleInputChange('allowComments', e.target.checked)}
                   />
@@ -546,13 +635,14 @@ const PostEditor: React.FC<PostEditorProps> = ({
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: { xs: 1, sm: 2 } }}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 Meta Tags
               </Typography>
               
               <TextField
                 fullWidth
+                size="small"
                 label="Meta Title"
                 value={postData.metaTitle}
                 onChange={(e) => handleInputChange('metaTitle', e.target.value)}
@@ -563,6 +653,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 fullWidth
                 multiline
                 rows={2}
+                size="small"
                 label="Meta Description"
                 value={postData.metaDescription}
                 onChange={(e) => handleInputChange('metaDescription', e.target.value)}
@@ -571,6 +662,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               
               <TextField
                 fullWidth
+                size="small"
                 label="Meta Keywords"
                 placeholder="Từ khóa 1, từ khóa 2, ..."
                 value={postData.metaKeywords}
@@ -584,6 +676,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               
               <TextField
                 fullWidth
+                size="small"
                 label="OG Title"
                 value={postData.ogTitle}
                 onChange={(e) => handleInputChange('ogTitle', e.target.value)}
@@ -594,6 +687,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 fullWidth
                 multiline
                 rows={2}
+                size="small"
                 label="OG Description"
                 value={postData.ogDescription}
                 onChange={(e) => handleInputChange('ogDescription', e.target.value)}
@@ -602,6 +696,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               
               <TextField
                 fullWidth
+                size="small"
                 label="OG Image"
                 value={postData.ogImage}
                 onChange={(e) => handleInputChange('ogImage', e.target.value)}
@@ -614,6 +709,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               
               <TextField
                 fullWidth
+                size="small"
                 label="Twitter Title"
                 value={postData.twitterTitle}
                 onChange={(e) => handleInputChange('twitterTitle', e.target.value)}
@@ -624,6 +720,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 fullWidth
                 multiline
                 rows={2}
+                size="small"
                 label="Twitter Description"
                 value={postData.twitterDescription}
                 onChange={(e) => handleInputChange('twitterDescription', e.target.value)}
@@ -632,6 +729,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
               
               <TextField
                 fullWidth
+                size="small"
                 label="Twitter Image"
                 value={postData.twitterImage}
                 onChange={(e) => handleInputChange('twitterImage', e.target.value)}

@@ -40,6 +40,7 @@ import {
 } from '../../store/slices/postsSlice';
 import { getUser } from '../../services/AuthService';
 import { clientCookies } from '../../services/TokenService';
+import { toast } from 'react-toastify';
 
 interface HomePageProps {
   postsData: Post[];
@@ -86,7 +87,7 @@ const AuthenticatedActions = ({ user, mounted }: { user: any; mounted: boolean }
         </Button>
         <Button
           component={Link}
-          href="/dashboard"
+          href="/my-posts"
           variant="outlined"
           size="large"
           className="border-white text-white hover:bg-white hover:text-primary-600"
@@ -164,7 +165,13 @@ const HomePage = ({ postsData }: HomePageProps) => {
     dispatch(optimisticToggleSave({ slug, saved: !currentSaved }));
     
     // Thực hiện API call
-    dispatch(togglePostSave(slug));
+    dispatch(togglePostSave(slug)).then((response: any) => {
+      if (response.payload.message) {
+        toast.success(response.payload.message);
+      } else {
+        toast.error(response.payload.message);
+      }
+    });
   };
 
   return (

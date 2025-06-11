@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   AppBar,
   Toolbar,
@@ -16,6 +16,9 @@ import {
   Container,
   useScrollTrigger,
   Slide,
+  TextField,
+  InputAdornment,
+  Collapse,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -27,6 +30,7 @@ import {
   Dashboard,
   Article,
   Search,
+  KeyboardArrowDown,
 } from '@mui/icons-material';
 import BrushIcon from '@mui/icons-material/Brush';
 import { useAppSelector, useAppDispatch } from '../../store';
@@ -45,12 +49,15 @@ function HideOnScroll({ children }: { children: React.ReactElement }) {
 
 const Header: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { mode } = useAppSelector((state) => state.theme);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleThemeToggle = () => {
     dispatch(toggleTheme());
@@ -69,10 +76,26 @@ const Header: React.FC = () => {
     handleUserMenuClose();
   };
 
+  const handleSearchToggle = () => {
+    setSearchOpen(!searchOpen);
+    if (searchOpen) {
+      setSearchQuery('');
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
   const navigationItems = [
     { label: 'Trang chủ', href: '/', active: pathname === '/' },
     { label: 'Bài viết', href: '/posts', active: pathname.startsWith('/posts') },
-    { label: 'Thể loại', href: '/categories', active: pathname.startsWith('/categories') },
+    // { label: 'Thể loại', href: '/categories', active: pathname.startsWith('/categories') },
     { label: 'Về chúng tôi', href: '/about', active: pathname === '/about' },
   ];
 
@@ -86,13 +109,21 @@ const Header: React.FC = () => {
               variant="h6"
               component={Link}
               href="/"
-              className="text-primary-600 dark:text-primary-400 font-bold text-xl mr-8 no-underline"
+              className="hidden md:block text-primary-600 dark:text-primary-400 font-bold text-xl mr-8 no-underline"
             >
               AdvancedBlog
             </Typography>
+            <Typography
+              variant="h6"
+              component={Link}
+              href="/"
+              className="md:hidden text-primary-600 dark:text-primary-400 font-bold text-xl mr-8 no-underline"
+            >
+              Blog
+            </Typography>
 
             {/* Desktop Navigation */}
-            <Box className="hidden md:flex flex-1 space-x-6">
+            <Box className="hidden md:flex space-x-6">
               {navigationItems.map((item) => (
                 <Button
                   key={item.href}
@@ -108,15 +139,60 @@ const Header: React.FC = () => {
             </Box>
 
             {/* Right side buttons */}
-            <Box className="flex items-center space-x-2">
-              {/* Search button */}
-              <IconButton
-                component={Link}
-                href="/search"
-                className="text-gray-700 dark:text-gray-300"
-              >
-                <Search />
-              </IconButton>
+            <Box className="flex items-center space-x-2 ml-auto">
+              {/* Search button/field */}
+              {!searchOpen ? (
+                <IconButton
+                  onClick={handleSearchToggle}
+                  className="text-gray-700 dark:text-gray-300"
+                >
+                  <Search />
+                </IconButton>
+              ) : (
+                <Box
+                  component="form"
+                  onSubmit={handleSearchSubmit}
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Tìm kiếm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    sx={{ 
+                      width: 250,
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      }
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            type="submit"
+                            size="small"
+                            disabled={!searchQuery.trim()}
+                          >
+                            <Search />
+                          </IconButton>
+                          <IconButton
+                            onClick={handleSearchToggle}
+                            size="small"
+                          >
+                            <Close />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              )}
 
               {/* Theme toggle */}
               <IconButton
@@ -125,9 +201,9 @@ const Header: React.FC = () => {
               >
                 {mode === 'dark' ? <LightMode /> : <DarkMode />}
               </IconButton>
-              <Button sx={{  }} component={Link} href="/posts/create" variant="outlined" color="primary">
-                <BrushIcon />
-                Viết bài
+              <Button sx={{ px: 1}} component={Link} href="/posts/create" variant="outlined" color="primary">
+                <BrushIcon/>
+                <span className="hidden md:block">Viết bài</span>
               </Button>
 
               {/* User menu or auth buttons */}
@@ -135,7 +211,7 @@ const Header: React.FC = () => {
                 <>
                   <IconButton
                     onClick={handleUserMenuOpen}
-                    className="ml-2"
+                    sx={{ position: 'relative' }}
                   >
                     <Avatar
                       src={user.avatar}
@@ -144,6 +220,7 @@ const Header: React.FC = () => {
                     >
                       {user.name.charAt(0).toUpperCase()}
                     </Avatar>
+                    <KeyboardArrowDown sx={{ position: 'absolute', right: 4, bottom: 4, width: 16, height: 16, backgroundColor: '#555', color: 'white', borderRadius: '50%', border: '1px solid #333' }} />
                   </IconButton>
                   <Menu
                     anchorEl={userMenuAnchor}
@@ -210,7 +287,7 @@ const Header: React.FC = () => {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <Box className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <Box className="lg:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
               <Box className="flex flex-col space-y-2 p-4">
                 {navigationItems.map((item) => (
                   <Button

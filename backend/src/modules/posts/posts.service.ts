@@ -321,7 +321,7 @@ export class PostsService {
 
     if (search) {
       queryBuilder.andWhere(
-        '(post.title ILIKE :search OR post.excerpt ILIKE :search OR post.content ILIKE :search)',
+        '(post.title ILIKE :search OR post.excerpt ILIKE :search)',
         { search: `%${search}%` },
       );
     }
@@ -917,7 +917,7 @@ export class PostsService {
 
     if (search) {
       baseQueryBuilder.andWhere(
-        '(post.title ILIKE :search OR post.excerpt ILIKE :search OR post.content ILIKE :search)',
+        '(post.title ILIKE :search OR post.excerpt ILIKE :search)',
         { search: `%${search}%` },
       );
     }
@@ -1113,7 +1113,7 @@ export class PostsService {
 
     if (search) {
       baseQueryBuilder.andWhere(
-        '(post.title ILIKE :search OR post.excerpt ILIKE :search OR post.content ILIKE :search)',
+        '(post.title ILIKE :search OR post.excerpt ILIKE :search)',
         { search: `%${search}%` },
       );
     }
