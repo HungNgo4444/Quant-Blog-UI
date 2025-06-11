@@ -25,13 +25,21 @@ export async function getPostsByUser(page: number, limit: number, category: stri
   }
 }
 
-export async function getSavedPostsByUser(page: number, limit: number, category: string, tag: string, search: string) {
+export async function getSavedPostsByUser(page: number = 1, limit: number = 10, category: string = '', tag: string = '', search: string = '') {
   try {
-    const res = await instanceApi.get(`/posts/saved?page=${page}&limit=${limit}&category=${category}&tag=${tag}&search=${search}`);
-    return res.data || [];
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(category && { category }),
+      ...(tag && { tag }),
+      ...(search && { search })
+    });
+
+    const res = await instanceApi.get(`/posts/saved?${params}`);
+    return res.data;
   } catch (error) {
     console.error('Error fetching saved posts by user:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -68,6 +76,17 @@ export async function getBulkSaveStatus(slugs: string[]) {
 export async function getPostBySlug(slug: string) {
   try {
     const res = await axios.get(`${API_URL}/posts/${slug}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error getting post by slug:', error);
+    return null;
+  }
+}
+
+export async function getPostBySlugIncludingDrafts(slug: string) {
+
+  try {
+    const res = await instanceApi.get(`/posts/${slug}/include-draft`);
     return res.data;
   } catch (error) {
     console.error('Error getting post by slug:', error);
@@ -114,6 +133,17 @@ export async function createPost(postData: any) {
   }
 }
 
+export async function updatePost(slug: string, postData: any) {
+  try {
+    const res = await instanceApi.put(`/posts/${slug}`, postData);
+    return res.data;
+  } catch (error) {
+    console.error('Error updating post:', error);
+    throw error;
+  }
+}
+
+
 export async function deletePost(slug: string) {
   try {
     const res = await instanceApi.delete(`/posts/${slug}`);
@@ -138,4 +168,14 @@ export async function getPostsServer() {
       console.error('Error fetching posts on server:', error);
       return [];
     }
+}
+
+export async function getUserPostsStats() {
+  try {
+    const res = await instanceApi.get('/posts/my-stats');
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching user posts stats:', error);
+    throw error;
+  }
 }

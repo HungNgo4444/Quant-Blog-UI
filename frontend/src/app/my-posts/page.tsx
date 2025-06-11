@@ -5,12 +5,16 @@ import MyPostsHeader from '../../components/MyPosts/MyPostsHeader';
 import MyPostsTabs from '../../components/MyPosts/MyPostsTabs';
 import MyPostsFilters from '../../components/MyPosts/MyPostsFilters';
 import { Post } from '../../types';
-import { getPostsByUser, getSavedPostsByUser } from '../../services/PostService';
+import { getPostsByUser, getSavedPostsByUser, getUserPostsStats } from '../../services/PostService';
 
 export default function MyPostsPage() {
   const [allMyPosts, setAllMyPosts] = useState<Post[]>([]);
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userStats, setUserStats] = useState({
+    totalPosts: 0,
+    totalViews: 0
+  });
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +37,17 @@ export default function MyPostsPage() {
     itemsPerPage: 5,
     hasMore: false
   });
+
+  const fetchUserStats = async () => {
+    try {
+      console.log('🔍 Fetching user stats...');
+      const stats = await getUserPostsStats();
+      console.log('📊 User stats received:', stats);
+      setUserStats(stats);
+    } catch (error) {
+      console.error('❌ Error fetching user stats:', error);
+    }
+  };
 
   const fetchPostsByUser = async (page: number = 1) => {
     try {
@@ -110,6 +125,7 @@ export default function MyPostsPage() {
   useEffect(() => {
     const fetchData = async () => {
       await Promise.all([
+        fetchUserStats(),
         fetchPostsByUser(),
         fetchSavedPostsByUser()
       ]);
@@ -162,21 +178,19 @@ export default function MyPostsPage() {
     return filtered;
   }, [allMyPosts, searchTerm, statusFilter, sortBy]);
 
-  const totalViews = Array.isArray(allMyPosts) 
-    ? allMyPosts.reduce((sum, post) => sum + post.viewCount, 0) 
-    : 0;
-
   // Handle post deletion
   const handlePostDeleted = (deletedSlug: string) => {
     setAllMyPosts(prevPosts => prevPosts.filter(post => post.slug !== deletedSlug));
+    // Refresh user stats after deletion
+    fetchUserStats();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MyPostsHeader 
-          totalPosts={Array.isArray(allMyPosts) ? allMyPosts.length : 0}
-          totalViews={totalViews}
+          totalPosts={userStats.totalPosts}
+          totalViews={userStats.totalViews}
         />
         
         <MyPostsFilters

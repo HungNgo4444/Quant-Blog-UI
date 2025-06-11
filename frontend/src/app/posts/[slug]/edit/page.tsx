@@ -5,43 +5,27 @@ import { useRouter, useParams } from 'next/navigation';
 import { Container, Alert, CircularProgress, Box } from '@mui/material';
 import PostEditor from '../../../../components/Editor/PostEditor';
 import { useAppSelector, useAppDispatch } from '../../../../store';
-import { updatePost, fetchPostBySlug, clearCurrentPost } from '../../../../store/slices/postsSlice';
+import { updatePost } from '../../../../services/PostService';
 import { toast } from 'react-toastify';
-
-// Mock data - trong thực tế sẽ fetch từ API
-const mockCategories = [
-  { id: '1', name: 'Technology', slug: 'technology' },
-  { id: '2', name: 'Tutorial', slug: 'tutorial' },
-  { id: '3', name: 'Programming', slug: 'programming' },
-  { id: '4', name: 'Web Development', slug: 'web-development' },
-  { id: '5', name: 'DevOps', slug: 'devops' },
-];
-
-const mockTags = [
-  { id: '1', name: 'TypeScript', slug: 'typescript' },
-  { id: '2', name: 'JavaScript', slug: 'javascript' },
-  { id: '3', name: 'React', slug: 'react' },
-  { id: '4', name: 'Next.js', slug: 'nextjs' },
-  { id: '5', name: 'Node.js', slug: 'nodejs' },
-  { id: '6', name: 'NestJS', slug: 'nestjs' },
-  { id: '7', name: 'PostgreSQL', slug: 'postgresql' },
-  { id: '8', name: 'Docker', slug: 'docker' },
-  { id: '9', name: 'AWS', slug: 'aws' },
-  { id: '10', name: 'Frontend', slug: 'frontend' },
-  { id: '11', name: 'Backend', slug: 'backend' },
-  { id: '12', name: 'Full-stack', slug: 'fullstack' },
-];
+import { getPostBySlugIncludingDrafts } from '../../../../services/PostService';
+import { getAllCategories } from '../../../../services/CategoryService';
+import { getAllTags } from '../../../../services/TagService';
+import { Post } from '../../../../types';
 
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const { currentPost, loading } = useAppSelector((state) => state.posts);
+  const { loading: reduxLoading } = useAppSelector((state) => state.posts);
   
+  const [currentPost, setCurrentPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [postLoaded, setPostLoaded] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
   const slug = params.slug as string;
 
   // Check authentication and permissions
@@ -52,15 +36,54 @@ export default function EditPostPage() {
     }
 
     setAuthChecked(true);
-  }, [isAuthenticated, router, dispatch, slug, authChecked]);
+  }, [isAuthenticated, router, slug, authChecked]);
 
-  // Load post data
+  // Load post data và categories/tags
   useEffect(() => {
-    if (authChecked && isAuthenticated && slug && !postLoaded) {
-      dispatch(fetchPostBySlug(slug));
-      setPostLoaded(true);
+    if (authChecked && isAuthenticated && slug) {
+      loadPostData();
+      loadCategoriesAndTags();
     }
-  }, [authChecked, isAuthenticated, slug, dispatch, postLoaded]);
+  }, [authChecked, isAuthenticated, slug]);
+
+  const loadPostData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 Loading post data for slug:', slug);
+      const response = await getPostBySlugIncludingDrafts(slug);
+      console.log('📊 Post data received:', response);
+      
+      if (response) {
+        setCurrentPost(response);
+      } else {
+        setError('Không tìm thấy bài viết');
+      }
+    } catch (err: any) {
+      console.error('❌ Error loading post:', err);
+      if (err.response?.status === 404) {
+        setError('Bài viết không tồn tại');
+      } else {
+        setError('Không thể tải bài viết');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCategoriesAndTags = async () => {
+    try {
+      const [categoriesData, tagsData] = await Promise.all([
+        getAllCategories(),
+        getAllTags()
+      ]);
+      setCategories(categoriesData);
+      setTags(tagsData);
+    } catch (error) {
+      console.error('Error loading categories/tags:', error);
+    }
+  };
 
   // Check edit permissions after post is loaded
   useEffect(() => {
@@ -75,41 +98,6 @@ export default function EditPostPage() {
       }
     }
   }, [currentPost, user, router, slug]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      dispatch(clearCurrentPost());
-    };
-  }, [dispatch]);
-
-  const handleSave = async (postData: any) => {
-    if (!currentPost) return;
-
-    try {
-      const formattedData = {
-        title: postData.title,
-        content: postData.content,
-        excerpt: postData.excerpt,
-        categoryId: postData.categoryId,
-        tags: postData.tags,
-        featured_image: postData.featuredImage,
-        published: false, // Lưu nháp
-        seoTitle: postData.metaTitle,
-        seoDescription: postData.metaDescription,
-      };
-
-      await dispatch(updatePost({ 
-        id: currentPost.slug, // Backend expects slug as ID
-        postData: formattedData 
-      })).unwrap();
-      
-      toast.success('Đã lưu bài viết thành công!');
-    } catch (error) {
-      console.error('Error saving post:', error);
-      toast.error('Có lỗi xảy ra khi lưu bài viết');
-    }
-  };
 
   const handlePublish = async (postData: any) => {
     if (!currentPost) return;
@@ -137,17 +125,15 @@ export default function EditPostPage() {
         seoDescription: postData.metaDescription,
       };
 
-      const result = await dispatch(updatePost({ 
-        id: currentPost.slug, // Backend expects slug as ID
-        postData: formattedData 
-      })).unwrap();
+      console.log('🚀 Publishing post with data:', formattedData);
+      const result = await updatePost(currentPost.slug, formattedData);
       
       toast.success('Đã cập nhật bài viết thành công!');
 
       // Redirect to the updated post
       router.push(`/posts/${result.slug}`);
     } catch (error) {
-      console.error('Error publishing post:', error);
+      console.error('❌ Error publishing post:', error);
       toast.error('Có lỗi xảy ra khi cập nhật bài viết');
     }
   };
@@ -172,6 +158,16 @@ export default function EditPostPage() {
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Alert severity="warning">
           Vui lòng đăng nhập để chỉnh sửa bài viết.
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert severity="error">
+          {error}
         </Alert>
       </Container>
     );
@@ -203,7 +199,7 @@ export default function EditPostPage() {
     content: currentPost.content,
     excerpt: currentPost.excerpt,
     categoryId: currentPost.categoryId,
-    tags: currentPost.tags.map(tag => tag.id),
+    tags: currentPost.tags?.map(tag => tag.id) || [],
     featuredImage: currentPost.featuredImage || '',
     published: currentPost.status === 'published',
     metaTitle: currentPost.metaTitle || '',
@@ -220,12 +216,11 @@ export default function EditPostPage() {
 
   return (
     <PostEditor
-      onSave={handleSave}
       onPublish={handlePublish}
       initialData={initialData}
-      categories={mockCategories}
-      tags={mockTags}
-      loading={loading}
+      categories={categories}
+      tags={tags}
+      loading={reduxLoading}
     />
   );
 } 

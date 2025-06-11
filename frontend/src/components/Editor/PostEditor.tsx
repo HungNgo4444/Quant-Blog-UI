@@ -53,7 +53,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface PostEditorProps {
-  onSave: (postData: any) => void;
+  onSave?: (postData: any) => void;
   onPublish: (postData: any) => void;
   initialData?: any;
   categories: Array<{ id: string; name: string; slug: string }>;
@@ -210,7 +210,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
   }, [postData.content, handleInputChange]);
 
   const handleSave = useCallback(() => {
-    onSave(postData);
+    onSave?.(postData);
   }, [onSave, postData]);
 
   const handlePublish = useCallback(() => {
@@ -233,14 +233,16 @@ const PostEditor: React.FC<PostEditorProps> = ({
               </IconButton>
             </Tooltip>
             
-            <Button
-              variant="outlined"
-              startIcon={<Save />}
-              onClick={handleSave}
-              disabled={loading}
-            >
-              Lưu nháp
-            </Button>
+            {onSave && (
+              <Button
+                variant="outlined"
+                startIcon={<Save />}
+                onClick={handleSave}
+                disabled={loading}
+              >
+                Lưu nháp
+              </Button>
+            )}
             
             <Button
               variant="contained"

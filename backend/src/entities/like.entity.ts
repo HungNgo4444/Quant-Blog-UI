@@ -28,9 +28,9 @@ export class Like {
   createdAt: Date;
 
   // Relations
-  // @ManyToOne(() => Post, (post) => post.likes, { onDelete: 'CASCADE' })
-  // post: Post;
+  @ManyToOne(() => Post, (post) => post.likes, { onDelete: 'CASCADE' })
+  post: Post;
 
-  // @ManyToOne(() => User, (user) => user.likes, { onDelete: 'CASCADE' })
-  // user: User;
+  @ManyToOne(() => User, (user) => user.likes, { onDelete: 'CASCADE' })
+  user: User;
 } 

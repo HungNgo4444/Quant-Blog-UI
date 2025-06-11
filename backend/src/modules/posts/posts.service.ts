@@ -120,7 +120,6 @@ export class PostsService {
     // Find the post
     const post = await this.postRepository.findOne({
       where: { slug, active: true },
-      relations: ['author', 'category', 'tags']
     });
 
     if (!post) {
@@ -933,8 +932,6 @@ export class PostsService {
       .limit(limit)
       .getRawMany();
 
-    console.log('postIds22222222222', postIds);
-
     if (postIds.length === 0) {
       return {
         posts: [],
@@ -1074,8 +1071,6 @@ export class PostsService {
       };
     }).filter(post => post !== null);
 
-    console.log('mappedPosts22222222222', mappedPosts);
-
     return {
       posts: mappedPosts,
       pagination: {
@@ -1132,8 +1127,6 @@ export class PostsService {
       .offset((page - 1) * limit)
       .limit(limit)
       .getRawMany();
-
-    console.log('savedPostIds11111111111', savedPostIds);
     
 
     if (savedPostIds.length === 0) {
@@ -1277,8 +1270,6 @@ export class PostsService {
         savedAt: post.saved_at
       };
     }).filter(post => post !== null);
-
-    console.log('mappedPosts11111111111', mappedPosts);
     
 
     return {
@@ -1394,6 +1385,23 @@ export class PostsService {
     });
 
     return result;
+  }
+
+  async getUserPostsStats(userId: string): Promise<{ totalPosts: number; totalViews: number }> {
+    const result = await this.postRepository
+      .createQueryBuilder('post')
+      .select([
+        'COUNT(post.id) as total_posts',
+        'COALESCE(SUM(post.viewCount), 0) as total_views'
+      ])
+      .where('post.authorId = :userId', { userId })
+      .andWhere('post.active = :active', { active: true })
+      .getRawOne();
+
+    return {
+      totalPosts: parseInt(result.total_posts) || 0,
+      totalViews: parseInt(result.total_views) || 0
+    };
   }
 
 }

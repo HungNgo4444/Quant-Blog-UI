@@ -71,11 +71,11 @@ export class Comment {
   parentId: string;
 
   // Relations
-  // @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
-  // user: User;
+  @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
+  user: User;
 
-  // @ManyToOne(() => Post, (post) => post.comments, { onDelete: 'CASCADE' })
-  // post: Post;
+  @ManyToOne(() => Post, (post) => post.comments, { onDelete: 'CASCADE' })
+  post: Post;
 
   @TreeChildren()
   children: Comment[];

@@ -134,12 +134,12 @@ export class Post {
   })
   tags: Tag[];
 
-  // @OneToMany(() => Comment, (comment) => comment.post)
-  // comments: Comment[];
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comments: Comment[];
 
-  // @OneToMany(() => Like, (like) => like.post)
-  // likes: Like[];
+  @OneToMany(() => Like, (like) => like.post)
+  likes: Like[];
 
-  // @OneToMany(() => View, (view) => view.post)
-  // views: View[];
+  @OneToMany(() => View, (view) => view.post)
+  views: View[];
 } 

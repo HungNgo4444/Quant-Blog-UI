@@ -105,22 +105,22 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  // Relations
-  // @OneToMany(() => Post, (post) => post.author)
-  // posts: Post[];
+  Relations
+  @OneToMany(() => Post, (post) => post.authorId)
+  posts: Post[];
 
-  // @OneToMany(() => Comment, (comment) => comment.user)
-  // comments: Comment[];
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 
-  // @OneToMany(() => Like, (like) => like.user)
-  // likes: Like[];
+  @OneToMany(() => Like, (like) => like.user)
+  likes: Like[];
 
-  // @OneToMany(() => View, (view) => view.user)
-  // views: View[];
+  @OneToMany(() => View, (view) => view.user)
+  views: View[];
 
-  // @OneToMany(() => Session, (session) => session.user)
-  // sessions: Session[];
+  @OneToMany(() => Session, (session) => session.user)
+  sessions: Session[];
 
-  // @OneToMany(() => ActivityLog, (log) => log.user)
-  // activityLogs: ActivityLog[];
+  @OneToMany(() => ActivityLog, (log) => log.user)
+  activityLogs: ActivityLog[];
 } 

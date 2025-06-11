@@ -76,6 +76,18 @@ export class PostsController {
     return this.postsService.getPostByUser(userId, page, limit, category, tag, search, request);
   }
 
+  @Get('/my-stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get user posts statistics' })
+  @ApiResponse({ status: 200, description: 'User posts statistics' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUserPostsStats(
+    @Req() request: any,
+  ): Promise<{ totalPosts: number; totalViews: number }> {
+    const userId = request.user.id; // From JWT payload
+    return this.postsService.getUserPostsStats(userId);
+  }
+
   @Get('/saved')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get saved posts by user' })
@@ -103,6 +115,14 @@ export class PostsController {
   @ApiResponse({ status: 404, description: 'Post not found' })
   async findOne(@Param('slug') slug: string): Promise<PostResponseDto> {
     return this.postsService.findOneBySlug(slug);
+  }
+
+  @Get(':slug/include-draft')
+  @ApiOperation({ summary: 'Get a post by slug' })
+  @ApiResponse({ status: 200, type: PostResponseDto })
+  @ApiResponse({ status: 404, description: 'Post not found' })
+  async findOneIncludingDrafts(@Param('slug') slug: string): Promise<PostResponseDto> {
+    return this.postsService.findOneBySlugIncludingDrafts(slug);
   }
 
   @Put(':slug')

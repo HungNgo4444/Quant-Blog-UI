@@ -46,7 +46,7 @@ export const fetchPostBySlug = createAsyncThunk(
     try {
       const response = await axios.get(`${API_URL}/posts/${slug}`);
       
-      return response.data.post;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -91,7 +91,7 @@ export const createPost = createAsyncThunk(
     try {
       const response = await axios.post(`${API_URL}/posts`, postData);
 
-      return response.data.post;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -100,11 +100,11 @@ export const createPost = createAsyncThunk(
 
 export const updatePost = createAsyncThunk(
   'posts/updatePost',
-  async ({ id, postData }: { id: string; postData: Partial<PostFormData> }, { rejectWithValue }) => {
+  async ({ slug, postData }: { slug: string; postData: Partial<PostFormData> }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/posts/${id}`, postData);
+      const response = await axios.put(`${API_URL}/posts/${slug}`, postData);
 
-      return response.data.post;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }

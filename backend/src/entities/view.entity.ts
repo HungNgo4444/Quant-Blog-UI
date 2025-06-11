@@ -7,6 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { Post } from './post.entity';
+import { User } from './user.entity';
 
 @Entity('views')
 @Index(['postId', 'ipAddress', 'userAgent'])
@@ -30,6 +31,9 @@ export class View {
   viewedAt: Date;
 
   // Relations
-  // @ManyToOne(() => Post, (post) => post.views, { onDelete: 'CASCADE' })
-  // post: Post;
+  @ManyToOne(() => Post, (post) => post.views, { onDelete: 'CASCADE' })
+  post: Post;
+
+  @ManyToOne(() => User, (user) => user.views, { onDelete: 'CASCADE' })
+  user: User;
 } 
