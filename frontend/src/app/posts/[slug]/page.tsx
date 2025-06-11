@@ -22,16 +22,21 @@ import {
   Share,
   Facebook,
   Twitter,
-  LinkedIn
+  LinkedIn,
+  Bookmark,
+  BookmarkBorder,
 } from '@mui/icons-material';
 import { useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import rehypeRaw from 'rehype-raw';
 import { formatDate, calculateReadingTime } from '../../../lib/utils';
 import axios from 'axios';
 import { clientCookies } from '../../../services/TokenService';
 import PostComment from '../../../components/Posts/PostComment';
+import { getLikeStatus, getPostBySlug, getSaveStatus, toggleLikePost, toggleSavePost, trackViewPost } from 'frontend/src/services/PostService';
+import { toast } from 'react-toastify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -70,6 +75,7 @@ export default function PostDetailPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Check authentication status
   useEffect(() => {
@@ -85,6 +91,7 @@ export default function PostDetailPage() {
       // 3. Only check like status if user is authenticated
       if (isAuthenticated) {
         checkLikeStatus();   // Check if user liked this post
+        checkSavedPost();
       }
     }
   }, [slug, isAuthenticated]);
@@ -92,10 +99,10 @@ export default function PostDetailPage() {
   const fetchPost = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/posts/${slug}`);
+      const response = await getPostBySlug(slug);
       
-      setPost(response.data);
-      setLikeCount(response.data.likeCount || 0);
+      setPost(response);
+      setLikeCount(response.likeCount || 0);
       setError(null);
     } catch (err: any) {
       if (err.response?.status === 404) {
@@ -111,7 +118,7 @@ export default function PostDetailPage() {
 
   const trackView = async () => {
     try {
-      await axios.post(`${API_URL}/posts/${slug}/view`);
+      await trackViewPost(slug);
     } catch (err) {
       console.error('Error tracking view:', err);
     }
@@ -127,16 +134,12 @@ export default function PostDetailPage() {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/posts/${slug}/like-status`, {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`
-        }
-      });
+      const response = await getLikeStatus(slug);
 
-      if (response.data) {
-        setLiked(response.data.liked);
+      if (response) {
+        setLiked(response.liked);
         // Cập nhật like count từ server (đảm bảo sync)
-        setLikeCount(response.data.likeCount);
+        setLikeCount(response.likeCount);
       }
     } catch (err: any) {
       if (err.response?.status === 401) {
@@ -158,15 +161,11 @@ export default function PostDetailPage() {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/posts/${slug}/like`, {}, {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`
-        }
-      });
+      const response = await toggleLikePost(slug);
 
-      if (response.data) {
-        setLiked(response.data.liked);
-        setLikeCount(response.data.likeCount);
+      if (response) {
+        setLiked(response.liked);
+        setLikeCount(response.likeCount);
       }
     } catch (err: any) {
       if (err.response?.status === 401) {
@@ -200,6 +199,36 @@ export default function PostDetailPage() {
     
     window.open(shareUrl, '_blank', 'width=600,height=400');
   };
+
+  const handleSavePost = async () => {
+    try {
+      const response = await toggleSavePost(slug);
+      if(response.saved){
+        toast.success('Đã lưu bài viết');
+        setSaved(true);
+      } else {
+        toast.success('Đã bỏ lưu bài viết');
+        setSaved(false);
+      }
+    } catch (err: any) {
+      console.error('Error saving post:', err);
+      if(!isAuthenticated){
+        toast.error('Bạn cần đăng nhập để lưu bài viết');
+      } else {
+        toast.error('Không thể lưu bài viết');
+      }
+    }
+  }
+
+  const checkSavedPost = async () => {
+    try {
+      const response = await getSaveStatus(slug);
+        setSaved(response.saved);
+    } catch (error) {
+      console.error('Error checking saved post:', error);
+    }
+    
+  }
 
   if (loading) {
     return (
@@ -280,21 +309,26 @@ export default function PostDetailPage() {
 
       {/* Author */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Avatar
-          src={post.author.avatar}
-          alt={post.author.name}
-          sx={{ width: 48, height: 48 }}
-        />
-        <Box>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {post.author.name}
-          </Typography>
-          {post.author.bio && (
-            <Typography variant="body2" color="text.secondary">
-              {post.author.bio}
+        <div>
+          <Avatar
+            src={post.author.avatar}
+            alt={post.author.name}
+            sx={{ width: 48, height: 48 }}
+          />
+          <Box>
+            <Typography variant="subtitle1" fontWeight="bold">
+              {post.author.name}
             </Typography>
-          )}
-        </Box>
+            {post.author.bio && (
+              <Typography variant="body2" color="text.secondary">
+                {post.author.bio}
+              </Typography>
+            )}
+          </Box>
+        </div>
+        <div className='ml-auto' onClick={handleSavePost} title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}>
+            {saved ?  <Bookmark sx={{ cursor: 'pointer', color: 'primary.main' }} />: <BookmarkBorder sx={{ cursor: 'pointer' }} />}
+        </div>
       </Box>
 
       <Divider sx={{ mb: 3 }} />
@@ -303,24 +337,60 @@ export default function PostDetailPage() {
       <Paper elevation={0} sx={{ p: 3, mb: 3 }}>
         <ReactMarkdown
           components={{
-            code({node, inline, className, children, ...props}) {
+            code({node, inline, className, children, ...props}: any) {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (
                 <SyntaxHighlighter
                   style={tomorrow as any}
                   language={match[1]}
                   PreTag="div"
+                  customStyle={{
+                    backgroundColor: '#1e1e1e',
+                    color: '#d4d4d4',
+                    padding: '20px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    margin: '20px 0',
+                    border: '1px solid #3c3c3c',
+                    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                    fontWeight: '400',
+                    overflow: 'auto',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                  }}
+                  codeTagProps={{
+                    style: {
+                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                      fontSize: '14px',
+                      lineHeight: '1.6'
+                    }
+                  }}
                   {...props}
                 >
                   {String(children).replace(/\n$/, '')}
                 </SyntaxHighlighter>
               ) : (
-                <code className={className} {...props}>
+                <code 
+                  className={className} 
+                  {...props}
+                  style={{
+                    backgroundColor: '#2d2d30',
+                    color: '#cccccc',
+                    padding: '3px 6px',
+                    borderRadius: '3px',
+                    fontSize: '13px',
+                    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                    border: '1px solid #404040',
+                    fontWeight: '400',
+                    letterSpacing: '0.025em'
+                  }}
+                >
                   {children}
                 </code>
               );
             }
           }}
+          rehypePlugins={[rehypeRaw]}
         >
           {post.content}
         </ReactMarkdown>

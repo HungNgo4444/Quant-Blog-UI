@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { Snackbar, Alert, Slide } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '../../store';
-import { removeNotification } from '../../store/slices/notificationSlice';
+import { hideNotification } from '../../store/slices/notificationSlice';
 import { TransitionProps } from '@mui/material/transitions';
 
 function SlideTransition(props: TransitionProps & { children: React.ReactElement<any, any> }) {
@@ -15,14 +15,14 @@ const NotificationManager: React.FC = () => {
   const { notifications } = useAppSelector((state) => state.notification);
 
   const handleClose = (id: string) => {
-    dispatch(removeNotification(id));
+    dispatch(hideNotification(id));
   };
 
   useEffect(() => {
     notifications.forEach((notification) => {
       if (notification.duration && notification.duration > 0) {
         const timer = setTimeout(() => {
-          dispatch(removeNotification(notification.id));
+          dispatch(hideNotification(notification.id));
         }, notification.duration);
 
         return () => clearTimeout(timer);

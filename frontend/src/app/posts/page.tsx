@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -20,6 +20,8 @@ import {
   InputAdornment,
   Skeleton,
   Alert,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   AccessTime,
@@ -28,42 +30,107 @@ import {
   Search,
   Comment,
   Share,
+  Bookmark,
+  BookmarkBorder,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { calculateReadingTime, formatDate } from '../../lib/utils';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
-import { fetchPosts } from '../../store/slices/postsSlice';
+import { 
+  fetchPosts, 
+  fetchBulkSaveStatus, 
+  togglePostSave, 
+  optimisticToggleSave 
+} from '../../store/slices/postsSlice';
 import { Post } from '../../types';
+
+// Custom hook để debounce search
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export default function PostsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { posts, loading, error, pagination } = useSelector((state: RootState) => state.posts);
+  const { posts, loading, error, pagination, saveStatus, saveLoading } = useSelector((state: RootState) => state.posts);
+  const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  useEffect(() => {
-    fetchPostsData();
-  }, [page, categoryFilter]);
+  // Debounce search term để tránh gọi API quá nhiều khi user đang gõ
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const fetchPostsData = async () => {
+  // Memoize params để tránh re-render không cần thiết
+  const apiParams = useMemo(() => {
     const params: any = {
       page,
       limit: 6,
     };
 
+    if (user?.id) {
+      params.userId = user.id;
+    }
+
     if (categoryFilter !== 'all') {
       params.category = categoryFilter;
     }
 
-    if (searchTerm) {
-      params.search = searchTerm;
+    if (debouncedSearchTerm.trim()) {
+      params.search = debouncedSearchTerm.trim();
     }
 
-    dispatch(fetchPosts(params));
-  };
+    return params;
+  }, [page, categoryFilter, debouncedSearchTerm, user?.id]);
+
+  // Memoize function để tránh re-create function
+  const fetchPostsData = useCallback(() => {
+    dispatch(fetchPosts(apiParams));
+  }, [dispatch, apiParams]);
+
+  // Load initial data chỉ một lần
+  useEffect(() => {
+    if (!hasInitialLoad) {
+      fetchPostsData();
+      setHasInitialLoad(true);
+    }
+  }, [fetchPostsData, hasInitialLoad]);
+
+  // Chỉ gọi API khi params thay đổi và đã có initial load
+  useEffect(() => {
+    if (hasInitialLoad) {
+      fetchPostsData();
+    }
+  }, [apiParams, hasInitialLoad, fetchPostsData]);
+
+  // Fetch save status cho các posts khi user đã login và posts đã load
+  useEffect(() => {
+    if (isAuthenticated && posts.length > 0) {
+      const slugs = posts.map(post => post.slug);
+      dispatch(fetchBulkSaveStatus(slugs));
+    }
+  }, [dispatch, isAuthenticated, posts]);
+
+  // Reset page về 1 khi filter thay đổi
+  useEffect(() => {
+    if (hasInitialLoad && page !== 1) {
+      setPage(1);
+    }
+  }, [categoryFilter, debouncedSearchTerm, hasInitialLoad]);
 
   const categories = [
     { value: 'all', label: 'Tất cả danh mục' },
@@ -78,12 +145,36 @@ export default function PostsPage() {
     { value: 'likes', label: 'Thích nhiều nhất' },
   ];
 
-  const handleSearch = () => {
-    setPage(1);
-    fetchPostsData();
-  };
+  // Handle search với Enter key
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Search đã được handle bởi debounced value
+    }
+  }, []);
 
-  if (loading) {
+  // Handle page change
+  const handlePageChange = useCallback((event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    // Scroll to top khi chuyển trang
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Handle toggle save với optimistic update
+  const handleToggleSave = useCallback((slug: string, currentSaved: boolean) => {
+    if (!isAuthenticated) {
+      // Có thể hiện modal login hoặc redirect
+      return;
+    }
+
+    // Optimistic update
+    dispatch(optimisticToggleSave({ slug, saved: !currentSaved }));
+    
+    // Thực hiện API call
+    dispatch(togglePostSave(slug));
+  }, [dispatch, isAuthenticated]);
+
+  if (loading && !hasInitialLoad) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom>
@@ -131,7 +222,7 @@ export default function PostsPage() {
             placeholder="Tìm kiếm bài viết..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyPress={handleKeyPress}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -140,6 +231,7 @@ export default function PostsPage() {
               ),
             }}
             sx={{ minWidth: 300 }}
+            helperText={searchTerm && searchTerm !== debouncedSearchTerm ? "Đang tìm kiếm..." : ""}
           />
 
           <FormControl sx={{ minWidth: 200 }}>
@@ -172,119 +264,167 @@ export default function PostsPage() {
             </Select>
           </FormControl>
         </Box>
+
+        {/* Loading indicator for subsequent loads */}
+        {loading && hasInitialLoad && (
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Đang tải...
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Posts Grid */}
       <Grid container spacing={3}>
-        {posts.map((post: Post) => (
-          <Grid item xs={12} sm={6} md={4} key={post.id}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4
-                }
-              }}
-            >
-              <Link href={`/posts/${post.slug}`} style={{ textDecoration: 'none', height: '100%' }}>
-                {post.featuredImage && (
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={post.featuredImage}
-                    alt={post.title}
-                  />
-                )}
-                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ mb: 2 }}>
-                    <Chip
-                      label={post.category?.name || ''}
-                      size="small"
-                      color="primary"
-                      sx={{ mb: 1 }}
+        {posts.map((post: Post) => {
+          const isSaved = saveStatus[post.slug] || false;
+          
+          return (
+            <Grid item xs={12} sm={6} md={4} key={post.id}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4
+                  }
+                }}
+              >
+                <Box sx={{ position: 'relative' }}>
+                  {post.featuredImage && (
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={post.featuredImage}
+                      alt={post.title}
                     />
-                  </Box>
+                  )}
                   
-                  <Typography variant="h6" component="h3" gutterBottom>
-                    {post.title}
-                  </Typography>
-                  
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      flex: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      mb: 2
-                    }}
-                  >
-                    {post.excerpt}
-                  </Typography>
+                  {/* Save button overlay */}
+                  {isAuthenticated && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'rgba(0, 0, 0, 0.6)',
+                        borderRadius: '50%',
+                      }}
+                    >
+                      <Tooltip title={isSaved ? 'Bỏ lưu' : 'Lưu bài viết'}>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleToggleSave(post.slug, isSaved);
+                          }}
+                          sx={{ 
+                            color: isSaved ? 'primary.main' : 'white',
+                            '&:hover': {
+                              bgcolor: 'rgba(255, 255, 255, 0.1)'
+                            }
+                          }}
+                        >
+                          {isSaved ? <Bookmark /> : <BookmarkBorder />}
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  )}
+                </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar
-                      src={post.author?.avatar || ''}
-                      alt={post.author?.name || ''}
-                      sx={{ width: 24, height: 24, mr: 1 }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {post.author?.name}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AccessTime sx={{ fontSize: 14 }} />
-                      <Typography variant="caption">
-                        {calculateReadingTime(post.content)} phút
-                      </Typography>
+                <Link href={`/posts/${post.slug}`} style={{ textDecoration: 'none', flex: 1 }}>
+                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Chip
+                        label={post.category?.name || ''}
+                        size="small"
+                        color="primary"
+                        sx={{ mb: 1 }}
+                      />
                     </Box>
                     
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Visibility sx={{ fontSize: 14 }} />
-                        <Typography variant="caption">{post.viewCount}</Typography>
+                    <Typography variant="h6" component="h3" gutterBottom>
+                      {post.title}
+                    </Typography>
+                    
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        flex: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        mb: 2
+                      }}
+                    >
+                      {post.excerpt}
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Avatar
+                        src={post.author?.avatar || ''}
+                        alt={post.author?.name || ''}
+                        sx={{ width: 24, height: 24, mr: 1 }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {post.author?.name}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AccessTime sx={{ fontSize: 14 }} />
+                        <Typography variant="caption">
+                          {calculateReadingTime(post.content)} phút đọc
+                        </Typography>
                       </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <ThumbUp sx={{ fontSize: 14 }} />
-                        <Typography variant="caption">{post.likeCount}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Comment sx={{ fontSize: 14 }} />
-                        <Typography variant="caption">{post.commentCount}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Share sx={{ fontSize: 14 }} />
-                        <Typography variant="caption">{post.shareCount}</Typography>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Visibility sx={{ fontSize: 14 }} />
+                          <Typography variant="caption">{post.viewCount}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ThumbUp sx={{ fontSize: 14 }} />
+                          <Typography variant="caption">{post.likeCount}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Comment sx={{ fontSize: 14 }} />
+                          <Typography variant="caption">{post.commentCount}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Share sx={{ fontSize: 14 }} />
+                          <Typography variant="caption">{post.shareCount}</Typography>
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
 
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                    {formatDate(post.publishedAt)}
-                  </Typography>
-                </CardContent>
-              </Link>
-            </Card>
-          </Grid>
-        ))}
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                      {formatDate(post.publishedAt)}
+                    </Typography>
+                  </CardContent>
+                </Link>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
 
       {/* Empty State */}
-      {posts.length === 0 && (
+      {posts.length === 0 && !loading && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Không có bài viết nào
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Hãy thử thay đổi bộ lọc hoặc tìm kiếm khác
+            {debouncedSearchTerm ? `Không tìm thấy kết quả cho "${debouncedSearchTerm}"` : 'Hãy thử thay đổi bộ lọc'}
           </Typography>
         </Box>
       )}
@@ -295,8 +435,9 @@ export default function PostsPage() {
           <Pagination
             count={pagination.totalPages}
             page={page}
-            onChange={(_, value) => setPage(value)}
+            onChange={handlePageChange}
             color="primary"
+            disabled={loading}
           />
         </Box>
       )}

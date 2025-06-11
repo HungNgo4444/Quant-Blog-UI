@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { PostsState, Post, PostFormData } from '../../types';
+import { getBulkSaveStatus, toggleSavePost } from '../../services/PostService';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -15,11 +16,13 @@ const initialState: PostsState = {
     totalItems: 0,
     itemsPerPage: 10,
   },
+  saveStatus: {},
+  saveLoading: false,
 };
 // Async thunks
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
-  async (params: { page?: number; limit?: number; category?: string; tag?: string; search?: string } = {}, { rejectWithValue }) => {
+  async (params: { page?: number; limit?: number; category?: string; tag?: string; search?: string; userId?: string } = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
       if (params.page) queryParams.append('page', params.page.toString());
@@ -27,7 +30,7 @@ export const fetchPosts = createAsyncThunk(
       if (params.category) queryParams.append('category', params.category);
       if (params.tag) queryParams.append('tag', params.tag);
       if (params.search) queryParams.append('search', params.search);
-
+      if (params.userId) queryParams.append('userId', params.userId);
       const response = await axios.get(`${API_URL}/posts?${queryParams}`);
       
       return response.data;
@@ -44,6 +47,38 @@ export const fetchPostBySlug = createAsyncThunk(
       const response = await axios.get(`${API_URL}/posts/${slug}`);
       
       return response.data.post;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchBulkSaveStatus = createAsyncThunk(
+  'posts/fetchBulkSaveStatus',
+  async (slugs: string[], { rejectWithValue, getState }) => {
+    try {
+      const state = getState() as { posts: PostsState };
+      
+      const uncachedSlugs = slugs.filter(slug => !(slug in state.posts.saveStatus));
+      
+      if (uncachedSlugs.length === 0) {
+        return state.posts.saveStatus;
+      }
+
+      const response = await getBulkSaveStatus(uncachedSlugs);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const togglePostSave = createAsyncThunk(
+  'posts/toggleSave',
+  async (slug: string, { rejectWithValue }) => {
+    try {
+      const response = await toggleSavePost(slug);
+      return { slug, ...response };
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -131,6 +166,9 @@ const postsSlice = createSlice({
         state.posts[index] = action.payload;
       }
     },
+    optimisticToggleSave: (state, action: PayloadAction<{ slug: string; saved: boolean }>) => {
+      state.saveStatus[action.payload.slug] = action.payload.saved;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -162,6 +200,31 @@ const postsSlice = createSlice({
       .addCase(fetchPostBySlug.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Fetch Bulk Save Status
+      .addCase(fetchBulkSaveStatus.pending, (state) => {
+        state.saveLoading = true;
+      })
+      .addCase(fetchBulkSaveStatus.fulfilled, (state, action) => {
+        state.saveLoading = false;
+        state.saveStatus = { ...state.saveStatus, ...action.payload };
+      })
+      .addCase(fetchBulkSaveStatus.rejected, (state, action) => {
+        state.saveLoading = false;
+      })
+      // Toggle Save
+      .addCase(togglePostSave.pending, (state, action) => {
+        // Optimistic update đã được handle trong reducer
+      })
+      .addCase(togglePostSave.fulfilled, (state, action) => {
+        state.saveStatus[action.payload.slug] = action.payload.saved;
+      })
+      .addCase(togglePostSave.rejected, (state, action) => {
+        // Revert optimistic update nếu thất bại
+        const slug = action.meta.arg;
+        if (slug in state.saveStatus) {
+          state.saveStatus[slug] = !state.saveStatus[slug];
+        }
       })
       // Create Post
       .addCase(createPost.pending, (state) => {
@@ -219,5 +282,5 @@ const postsSlice = createSlice({
   },
 });
 
-export const { clearCurrentPost, clearError, updatePostInList } = postsSlice.actions;
+export const { clearCurrentPost, clearError, updatePostInList, optimisticToggleSave } = postsSlice.actions;
 export default postsSlice.reducer; 

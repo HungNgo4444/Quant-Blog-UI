@@ -73,7 +73,6 @@ export default function PostComment({ postId }: PostCommentProps) {
   // Check authentication
   useEffect(() => {
     const tokens = clientCookies.getAuthTokens();
-    console.log(tokens);
     setIsAuthenticated(!!tokens?.accessToken);
   }, []);
 

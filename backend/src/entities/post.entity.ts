@@ -126,13 +126,13 @@ export class Post {
   // @ManyToOne(() => Category, (category) => category.posts, { onDelete: 'SET NULL' })
   // category: Category;
 
-  // @ManyToMany(() => Tag, (tag) => tag.posts)
-  // @JoinTable({
-  //   name: 'post_tags',
-  //   joinColumn: { name: 'post_id', referencedColumnName: 'id' },
-  //   inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
-  // })
-  // tags: Tag[];
+  @ManyToMany(() => Tag, (tag) => tag.posts)
+  @JoinTable({
+    name: 'post_tags',
+    joinColumn: { name: 'post_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tag_id', referencedColumnName: 'id' },
+  })
+  tags: Tag[];
 
   // @OneToMany(() => Comment, (comment) => comment.post)
   // comments: Comment[];

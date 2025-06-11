@@ -14,6 +14,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { UsersModule } from './modules/users/users.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { TagsModule } from './modules/tags/tags.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CommentsModule } from './modules/comments/comments.module';
     CategoriesModule,
     UsersModule,
     CommentsModule,
+    TagsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

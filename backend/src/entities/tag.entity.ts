@@ -37,7 +37,7 @@ export class Tag {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  // Relations
-  // @ManyToMany(() => Post, (post) => post.tags)
-  // posts: Post[];
+  Relations
+  @ManyToMany(() => Post, (post) => post.tags)
+  posts: Post[];
 } 

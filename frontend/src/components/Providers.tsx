@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { store } from '../store';
 import { useAppSelector } from '../store';
 import AuthProvider from './Providers/AuthProvider';
+import { ToastContainer } from 'react-toastify';
 
 const lightTheme = createTheme({
   palette: {
@@ -53,6 +54,7 @@ function ThemeWrapper({ children }: { children: React.ReactNode }) {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
+      <ToastContainer position="bottom-right" autoClose={3000} />
         {children}
       </AuthProvider>
     </ThemeProvider>

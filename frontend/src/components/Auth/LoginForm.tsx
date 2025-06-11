@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loginUser } from '../../store/slices/authSlice';
-import { addNotification } from '../../store/slices/notificationSlice';
+import { showNotification } from '../../store/slices/notificationSlice';
 import { LoginCredentials } from '../../types';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -67,7 +67,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
     try {
       const result = await dispatch(loginUser(data)).unwrap();
       
-      dispatch(addNotification({
+      dispatch(showNotification({
         type: 'success',
         message: `Chào mừng bạn trở lại, ${result.name}!`,
         duration: 5000,
@@ -79,7 +79,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
         router.push(redirectTo);
       }
     } catch (error: any) {
-      dispatch(addNotification({
+      dispatch(showNotification({
         type: 'error',
         message: error || 'Đăng nhập thất bại',
         duration: 5000,

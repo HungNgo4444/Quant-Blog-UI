@@ -28,6 +28,7 @@ import {
   Article,
   Search,
 } from '@mui/icons-material';
+import BrushIcon from '@mui/icons-material/Brush';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { toggleTheme } from '../../store/slices/themeSlice';
 import { logoutUser } from '../../store/slices/authSlice';
@@ -124,6 +125,10 @@ const Header: React.FC = () => {
               >
                 {mode === 'dark' ? <LightMode /> : <DarkMode />}
               </IconButton>
+              <Button sx={{  }} component={Link} href="/posts/create" variant="outlined" color="primary">
+                <BrushIcon />
+                Viết bài
+              </Button>
 
               {/* User menu or auth buttons */}
               {isAuthenticated && user ? (
@@ -180,7 +185,6 @@ const Header: React.FC = () => {
                     component={Link}
                     href="/auth/login"
                     variant="outlined"
-                    size="small"
                   >
                     Đăng nhập
                   </Button>
@@ -188,7 +192,6 @@ const Header: React.FC = () => {
                     component={Link}
                     href="/auth/register"
                     variant="contained"
-                    size="small"
                   >
                     Đăng ký
                   </Button>

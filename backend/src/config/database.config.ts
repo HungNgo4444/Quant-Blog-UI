@@ -9,6 +9,7 @@ import { Like } from '../entities/like.entity';
 import { View } from '../entities/view.entity';
 import { Session } from '../entities/session.entity';
 import { ActivityLog } from '../entities/activity-log.entity';
+import { SavedPost } from '../entities/saved-post.entity';
 
 export default registerAs(
   'database',
@@ -29,6 +30,7 @@ export default registerAs(
       View,
       Session,
       ActivityLog,
+      SavedPost,
     ],
     synchronize: process.env.NODE_ENV !== 'production',
     logging: process.env.NODE_ENV === 'development',

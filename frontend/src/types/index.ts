@@ -157,6 +157,8 @@ export interface PostsState {
     totalItems: number;
     itemsPerPage: number;
   };
+  saveStatus: { [slug: string]: boolean };
+  saveLoading: boolean;
 }
 
 export interface ThemeState {
