@@ -1,23 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Chip, 
-  Avatar,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import { 
-  AccessTime,
-  Bookmark,
-  BookmarkBorder,
-} from '@mui/icons-material';
 import Link from 'next/link';
 import { calculateReadingTime } from '../../lib/utils';
 import { Post } from '../../types';
@@ -28,19 +11,31 @@ import {
   optimisticToggleSave 
 } from '../../store/slices/postsSlice';
 import { toast } from 'react-toastify';
+import { getRecentPost } from '../../services/PostService';
+import RecentPosts from './RecentPosts';
+import TopPosts from './TopPosts';
+import { getAllCategoriesWithPostCount } from 'frontend/src/services/CategoryService';
+import { 
+  Clock,
+  Bookmark,
+  BookmarkIcon,
+  User,
+  Twitter,
+  Github,
+  Linkedin,
+  Calendar,
+} from 'lucide-react';
 
-interface ClientSidePostsProps {
-  initialPosts: Post[];
-}
-
-const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
+const ClientSidePosts = ({ user }: { user: any }) => {
   const dispatch = useAppDispatch();
   const { saveStatus } = useAppSelector((state) => state.posts);
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const { isAuthenticated } = useAppSelector((state: any) => state.auth);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [categories, setCategories] = useState<any[]>([]);
 
   // Set mounted state
   useEffect(() => {
@@ -48,15 +43,21 @@ const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
   }, []);
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await getAllCategoriesWithPostCount();
+        setCategories(res || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch categories');
+      }
+    };
+
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?limit=6`);
-        if (!res.ok) {
-          throw new Error('Failed to fetch posts');
-        }
-        const data = await res.json();
-        setPosts(data.data || []);
+        const res = await getRecentPost(6);
+        setPosts(res || []);
       } catch (err) {
         console.error('Error fetching posts:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch posts');
@@ -65,11 +66,10 @@ const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
       }
     };
 
-    // Uncomment dòng dưới nếu muốn fetch lại data ở client-side
-    // fetchPosts();
+    fetchPosts();
+    fetchCategories();
   }, []);
 
-  // Fetch save status cho các posts khi user đã login và posts đã load
   useEffect(() => {
     if (mounted && isAuthenticated && posts.length > 0) {
       const slugs = posts.map(post => post.slug);
@@ -83,7 +83,6 @@ const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
     event.stopPropagation();
     
     if (!isAuthenticated) {
-      // Có thể hiện modal login hoặc redirect
       return;
     }
 
@@ -100,124 +99,127 @@ const ClientSidePosts = ({ initialPosts }: ClientSidePostsProps) => {
     });
   };
 
+  const handleTabChange = (newValue: number) => {
+    setActiveTab(newValue);
+  };
+
   if (error) {
     return (
-      <Box className="py-16 bg-gray-50 dark:bg-gray-800">
-        <Container maxWidth="lg">
-          <Typography color="error" align="center">
+      <section className="py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-red-500 text-center">
             {error}
-          </Typography>
-        </Container>
-      </Box>
+          </p>
+        </div>
+      </section>
     );
   }
 
+  const mainPost = posts[0];
+  const sidebarPosts = posts.slice(1, 4);
+
   return (
-    <Box className="py-16 bg-gray-50 dark:bg-gray-800">
-      <Container maxWidth="lg">
-        <Box className="text-center mb-12">
-          <Typography variant="h3" component="h2" className="font-bold mb-4">
-            Bài viết mới nhất
-          </Typography>
-          <Typography variant="h6" className="text-gray-600 dark:text-gray-400">
-            Cập nhật những kiến thức mới nhất
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3}>
-          {posts.map((post) => {
-            const isSaved = saveStatus[post.slug] || false;
+    <section className="py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-8">
             
-            return (
-              <Grid item xs={12} md={6} lg={4} key={post.id}>
-                <Card className="h-full relative">
-                  {/* Save button overlay - chỉ hiển thị sau khi mounted */}
-                  {mounted && isAuthenticated && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        bgcolor: 'rgba(0, 0, 0, 0.6)',
-                        borderRadius: '50%',
-                        zIndex: 1,
-                      }}
-                    >
-                      <Tooltip title={isSaved ? 'Bỏ lưu' : 'Lưu bài viết'}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleToggleSave(post.slug, isSaved, e)}
-                          sx={{ 
-                            color: isSaved ? 'primary.main' : 'white',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.1)'
-                            }
-                          }}
-                        >
-                          {isSaved ? <Bookmark /> : <BookmarkBorder />}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  )}
-                  
-                  <CardContent>
-                    <Box className="flex items-center gap-2 mb-3">
-                      <Chip
-                        label={post.category?.name || ''}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                      <Typography variant="caption" className="text-gray-500">
-                        {new Date(post.createdAt).toLocaleDateString('vi-VN')}
-                      </Typography>
-                    </Box>
-                    
-                    <Typography
-                      variant="h6"
-                      component="h3"
-                      className="font-semibold mb-2 line-clamp-2"
-                    >
-                      <Link
-                        href={`/posts/${post.slug}`}
-                        className="hover:text-primary-600 transition-colors"
-                      >
-                        {post.title}
-                      </Link>
-                    </Typography>
-                    
-                    <Typography
-                      variant="body2"
-                      className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2"
-                    >
-                      {post.excerpt}
-                    </Typography>
+            {/* Tab Navigation */}
+            <div className="mb-10">
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => handleTabChange(0)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === 0
+                        ? 'border-black dark:border-white text-black dark:text-white'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Mới nhất
+                  </button>
+                  <button
+                    onClick={() => handleTabChange(1)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === 1
+                        ? 'border-black dark:border-white text-black dark:text-white'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Đánh giá cao nhất
+                  </button>
+                </nav>
+              </div>
+            </div>
 
-                    <Box className="flex items-center justify-between text-sm text-gray-500">
-                      <Box className="flex items-center gap-1">
-                        <Avatar
-                          src={post.author?.avatar || ''}
-                          alt={post.author?.name || ''}
-                          className="w-5 h-5"
-                        >
-                          {post.author?.name?.charAt(0)}
-                        </Avatar>
-                        {post.author?.name}
-                      </Box>
-                      
-                      <Box className="flex items-center gap-1">
-                        <AccessTime className="w-4 h-4" />
-                        {calculateReadingTime(post.content)} phút đọc
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Container>
-    </Box>
+            {/* Tab Content */}
+            <div>
+              {activeTab === 0 && <RecentPosts />}
+              {activeTab === 1 && <TopPosts />}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-4">
+            {/* Author Info */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-sm">
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
+                <h3 className="text-lg font-bold mb-2">
+                  {user?.name}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Passionate developer và designer, chia sẻ kiến thức về tech và cuộc sống.
+                </p>
+                
+                <div className="flex justify-center gap-2">
+                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Twitter className="w-4 h-4" />
+                  </button>
+                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Github className="w-4 h-4" />
+                  </button>
+                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <Linkedin className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-bold mb-4">
+                Chủ đề
+              </h3>
+              
+              <div className="space-y-1">
+                {categories.map((category, index) => (
+                  <div key={index}>
+                    <Link 
+                      href={`/posts?category=${category.slug}`}
+                      className="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{category.name}</span>
+                        <span className="text-sm text-gray-500">
+                          ({category.postCount})
+                        </span>
+                      </div>
+                    </Link>
+                    {index < categories.length - 1 && (
+                      <div className="border-b border-gray-200 dark:border-gray-700" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

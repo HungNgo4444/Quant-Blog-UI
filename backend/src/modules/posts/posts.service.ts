@@ -9,6 +9,7 @@ import { View } from '../../entities/view.entity';
 import { Like } from '../../entities/like.entity';
 import { SavedPost } from '../../entities/saved-post.entity';
 import { Tag } from '../../entities/tag.entity';
+import { ImageService } from 'src/shared/services/image.service';
 
 @Injectable()
 export class PostsService {
@@ -25,6 +26,7 @@ export class PostsService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    private readonly imageService: ImageService,
   ) {}
 
   // Helper function để generate slug
@@ -45,6 +47,7 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<PostResponseDto> {
+    console.log(11111111111,createPostDto);
     // Verify category exists
     const category = await this.categoryRepository.findOne({
       where: { id: createPostDto.categoryId }
@@ -71,6 +74,11 @@ export class PostsService {
 
     // Calculate reading time
     const readingTime = this.calculateReadingTime(createPostDto.content);
+
+    if (createPostDto.featured_image) {
+      const imageUrl = await this.imageService.uploadBase64Image(createPostDto.featured_image, 'featured_image_posts');
+      createPostDto.featured_image = imageUrl;
+    }
 
     // Create post
     const post = this.postRepository.create({
@@ -177,7 +185,8 @@ export class PostsService {
     }
 
     if (updatePostDto.featured_image !== undefined) {
-      post.featuredImage = updatePostDto.featured_image;
+      const imageUrl = await this.imageService.uploadBase64Image(updatePostDto.featured_image, 'featured_image_posts');
+      post.featuredImage = imageUrl;
     }
 
     if (updatePostDto.published !== undefined) {
@@ -260,12 +269,97 @@ export class PostsService {
     category?: string,
     tag?: string,
     search?: string,
+    sort?: string,
     userId?: string,
   ): Promise<PaginatedPostsResponseDto> {
-    const queryBuilder = this.postRepository
+    // Build the base WHERE conditions
+    let whereConditions = 'post.status = $1 AND post.active = $2';
+    const parameters: any[] = [PostStatus.PUBLISHED, true];
+    let paramIndex = 2;
+
+    // Add category filter
+    if (category) {
+      paramIndex++;
+      whereConditions += ` AND category.slug = $${paramIndex}`;
+      parameters.push(category);
+    }
+
+    // Add search filter
+    if (search) {
+      paramIndex++;
+      whereConditions += ` AND (post.title ILIKE $${paramIndex} OR post.excerpt ILIKE $${paramIndex})`;
+      parameters.push(`%${search}%`);
+    }
+
+    // Add tag filter - need special handling
+    let tagJoinCondition = '';
+    if (tag) {
+      paramIndex++;
+      tagJoinCondition = `
+        AND post.id IN (
+          SELECT DISTINCT pt.post_id 
+          FROM post_tags pt 
+          JOIN tags t ON CAST(t.id AS TEXT) = CAST(pt.tag_id AS TEXT)
+          WHERE t.slug = $${paramIndex}
+        )
+      `;
+      parameters.push(tag);
+    }
+
+    // Build ORDER BY clause - use correct column names
+    let orderByColumn = 'post.published_at';
+    if (sort === 'likes') {
+      orderByColumn = 'post.like_count';
+    } else if (sort === 'views') {
+      orderByColumn = 'post.view_count';
+    }
+    const orderByDirection = 'DESC';
+
+    // First, get the total count without LIMIT
+    const countQuery = `
+      SELECT COUNT(DISTINCT post.id) as count
+      FROM posts post
+      LEFT JOIN categories category ON CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)
+      WHERE ${whereConditions} ${tagJoinCondition}
+    `;
+
+    const totalResult = await this.postRepository.query(countQuery, parameters);
+    const total = parseInt(totalResult[0].count);
+
+    // Get paginated post IDs using raw SQL - include order column in SELECT for DISTINCT
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, ${orderByColumn}
+      FROM posts post
+      LEFT JOIN categories category ON CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)
+      WHERE ${whereConditions} ${tagJoinCondition}
+      ORDER BY ${orderByColumn} ${orderByDirection}
+      LIMIT $${parameters.length + 1} OFFSET $${parameters.length + 2}
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [...parameters, limit, (page - 1) * limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
+
+    // Now get full post data for these specific posts using QueryBuilder
+    const detailQuery = this.postRepository
       .createQueryBuilder('post')
-      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.authorId AS TEXT)')
-      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.categoryId AS TEXT)')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
       .leftJoin('post_tags', 'post_tags', 'CAST(post_tags.post_id AS TEXT) = CAST(post.id AS TEXT)')
       .leftJoin('tags', 'tag', 'CAST(tag.id AS TEXT) = CAST(post_tags.tag_id AS TEXT)')
       .select([
@@ -274,29 +368,29 @@ export class PostsService {
         'post.slug as slug',
         'post.excerpt as excerpt',
         'post.content as content',
-        'post.featuredImage as featured_image',
+        'post.featured_image as featured_image',
         'post.status as status',
-        'post.publishedAt as published_at',
-        'post.readingTime as reading_time',
-        'post.viewCount as view_count',
-        'post.likeCount as like_count',
-        'post.commentCount as comment_count',
-        'post.shareCount as share_count',
-        'post.metaTitle as meta_title',
-        'post.metaDescription as meta_description',
-        'post.metaKeywords as meta_keywords',
-        'post.ogTitle as og_title',
-        'post.ogDescription as og_description',
-        'post.ogImage as og_image',
-        'post.twitterTitle as twitter_title',
-        'post.twitterDescription as twitter_description',
-        'post.twitterImage as twitter_image',
-        'post.allowComments as allow_comments',
+        'post.published_at as published_at',
+        'post.reading_time as reading_time',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.comment_count as comment_count',
+        'post.share_count as share_count',
+        'post.meta_title as meta_title',
+        'post.meta_description as meta_description',
+        'post.meta_keywords as meta_keywords',
+        'post.og_title as og_title',
+        'post.og_description as og_description',
+        'post.og_image as og_image',
+        'post.twitter_title as twitter_title',
+        'post.twitter_description as twitter_description',
+        'post.twitter_image as twitter_image',
+        'post.allow_comments as allow_comments',
         'post.active as active',
-        'post.createdAt as created_at',
-        'post.updatedAt as updated_at',
-        'post.authorId as author_id',
-        'post.categoryId as category_id',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'post.author_id as author_id',
+        'post.category_id as category_id',
         'user.id as user_id',
         'user.name as user_name',
         'user.avatar as user_avatar',
@@ -308,37 +402,20 @@ export class PostsService {
         'tag.name as tag_name',
         'tag.slug as tag_slug'
       ])
-      .where('post.status = :status', { status: PostStatus.PUBLISHED })
-      .andWhere('post.active = :active', { active: true });
+      .where('post.id IN (:...postIds)', { postIds });
 
-    if (category) {
-      queryBuilder.andWhere('category.slug = :categorySlug', { categorySlug: category });
+    // Apply the same sorting to detail query - use correct column names
+    if (sort === 'likes') {
+      detailQuery.orderBy('post.like_count', 'DESC');
+    } else {
+      detailQuery.orderBy('post.published_at', 'DESC');
     }
 
-    if (tag) {
-      queryBuilder.andWhere('tag.slug = :tagSlug', { tagSlug: tag });
-    }
-
-    if (search) {
-      queryBuilder.andWhere(
-        '(post.title ILIKE :search OR post.excerpt ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    // Get total count
-    const total = await queryBuilder.getCount();
-
-    // Get posts
-    const posts = await queryBuilder
-      .orderBy('post.publishedAt', 'DESC')
-      .offset((page - 1) * limit)
-      .limit(limit)
-      .getRawMany();
+    const posts = await detailQuery.getRawMany();
 
     // Group posts by ID to handle tags
     const postsMap = new Map();
-    posts.forEach(async raw => {
+    posts.forEach(raw => {
       const postId = raw.id;
       if (!postsMap.has(postId)) {
         postsMap.set(postId, {
@@ -369,39 +446,43 @@ export class PostsService {
       }
     });
 
-    const mappedPosts = Array.from(postsMap.values()).map(post => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt,
-      content: post.content,
-      featuredImage: post.featured_image,
-      status: post.status,
-      publishedAt: post.published_at,
-      readingTime: post.reading_time,
-      viewCount: post.view_count,
-      likeCount: post.like_count,
-      commentCount: post.comment_count,
-      shareCount: post.share_count,
-      metaTitle: post.meta_title,
-      metaDescription: post.meta_description,
-      metaKeywords: post.meta_keywords,
-      ogTitle: post.og_title,
-      ogDescription: post.og_description,
-      ogImage: post.og_image,
-      twitterTitle: post.twitter_title,
-      twitterDescription: post.twitter_description,
-      twitterImage: post.twitter_image,
-      allowComments: post.allow_comments,
-      active: post.active,
-      createdAt: post.created_at,
-      updatedAt: post.updated_at,
-      authorId: post.author_id,
-      categoryId: post.category_id,
-      author: post.author,
-      category: post.category,
-      tags: post.tags
-    }));
+    // Convert map to array and maintain the order from postIds
+    const mappedPosts = postIds.map(id => {
+      const post = postsMap.get(id);
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        featuredImage: post.featured_image,
+        status: post.status,
+        publishedAt: post.published_at,
+        readingTime: post.reading_time,
+        viewCount: post.view_count,
+        likeCount: post.like_count,
+        commentCount: post.comment_count,
+        shareCount: post.share_count,
+        metaTitle: post.meta_title,
+        metaDescription: post.meta_description,
+        metaKeywords: post.meta_keywords,
+        ogTitle: post.og_title,
+        ogDescription: post.og_description,
+        ogImage: post.og_image,
+        twitterTitle: post.twitter_title,
+        twitterDescription: post.twitter_description,
+        twitterImage: post.twitter_image,
+        allowComments: post.allow_comments,
+        active: post.active,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        authorId: post.author_id,
+        categoryId: post.category_id,
+        author: post.author,
+        category: post.category,
+        tags: post.tags
+      };
+    });
 
     return {
       posts: mappedPosts,
@@ -421,10 +502,39 @@ export class PostsService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const queryBuilder = this.postRepository
+    // First, get the post IDs with proper pagination using raw SQL
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, post.like_count, post.published_at
+      FROM posts post
+      WHERE post.status = $1 AND post.active = $2 AND post.published_at >= $3
+      ORDER BY post.like_count DESC, post.published_at DESC
+      LIMIT $4
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [PostStatus.PUBLISHED, true, thirtyDaysAgo, limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: 0,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 0,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
+
+    // Now get full post data for these specific posts
+    const detailQuery = this.postRepository
       .createQueryBuilder('post')
-      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.authorId AS TEXT)')
-      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.categoryId AS TEXT)')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
       .leftJoin('post_tags', 'post_tags', 'CAST(post_tags.post_id AS TEXT) = CAST(post.id AS TEXT)')
       .leftJoin('tags', 'tag', 'CAST(tag.id AS TEXT) = CAST(post_tags.tag_id AS TEXT)')
       .select([
@@ -433,29 +543,29 @@ export class PostsService {
         'post.slug as slug',
         'post.excerpt as excerpt',
         'post.content as content',
-        'post.featuredImage as featured_image',
+        'post.featured_image as featured_image',
         'post.status as status',
-        'post.publishedAt as published_at',
-        'post.readingTime as reading_time',
-        'post.viewCount as view_count',
-        'post.likeCount as like_count',
-        'post.commentCount as comment_count',
-        'post.shareCount as share_count',
-        'post.metaTitle as meta_title',
-        'post.metaDescription as meta_description',
-        'post.metaKeywords as meta_keywords',
-        'post.ogTitle as og_title',
-        'post.ogDescription as og_description',
-        'post.ogImage as og_image',
-        'post.twitterTitle as twitter_title',
-        'post.twitterDescription as twitter_description',
-        'post.twitterImage as twitter_image',
-        'post.allowComments as allow_comments',
+        'post.published_at as published_at',
+        'post.reading_time as reading_time',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.comment_count as comment_count',
+        'post.share_count as share_count',
+        'post.meta_title as meta_title',
+        'post.meta_description as meta_description',
+        'post.meta_keywords as meta_keywords',
+        'post.og_title as og_title',
+        'post.og_description as og_description',
+        'post.og_image as og_image',
+        'post.twitter_title as twitter_title',
+        'post.twitter_description as twitter_description',
+        'post.twitter_image as twitter_image',
+        'post.allow_comments as allow_comments',
         'post.active as active',
-        'post.createdAt as created_at',
-        'post.updatedAt as updated_at',
-        'post.authorId as author_id',
-        'post.categoryId as category_id',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'post.author_id as author_id',
+        'post.category_id as category_id',
         'user.id as user_id',
         'user.name as user_name',
         'user.avatar as user_avatar',
@@ -467,23 +577,15 @@ export class PostsService {
         'tag.name as tag_name',
         'tag.slug as tag_slug'
       ])
-      .where('post.status = :status', { status: PostStatus.PUBLISHED })
-      .andWhere('post.active = :active', { active: true })
-      .andWhere('post.publishedAt >= :thirtyDaysAgo', { thirtyDaysAgo })
-      .orderBy('post.likeCount', 'DESC')
-      .addOrderBy('post.publishedAt', 'DESC');
+      .where('post.id IN (:...postIds)', { postIds })
+      .orderBy('post.like_count', 'DESC')
+      .addOrderBy('post.published_at', 'DESC');
 
-    // Get total count
-    const total = await queryBuilder.getCount();
-
-    // Get posts
-    const posts = await queryBuilder
-      .limit(limit)
-      .getRawMany();
+    const posts = await detailQuery.getRawMany();
 
     // Group posts by ID to handle tags
     const postsMap = new Map();
-    posts.forEach(async raw => {
+    posts.forEach(raw => {
       const postId = raw.id;
       if (!postsMap.has(postId)) {
         postsMap.set(postId, {
@@ -514,39 +616,216 @@ export class PostsService {
       }
     });
 
-    const mappedPosts = Array.from(postsMap.values()).map(post => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      excerpt: post.excerpt,
-      content: post.content,
-      featuredImage: post.featured_image,
-      status: post.status,
-      publishedAt: post.published_at,
-      readingTime: post.reading_time,
-      viewCount: post.view_count,
-      likeCount: post.like_count,
-      commentCount: post.comment_count,
-      shareCount: post.share_count,
-      metaTitle: post.meta_title,
-      metaDescription: post.meta_description,
-      metaKeywords: post.meta_keywords,
-      ogTitle: post.og_title,
-      ogDescription: post.og_description,
-      ogImage: post.og_image,
-      twitterTitle: post.twitter_title,
-      twitterDescription: post.twitter_description,
-      twitterImage: post.twitter_image,
-      allowComments: post.allow_comments,
-      active: post.active,
-      createdAt: post.created_at,
-      updatedAt: post.updated_at,
-      authorId: post.author_id,
-      categoryId: post.category_id,
-      author: post.author,
-      category: post.category,
-      tags: post.tags
-    }));
+    // Convert map to array and maintain the order from postIds
+    const mappedPosts = postIds.map(id => {
+      const post = postsMap.get(id);
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        featuredImage: post.featured_image,
+        status: post.status,
+        publishedAt: post.published_at,
+        readingTime: post.reading_time,
+        viewCount: post.view_count,
+        likeCount: post.like_count,
+        commentCount: post.comment_count,
+        shareCount: post.share_count,
+        metaTitle: post.meta_title,
+        metaDescription: post.meta_description,
+        metaKeywords: post.meta_keywords,
+        ogTitle: post.og_title,
+        ogDescription: post.og_description,
+        ogImage: post.og_image,
+        twitterTitle: post.twitter_title,
+        twitterDescription: post.twitter_description,
+        twitterImage: post.twitter_image,
+        allowComments: post.allow_comments,
+        active: post.active,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        authorId: post.author_id,
+        categoryId: post.category_id,
+        author: post.author,
+        category: post.category,
+        tags: post.tags
+      };
+    });
+
+    return {
+      posts: mappedPosts,
+      pagination: {
+        currentPage: 0,
+        totalPages: 1,
+        totalItems: mappedPosts.length,
+        itemsPerPage: mappedPosts.length,
+      },
+    };
+  }
+
+  async getRecentPost(limit = 10): Promise<PaginatedPostsResponseDto> {
+    // First, get the post IDs with proper pagination using raw SQL
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, post.published_at
+      FROM posts post
+      WHERE post.status = $1 AND post.active = $2
+      ORDER BY post.published_at DESC
+      LIMIT $3
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [PostStatus.PUBLISHED, true, limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: 0,
+          totalPages: 1,
+          totalItems: 0,
+          itemsPerPage: 0,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
+
+    // Get total count for recent posts
+    const totalQuery = `
+      SELECT COUNT(DISTINCT post.id) as count
+      FROM posts post
+      WHERE post.status = $1 AND post.active = $2
+    `;
+
+    const totalResult = await this.postRepository.query(totalQuery, [PostStatus.PUBLISHED, true]);
+    const total = parseInt(totalResult[0].count);
+
+    // Now get full post data for these specific posts
+    const detailQuery = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
+      .leftJoin('post_tags', 'post_tags', 'CAST(post_tags.post_id AS TEXT) = CAST(post.id AS TEXT)')
+      .leftJoin('tags', 'tag', 'CAST(tag.id AS TEXT) = CAST(post_tags.tag_id AS TEXT)')
+      .select([
+        'post.id as id',
+        'post.title as title',
+        'post.slug as slug',
+        'post.excerpt as excerpt',
+        'post.content as content',
+        'post.featured_image as featured_image',
+        'post.status as status',
+        'post.published_at as published_at',
+        'post.reading_time as reading_time',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.comment_count as comment_count',
+        'post.share_count as share_count',
+        'post.meta_title as meta_title',
+        'post.meta_description as meta_description',
+        'post.meta_keywords as meta_keywords',
+        'post.og_title as og_title',
+        'post.og_description as og_description',
+        'post.og_image as og_image',
+        'post.twitter_title as twitter_title',
+        'post.twitter_description as twitter_description',
+        'post.twitter_image as twitter_image',
+        'post.allow_comments as allow_comments',
+        'post.active as active',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'post.author_id as author_id',
+        'post.category_id as category_id',
+        'user.id as user_id',
+        'user.name as user_name',
+        'user.avatar as user_avatar',
+        'category.id as category_id',
+        'category.name as category_name',
+        'category.slug as category_slug',
+        'category.color as category_color',
+        'tag.id as tag_id',
+        'tag.name as tag_name',
+        'tag.slug as tag_slug'
+      ])
+      .where('post.id IN (:...postIds)', { postIds })
+      .orderBy('post.published_at', 'DESC');
+
+    const posts = await detailQuery.getRawMany();
+
+    // Group posts by ID to handle tags
+    const postsMap = new Map();
+    posts.forEach(raw => {
+      const postId = raw.id;
+      if (!postsMap.has(postId)) {
+        postsMap.set(postId, {
+          ...raw,
+          author: {
+            id: raw.user_id,
+            name: raw.user_name,
+            avatar: raw.user_avatar
+          },
+          category: {
+            id: raw.category_id,
+            name: raw.category_name,
+            slug: raw.category_slug,
+            color: raw.category_color
+          },
+          tags: []
+        });
+      }
+      if (raw.tag_id) {
+        const post = postsMap.get(postId);
+        if (!post.tags.some(t => t.id === raw.tag_id)) {
+          post.tags.push({
+            id: raw.tag_id,
+            name: raw.tag_name,
+            slug: raw.tag_slug
+          });
+        }
+      }
+    });
+
+    // Convert map to array and maintain the order from postIds
+    const mappedPosts = postIds.map(id => {
+      const post = postsMap.get(id);
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        featuredImage: post.featured_image,
+        status: post.status,
+        publishedAt: post.published_at,
+        readingTime: post.reading_time,
+        viewCount: post.view_count,
+        likeCount: post.like_count,
+        commentCount: post.comment_count,
+        shareCount: post.share_count,
+        metaTitle: post.meta_title,
+        metaDescription: post.meta_description,
+        metaKeywords: post.meta_keywords,
+        ogTitle: post.og_title,
+        ogDescription: post.og_description,
+        ogImage: post.og_image,
+        twitterTitle: post.twitter_title,
+        twitterDescription: post.twitter_description,
+        twitterImage: post.twitter_image,
+        allowComments: post.allow_comments,
+        active: post.active,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        authorId: post.author_id,
+        categoryId: post.category_id,
+        author: post.author,
+        category: post.category,
+        tags: post.tags
+      };
+    });
 
     return {
       posts: mappedPosts,
@@ -1404,4 +1683,103 @@ export class PostsService {
     };
   }
 
+  async getPostCountByCategory(categoryId: string): Promise<number> {
+    const result = await this.postRepository
+      .createQueryBuilder('post')
+      .select('COUNT(post.id) as total_posts')
+      .where('post.categoryId = :categoryId', { categoryId })
+      .andWhere('post.active = :active', { active: true })
+      .getRawOne();
+
+    return parseInt(result.total_posts) || 0;
+  }
+
+  async getAdminPosts(
+    page = 1,
+    limit = 7,
+    status?: string,
+    search?: string,
+  ): Promise<any> {
+    // Build query with simple conditions
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
+      .select([
+        'post.id as id',
+        'post.title as title',
+        'post.slug as slug',
+        'post.excerpt as excerpt',
+        'post.status as status',
+        'post.published_at as published_at',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'user.id as author_id',
+        'user.name as author_name',
+        'user.avatar as author_avatar',
+        'category.id as category_id',
+        'category.name as category_name',
+        'category.color as category_color'
+      ])
+      .where('post.active = :active', { active: true });
+
+    // Filter by status if provided
+    if (status && status !== 'all') {
+      queryBuilder.andWhere('post.status = :status', { status });
+    }
+
+    // Filter by search if provided
+    if (search) {
+      queryBuilder.andWhere(
+        '(post.title ILIKE :search OR post.excerpt ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Get total count
+    const total = await queryBuilder.getCount();
+
+    // Get paginated results
+    const posts = await queryBuilder
+      .orderBy('post.created_at', 'DESC')
+      .offset((page - 1) * limit)
+      .limit(limit)
+      .getRawMany();
+
+    // Format response
+    const formattedPosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      status: post.status,
+      publishedAt: post.published_at,
+      viewCount: post.view_count,
+      likeCount: post.like_count,
+      createdAt: post.created_at,
+      updatedAt: post.updated_at,
+      author: {
+        id: post.author_id,
+        name: post.author_name,
+        avatar: post.author_avatar
+      },
+      category: {
+        id: post.category_id,
+        name: post.category_name,
+        color: post.category_color
+      }
+    }));
+
+    return {
+      posts: formattedPosts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
+  }
 }

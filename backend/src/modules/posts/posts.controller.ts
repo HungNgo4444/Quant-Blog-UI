@@ -16,8 +16,9 @@ export class PostsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'category', required: false, type: String })
   @ApiQuery({ name: 'tag', required: false, type: String })
-  @ApiQuery({ name: 'userId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiQuery({ name: 'userId', required: false, type: String })
   @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
   async findAll(
     @Query('page') page?: number,
@@ -26,8 +27,9 @@ export class PostsController {
     @Query('tag') tag?: string,
     @Query('search') search?: string,
     @Query('userId') userId?: string,
+    @Query('sort') sort?: string,
   ): Promise<PaginatedPostsResponseDto> {
-    return this.postsService.findAll(page, limit, category, tag, search, userId);
+    return this.postsService.findAll(page, limit, category, tag, search, sort, userId);
   }
 
   @Get('/featured')
@@ -38,6 +40,28 @@ export class PostsController {
     @Query('limit') limit?: number,
   ): Promise<PaginatedPostsResponseDto> {
     return this.postsService.getFeaturedPost(limit);
+  }
+
+  @Get('/recent')
+  @ApiOperation({ summary: 'Get recent posts' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
+  async getRecentPost(
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResponseDto> {
+    return this.postsService.getRecentPost(limit);
+  }
+
+  @Get('/top')
+  @ApiOperation({ summary: 'Get top posts' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
+  async getTopPost(
+    @Query('limit') limit?: number,
+    @Query('sort') sort?: string,
+  ): Promise<PaginatedPostsResponseDto> {
+    return this.postsService.findAll(1, limit, '', '', '', sort);
   }
 
   @Post()
@@ -51,7 +75,6 @@ export class PostsController {
   ): Promise<PostResponseDto> {
     const userId = request.user.id;
     
-    // Cho phép tất cả user đã đăng nhập tạo bài viết
     return this.postsService.create(createPostDto, userId);
   }
 
@@ -241,5 +264,26 @@ export class PostsController {
   ): Promise<{ saved: boolean; message: string }> {
     const userId = request.user.id; // From JWT payload
     return this.postsService.toggleSavePost(slug, userId);
+  }
+
+  @Get('/admin/all')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Admin: Get all posts with basic filtering' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiResponse({ status: 200, description: 'Posts retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAdminPosts(
+    @Req() request: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ): Promise<any> {
+    // Check if user is admin (you might want to add admin role check here)
+    // For now, any authenticated user can access
+    return this.postsService.getAdminPosts(page, limit, status, search);
   }
 }

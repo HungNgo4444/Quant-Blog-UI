@@ -2,28 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  Box,
-  Chip,
-  Avatar,
-  Pagination,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  InputAdornment,
-  Skeleton,
-  Alert,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
   AccessTime,
   Visibility,
   ThumbUp,
@@ -45,6 +23,16 @@ import {
 } from '../../store/slices/postsSlice';
 import { Post } from '../../types';
 import { toast } from 'react-toastify';
+import { useSearchParams } from 'next/navigation';
+import { getAllCategories } from 'frontend/src/services/CategoryService';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { Skeleton } from '../../components/ui/skeleton';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 // Custom hook để debounce search
 function useDebounce(value: string, delay: number) {
@@ -72,6 +60,12 @@ export default function PostsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+  const [categories, setCategories] = useState([
+    { value: 'all', label: 'Tất cả danh mục' },
+  ]);
+
+  const params = useSearchParams();
+  let categoryParam = params.get('category');
 
   // Debounce search term để tránh gọi API quá nhiều khi user đang gõ
   const debouncedSearchTerm = useDebounce(searchTerm, 1000);
@@ -83,12 +77,16 @@ export default function PostsPage() {
       limit: 6,
     };
 
-    if (user?.id) {
-      params.userId = user.id;
+    if (categoryParam) {
+      params.category = categoryParam;
     }
 
     if (categoryFilter !== 'all') {
       params.category = categoryFilter;
+    }
+
+    if (sortBy) {
+      params.sort = sortBy;
     }
 
     if (debouncedSearchTerm.trim()) {
@@ -96,17 +94,28 @@ export default function PostsPage() {
     }
 
     return params;
-  }, [page, categoryFilter, debouncedSearchTerm, user?.id]);
+  }, [page, categoryFilter, debouncedSearchTerm, user?.id, sortBy]);
 
   // Memoize function để tránh re-create function
   const fetchPostsData = useCallback(() => {
     dispatch(fetchPosts(apiParams));
   }, [dispatch, apiParams]);
 
+  const fetchCategoryData = useCallback(async () => {
+    try {
+      const res = await getAllCategories();
+      setCategories(categories.concat(res.map((category: any) => ({ value: category.slug, label: category.name }))));
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+    
+  }, []);
+
   // Load initial data chỉ một lần
   useEffect(() => {
     if (!hasInitialLoad) {
       fetchPostsData();
+      fetchCategoryData();
       setHasInitialLoad(true);
     }
   }, [fetchPostsData, hasInitialLoad]);
@@ -133,12 +142,6 @@ export default function PostsPage() {
     }
   }, [categoryFilter, debouncedSearchTerm, hasInitialLoad]);
 
-  const categories = [
-    { value: 'all', label: 'Tất cả danh mục' },
-    { value: 'technology', label: 'Technology' },
-    { value: 'tutorial', label: 'Tutorial' },
-    { value: 'programming', label: 'Programming' },
-  ];
 
   const sortOptions = [
     { value: 'date', label: 'Mới nhất' },
@@ -155,7 +158,7 @@ export default function PostsPage() {
   }, []);
 
   // Handle page change
-  const handlePageChange = useCallback((event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = useCallback((value: number) => {
     setPage(value);
     // Scroll to top khi chuyển trang
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,271 +186,228 @@ export default function PostsPage() {
 
   if (loading && !hasInitialLoad) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Tất cả bài viết
-        </Typography>
-        <Grid container spacing={3}>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-6">Tất cả bài viết</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card>
-                <Skeleton variant="rectangular" height={200} />
-                <CardContent>
-                  <Skeleton variant="text" height={40} />
-                  <Skeleton variant="text" height={60} />
-                  <Skeleton variant="text" height={20} width="60%" />
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={index}>
+              <Skeleton className="h-48 w-full" />
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
-      </Container>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <Alert>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Tất cả bài viết
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Tất cả bài viết</h1>
+        <p className="text-xl text-gray-600 mb-6">
           Khám phá các bài viết về lập trình và công nghệ
-        </Typography>
+        </p>
 
         {/* Filters */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="Tìm kiếm bài viết..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={handleKeyPress}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ minWidth: 300 }}
-            helperText={searchTerm && searchTerm !== debouncedSearchTerm ? "Đang tìm kiếm..." : ""}
-          />
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="relative min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Tìm kiếm bài viết..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="pl-10"
+            />
+            {searchTerm && searchTerm !== debouncedSearchTerm && (
+              <p className="text-sm text-gray-500 mt-1">Đang tìm kiếm...</p>
+            )}
+          </div>
 
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Danh mục</InputLabel>
-            <Select
-              value={categoryFilter}
-              label="Danh mục"
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              {categories.map((category) => (
-                <MenuItem key={category.value} value={category.value}>
-                  {category.label}
-                </MenuItem>
-              ))}
+          <div className="min-w-[200px]">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Danh mục" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
+          </div>
 
-          <FormControl sx={{ minWidth: 160 }}>
-            <InputLabel>Sắp xếp</InputLabel>
-            <Select
-              value={sortBy}
-              label="Sắp xếp"
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              {sortOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
+          <div className="min-w-[160px]">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
-        </Box>
+          </div>
+        </div>
 
         {/* Loading indicator for subsequent loads */}
         {loading && hasInitialLoad && (
-          <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Đang tải...
-            </Typography>
-          </Box>
+          <div className="text-center mb-4">
+            <p className="text-gray-600">Đang tải...</p>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Posts Grid */}
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts.map((post: Post) => {
           const isSaved = saveStatus[post.slug] || false;
           
           return (
-            <Grid item xs={12} sm={6} md={4} key={post.id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4
-                  }
-                }}
-              >
-                <Box sx={{ position: 'relative' }}>
-                  {post.featuredImage && (
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={post.featuredImage}
-                      alt={post.title}
-                    />
-                  )}
+            <Card 
+              key={post.id}
+              className="h-full flex flex-col transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+            >
+              <div className="relative">
+                {post.featuredImage && (
+                  <img
+                    src={post.featuredImage}
+                    alt={post.title}
+                    className="w-full h-48 object-cover rounded-t-lg"
+                  />
+                )}
+                
+                {/* Save button overlay */}
+                {isAuthenticated && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-lg"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleToggleSave(post.slug, isSaved);
+                    }}
+                  >
+                    {isSaved ? <Bookmark className="h-4 w-4" /> : <BookmarkBorder className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+
+              <Link href={`/posts/${post.slug}`} className="flex-1 flex flex-col text-decoration-none">
+                <CardContent className="h-[303px] flex-1 flex flex-col p-4">
+                  <div className="mb-3">
+                    <Badge 
+                      variant="secondary" 
+                      className="mb-2 text-blue-700 bg-blue-100 font-semibold"
+                    >
+                      {post.category?.name || ''}
+                    </Badge>
+                  </div>
                   
-                  {/* Save button overlay */}
-                  {isAuthenticated && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        bgcolor: 'rgba(0, 0, 0, 0.6)',
-                        borderRadius: '50%',
-                      }}
-                    >
-                      <Tooltip title={isSaved ? 'Bỏ lưu' : 'Lưu bài viết'}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleToggleSave(post.slug, isSaved);
-                          }}
-                          sx={{ 
-                            color: isSaved ? 'primary.main' : 'white',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.1)'
-                            }
-                          }}
-                        >
-                          {isSaved ? <Bookmark /> : <BookmarkBorder />}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  )}
-                </Box>
+                  <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                    {post.title}
+                  </h3>
+                  
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">
+                    {post.excerpt}
+                  </p>
 
-                <Link href={`/posts/${post.slug}`} style={{ textDecoration: 'none', flex: 1 }}>
-                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 2 }}>
-                      <Chip
-                        label={post.category?.name || ''}
-                        size="small"
-                        color="primary"
-                        sx={{ mb: 1 }}
-                      />
-                    </Box>
+                  <div className="flex items-center mb-3">
+                    <Avatar className="h-6 w-6 mr-2">
+                      <AvatarImage src={post.author?.avatar || ''} alt={post.author?.name || ''} />
+                      <AvatarFallback>{post.author?.name?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-gray-500">
+                      {post.author?.name}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <AccessTime className="h-3 w-3" />
+                      <span>{calculateReadingTime(post.content)} phút đọc</span>
+                    </div>
                     
-                    <Typography variant="h6" component="h3" gutterBottom>
-                      {post.title}
-                    </Typography>
-                    
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        flex: 1,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        mb: 2
-                      }}
-                    >
-                      {post.excerpt}
-                    </Typography>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Visibility className="h-3 w-3" />
+                        <span>{post.viewCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ThumbUp className="h-3 w-3" />
+                        <span>{post.likeCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Comment className="h-3 w-3" />
+                        <span>{post.commentCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Share className="h-3 w-3" />
+                        <span>{post.shareCount}</span>
+                      </div>
+                    </div>
+                  </div>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar
-                        src={post.author?.avatar || ''}
-                        alt={post.author?.name || ''}
-                        sx={{ width: 24, height: 24, mr: 1 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {post.author?.name}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <AccessTime sx={{ fontSize: 14 }} />
-                        <Typography variant="caption">
-                          {calculateReadingTime(post.content)} phút đọc
-                        </Typography>
-                      </Box>
-                      
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Visibility sx={{ fontSize: 14 }} />
-                          <Typography variant="caption">{post.viewCount}</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <ThumbUp sx={{ fontSize: 14 }} />
-                          <Typography variant="caption">{post.likeCount}</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Comment sx={{ fontSize: 14 }} />
-                          <Typography variant="caption">{post.commentCount}</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Share sx={{ fontSize: 14 }} />
-                          <Typography variant="caption">{post.shareCount}</Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                      {formatDate(post.publishedAt)}
-                    </Typography>
-                  </CardContent>
-                </Link>
-              </Card>
-            </Grid>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formatDate(post.publishedAt)}
+                  </p>
+                </CardContent>
+              </Link>
+            </Card>
           );
         })}
-      </Grid>
+      </div>
 
       {/* Empty State */}
       {posts.length === 0 && !loading && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="text-center py-16">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
             Không có bài viết nào
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-gray-600">
             {debouncedSearchTerm ? `Không tìm thấy kết quả cho "${debouncedSearchTerm}"` : 'Hãy thử thay đổi bộ lọc'}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Pagination
-            count={pagination.totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            disabled={loading}
-          />
-        </Box>
+        <div className="flex justify-center mt-8">
+          <div className="flex items-center gap-2">
+            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <Button
+                key={pageNum}
+                variant={pageNum === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePageChange(pageNum)}
+                disabled={loading}
+              >
+                {pageNum}
+              </Button>
+            ))}
+          </div>
+        </div>
       )}
-    </Container>
+    </div>
   );
 } 

@@ -2,29 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-  TextField,
-  Button,
-  Avatar,
-  IconButton,
-  Tabs,
-  Tab,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-} from '@mui/material';
-import {
   Edit,
   PhotoCamera,
   Save,
@@ -37,20 +14,16 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { updateProfile } from '../../store/slices/authSlice';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
-  return (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-};
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Label } from '../../components/ui/label';
+import { Switch } from '../../components/ui/switch';
+import { Textarea } from '../../components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 
 interface ProfileFormData {
   name: string;
@@ -76,7 +49,6 @@ export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state) => state.auth);
   
-  const [tabValue, setTabValue] = useState(0);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [showPasswords, setShowPasswords] = useState({
     current: false,
@@ -140,10 +112,6 @@ export default function ProfilePage() {
       }
     }
   }, [user, setProfileValue]);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
 
   const onProfileSubmit = async (data: ProfileFormData) => {
     try {
@@ -213,414 +181,412 @@ export default function ProfilePage() {
   };
 
   return (
-    <Box className="max-w-4xl mx-auto p-6">
-      <Typography variant="h4" component="h1" className="mb-6 font-bold">
-        Quản lý tài khoản
-      </Typography>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Quản lý tài khoản</h1>
 
       {successMessage && (
-        <Alert severity="success" className="mb-4">
-          {successMessage}
+        <Alert className="mb-4">
+          <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
 
       <Card>
-        <CardHeader
-          title={
-            <Tabs value={tabValue} onChange={handleTabChange}>
-              <Tab icon={<Person />} label="Thông tin cá nhân" />
-              <Tab icon={<Security />} label="Bảo mật" />
-            </Tabs>
-          }
-        />
-        
-        <CardContent>
-          {/* Profile Tab */}
-          <TabPanel value={tabValue} index={0}>
-            <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <Box className="text-center">
-                    <Avatar
-                      src={avatarPreview}
-                      alt={user?.name}
-                      sx={{ width: 150, height: 150, mx: 'auto', mb: 2 }}
-                    >
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </Avatar>
-                    
-                    <input
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      id="avatar-upload"
-                      type="file"
-                      onChange={handleAvatarChange}
-                    />
-                    <label htmlFor="avatar-upload">
-                      <IconButton
-                        color="primary"
-                        aria-label="upload picture"
-                        component="span"
-                        size="large"
-                      >
-                        <PhotoCamera />
-                      </IconButton>
-                    </label>
-                    
-                    <Typography variant="body2" color="text.secondary">
-                      Nhấp để thay đổi ảnh đại diện
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={8}>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="name"
-                        control={profileControl}
-                        rules={{ required: 'Tên là bắt buộc' }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Họ và tên"
-                            fullWidth
-                            error={!!profileErrors.name}
-                            helperText={profileErrors.name?.message}
-                          />
-                        )}
+        <CardHeader>
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <Person className="h-4 w-4" />
+                Thông tin cá nhân
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Security className="h-4 w-4" />
+                Bảo mật
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile" className="pt-6">
+              <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-1">
+                    <div className="text-center">
+                      <Avatar className="w-32 h-32 mx-auto mb-4">
+                        <AvatarImage src={avatarPreview} alt={user?.name} />
+                        <AvatarFallback className="text-2xl">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <input
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        id="avatar-upload"
+                        type="file"
+                        onChange={handleAvatarChange}
                       />
-                    </Grid>
+                      <label htmlFor="avatar-upload">
+                        <Button variant="outline" size="sm">
+                          <span className="cursor-pointer">
+                            <PhotoCamera className="h-4 w-4 mr-2" />
+                            Thay đổi ảnh
+                          </span>
+                        </Button>
+                      </label>
+                      
+                      <p className="text-sm text-gray-500 mt-2">
+                        Nhấp để thay đổi ảnh đại diện
+                      </p>
+                    </div>
+                  </div>
 
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="email"
-                        control={profileControl}
-                        rules={{
-                          required: 'Email là bắt buộc',
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Email không hợp lệ',
-                          },
-                        }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Email"
-                            fullWidth
-                            error={!!profileErrors.email}
-                            helperText={profileErrors.email?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
+                  <div className="md:col-span-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <Label htmlFor="name">Họ và tên</Label>
+                        <Controller
+                          name="name"
+                          control={profileControl}
+                          rules={{ required: 'Tên là bắt buộc' }}
+                          render={({ field }) => (
+                            <div>
+                              <Input
+                                {...field}
+                                id="name"
+                                className={profileErrors.name ? 'border-red-500' : ''}
+                              />
+                              {profileErrors.name && (
+                                <p className="text-sm text-red-500 mt-1">{profileErrors.name.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </div>
 
-                    <Grid item xs={12}>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Controller
+                          name="email"
+                          control={profileControl}
+                          rules={{
+                            required: 'Email là bắt buộc',
+                            pattern: {
+                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                              message: 'Email không hợp lệ',
+                            },
+                          }}
+                          render={({ field }) => (
+                            <div>
+                              <Input
+                                {...field}
+                                id="email"
+                                type="email"
+                                className={profileErrors.email ? 'border-red-500' : ''}
+                              />
+                              {profileErrors.email && (
+                                <p className="text-sm text-red-500 mt-1">{profileErrors.email.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <Label htmlFor="bio">Giới thiệu</Label>
                       <Controller
                         name="bio"
                         control={profileControl}
                         render={({ field }) => (
-                          <TextField
+                          <Textarea
                             {...field}
-                            label="Giới thiệu"
-                            fullWidth
-                            multiline
-                            rows={4}
+                            id="bio"
                             placeholder="Viết một vài dòng về bản thân..."
+                            rows={4}
                           />
                         )}
                       />
-                    </Grid>
-                  </Grid>
-                </Grid>
+                    </div>
 
-                {/* Social Links */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" className="mb-3">
-                    Liên kết mạng xã hội
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="socialLinks.website"
-                        control={profileControl}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Website"
-                            fullWidth
-                            placeholder="https://yourwebsite.com"
+                    {/* Social Links */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-medium mb-4">Liên kết mạng xã hội</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="website">Website</Label>
+                          <Controller
+                            name="socialLinks.website"
+                            control={profileControl}
+                            render={({ field }) => (
+                              <Input
+                                {...field}
+                                id="website"
+                                placeholder="https://yourwebsite.com"
+                              />
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
+                        </div>
 
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="socialLinks.twitter"
-                        control={profileControl}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Twitter"
-                            fullWidth
-                            placeholder="@username"
+                        <div>
+                          <Label htmlFor="twitter">Twitter</Label>
+                          <Controller
+                            name="socialLinks.twitter"
+                            control={profileControl}
+                            render={({ field }) => (
+                              <Input
+                                {...field}
+                                id="twitter"
+                                placeholder="@username"
+                              />
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
+                        </div>
 
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="socialLinks.linkedin"
-                        control={profileControl}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="LinkedIn"
-                            fullWidth
-                            placeholder="https://linkedin.com/in/username"
+                        <div>
+                          <Label htmlFor="linkedin">LinkedIn</Label>
+                          <Controller
+                            name="socialLinks.linkedin"
+                            control={profileControl}
+                            render={({ field }) => (
+                              <Input
+                                {...field}
+                                id="linkedin"
+                                placeholder="https://linkedin.com/in/username"
+                              />
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
+                        </div>
 
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="socialLinks.github"
-                        control={profileControl}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="GitHub"
-                            fullWidth
-                            placeholder="https://github.com/username"
+                        <div>
+                          <Label htmlFor="github">GitHub</Label>
+                          <Controller
+                            name="socialLinks.github"
+                            control={profileControl}
+                            render={({ field }) => (
+                              <Input
+                                {...field}
+                                id="github"
+                                placeholder="https://github.com/username"
+                              />
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
+                        </div>
+                      </div>
+                    </div>
 
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<Save />}
-                    disabled={loading}
-                    size="large"
-                  >
-                    Lưu thay đổi
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
-          </TabPanel>
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Lưu thay đổi
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </TabsContent>
 
-          {/* Security Tab */}
-          <TabPanel value={tabValue} index={1}>
-            <form onSubmit={handleSecuritySubmit(onSecuritySubmit)}>
-              <Grid container spacing={3}>
-                {/* Password Change */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" className="mb-3">
-                    Đổi mật khẩu
-                  </Typography>
-                  
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <Controller
-                        name="currentPassword"
-                        control={securityControl}
-                        rules={{ required: 'Vui lòng nhập mật khẩu hiện tại' }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Mật khẩu hiện tại"
-                            type={showPasswords.current ? 'text' : 'password'}
-                            fullWidth
-                            error={!!securityErrors.currentPassword}
-                            helperText={securityErrors.currentPassword?.message}
-                            InputProps={{
-                              endAdornment: (
-                                <IconButton
-                                  onClick={() => 
-                                    setShowPasswords(prev => ({ ...prev, current: !prev.current }))
-                                  }
-                                >
-                                  {showPasswords.current ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                              ),
+            <TabsContent value="security" className="pt-6">
+              <form onSubmit={handleSecuritySubmit(onSecuritySubmit)}>
+                <div className="space-y-6">
+                  {/* Password Change */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Đổi mật khẩu</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+                        <Controller
+                          name="currentPassword"
+                          control={securityControl}
+                          rules={{ required: 'Vui lòng nhập mật khẩu hiện tại' }}
+                          render={({ field }) => (
+                            <div className="relative">
+                              <Input
+                                {...field}
+                                id="currentPassword"
+                                type={showPasswords.current ? 'text' : 'password'}
+                                className={securityErrors.currentPassword ? 'border-red-500' : ''}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                onClick={() => 
+                                  setShowPasswords(prev => ({ ...prev, current: !prev.current }))
+                                }
+                              >
+                                {showPasswords.current ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                              </Button>
+                              {securityErrors.currentPassword && (
+                                <p className="text-sm text-red-500 mt-1">{securityErrors.currentPassword.message}</p>
+                              )}
+                            </div>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                          <Controller
+                            name="newPassword"
+                            control={securityControl}
+                            rules={{
+                              required: 'Vui lòng nhập mật khẩu mới',
+                              validate: validatePassword,
                             }}
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="newPassword"
-                        control={securityControl}
-                        rules={{
-                          required: 'Vui lòng nhập mật khẩu mới',
-                          validate: validatePassword,
-                        }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Mật khẩu mới"
-                            type={showPasswords.new ? 'text' : 'password'}
-                            fullWidth
-                            error={!!securityErrors.newPassword}
-                            helperText={securityErrors.newPassword?.message}
-                            InputProps={{
-                              endAdornment: (
-                                <IconButton
+                            render={({ field }) => (
+                              <div className="relative">
+                                <Input
+                                  {...field}
+                                  id="newPassword"
+                                  type={showPasswords.new ? 'text' : 'password'}
+                                  className={securityErrors.newPassword ? 'border-red-500' : ''}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
                                   onClick={() => 
                                     setShowPasswords(prev => ({ ...prev, new: !prev.new }))
                                   }
                                 >
-                                  {showPasswords.new ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                              ),
-                            }}
+                                  {showPasswords.new ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                </Button>
+                                {securityErrors.newPassword && (
+                                  <p className="text-sm text-red-500 mt-1">{securityErrors.newPassword.message}</p>
+                                )}
+                              </div>
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
+                        </div>
 
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="confirmPassword"
-                        control={securityControl}
-                        rules={{
-                          required: 'Vui lòng xác nhận mật khẩu',
-                          validate: value => value === newPassword || 'Mật khẩu xác nhận không khớp',
-                        }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            label="Xác nhận mật khẩu"
-                            type={showPasswords.confirm ? 'text' : 'password'}
-                            fullWidth
-                            error={!!securityErrors.confirmPassword}
-                            helperText={securityErrors.confirmPassword?.message}
-                            InputProps={{
-                              endAdornment: (
-                                <IconButton
+                        <div>
+                          <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                          <Controller
+                            name="confirmPassword"
+                            control={securityControl}
+                            rules={{
+                              required: 'Vui lòng xác nhận mật khẩu',
+                              validate: value => value === newPassword || 'Mật khẩu xác nhận không khớp',
+                            }}
+                            render={({ field }) => (
+                              <div className="relative">
+                                <Input
+                                  {...field}
+                                  id="confirmPassword"
+                                  type={showPasswords.confirm ? 'text' : 'password'}
+                                  className={securityErrors.confirmPassword ? 'border-red-500' : ''}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
                                   onClick={() => 
                                     setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))
                                   }
                                 >
-                                  {showPasswords.confirm ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                              ),
-                            }}
+                                  {showPasswords.confirm ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                </Button>
+                                {securityErrors.confirmPassword && (
+                                  <p className="text-sm text-red-500 mt-1">{securityErrors.confirmPassword.message}</p>
+                                )}
+                              </div>
+                            )}
                           />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                <Grid item xs={12}>
-                  <Divider />
-                </Grid>
+                  <hr className="border-gray-200" />
 
-                {/* Two Factor Authentication */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" className="mb-3">
-                    Xác thực hai yếu tố (2FA)
-                  </Typography>
-                  
-                  <Controller
-                    name="twoFactorEnabled"
-                    control={securityControl}
-                    render={({ field }) => (
-                      <FormControlLabel
-                        control={<Switch {...field} checked={field.value} />}
-                        label={
-                          <Box>
-                            <Typography>Bật xác thực hai yếu tố</Typography>
-                            <Typography variant="body2" color="text.secondary">
+                  {/* Two Factor Authentication */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Xác thực hai yếu tố (2FA)</h3>
+                    
+                    <Controller
+                      name="twoFactorEnabled"
+                      control={securityControl}
+                      render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                          <div>
+                            <Label>Bật xác thực hai yếu tố</Label>
+                            <p className="text-sm text-gray-600">
                               Tăng cường bảo mật cho tài khoản của bạn
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    )}
-                  />
-                </Grid>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    />
+                  </div>
 
-                <Grid item xs={12}>
                   <Button
                     type="submit"
-                    variant="contained"
-                    startIcon={<Security />}
                     disabled={loading}
-                    size="large"
+                    className="flex items-center gap-2"
                   >
+                    <Security className="h-4 w-4" />
                     Cập nhật bảo mật
                   </Button>
-                </Grid>
 
-                <Grid item xs={12}>
-                  <Divider />
-                </Grid>
+                  <hr className="border-gray-200" />
 
-                {/* Danger Zone */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" className="mb-3" color="error">
-                    Vùng nguy hiểm
-                  </Typography>
-                  
-                  <Alert severity="warning" className="mb-3">
-                    Xóa tài khoản sẽ xóa vĩnh viễn tất cả dữ liệu của bạn. Hành động này không thể hoàn tác.
-                  </Alert>
-                  
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={() => setDeleteAccountDialog(true)}
-                  >
-                    Xóa tài khoản
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
-          </TabPanel>
-        </CardContent>
+                  {/* Danger Zone */}
+                  <div>
+                    <h3 className="text-lg font-medium text-red-600 mb-4">Vùng nguy hiểm</h3>
+                    
+                    <Alert className="mb-4 border-yellow-200 bg-yellow-50">
+                      <AlertDescription>
+                        Xóa tài khoản sẽ xóa vĩnh viễn tất cả dữ liệu của bạn. Hành động này không thể hoàn tác.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <Button
+                      variant="destructive"
+                      onClick={() => setDeleteAccountDialog(true)}
+                    >
+                      Xóa tài khoản
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardHeader>
       </Card>
 
       {/* Delete Account Dialog */}
-      <Dialog
-        open={deleteAccountDialog}
-        onClose={() => setDeleteAccountDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle color="error">Xác nhận xóa tài khoản</DialogTitle>
+      <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
         <DialogContent>
-          <Alert severity="error" className="mb-4">
-            Hành động này không thể hoàn tác!
-          </Alert>
-          <Typography>
-            Bạn có chắc chắn muốn xóa tài khoản? Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
-          </Typography>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Xác nhận xóa tài khoản</DialogTitle>
+            <DialogDescription>
+              <Alert className="mb-4 border-red-200 bg-red-50">
+                <AlertDescription className="text-red-800">
+                  Hành động này không thể hoàn tác!
+                </AlertDescription>
+              </Alert>
+              Bạn có chắc chắn muốn xóa tài khoản? Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAccountDialog(false)}>
+              Hủy
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAccount}>
+              Xóa tài khoản
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteAccountDialog(false)}>
-            Hủy
-          </Button>
-          <Button
-            onClick={handleDeleteAccount}
-            color="error"
-            variant="contained"
-          >
-            Xóa tài khoản
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 } 

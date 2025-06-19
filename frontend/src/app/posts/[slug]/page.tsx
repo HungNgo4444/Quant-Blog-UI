@@ -2,19 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Chip,
-  Avatar,
-  Button,
-  Divider,
-  IconButton,
-  Paper,
-  Skeleton,
-  Alert
-} from '@mui/material';
-import {
   AccessTime,
   Visibility,
   ThumbUp,
@@ -37,6 +24,12 @@ import { clientCookies } from '../../../services/TokenService';
 import PostComment from '../../../components/Posts/PostComment';
 import { getLikeStatus, getPostBySlug, getSaveStatus, toggleLikePost, toggleSavePost, trackViewPost } from 'frontend/src/services/PostService';
 import { toast } from 'react-toastify';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { Alert, AlertDescription } from '../../../components/ui/alert';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -232,224 +225,235 @@ export default function PostDetailPage() {
 
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Skeleton variant="rectangular" height={400} sx={{ mb: 3 }} />
-        <Skeleton variant="text" height={60} sx={{ mb: 2 }} />
-        <Skeleton variant="text" height={40} sx={{ mb: 3 }} />
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <Skeleton variant="circular" width={40} height={40} />
-          <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" height={24} />
-            <Skeleton variant="text" height={20} />
-          </Box>
-        </Box>
-        <Skeleton variant="rectangular" height={300} />
-      </Container>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Skeleton className="w-full h-96 mb-6" />
+        <Skeleton className="h-8 w-3/4 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-6" />
+        <div className="flex gap-4 mb-6">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1">
+            <Skeleton className="h-4 w-32 mb-2" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <Skeleton className="w-full h-64" />
+      </div>
     );
   }
 
   if (error || !post) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="error">
-          {error || 'Bài viết không tồn tại'}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Alert>
+          <AlertDescription>
+            {error || 'Bài viết không tồn tại'}
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Featured Image */}
       {post.featuredImage && (
-        <Box
-          component="img"
+        <img
           src={post.featuredImage}
           alt={post.title}
-          sx={{
-            width: '100%',
-            height: 400,
-            objectFit: 'cover',
-            borderRadius: 2,
-            mb: 3
-          }}
+          className="w-full h-96 object-cover rounded-lg mb-6"
         />
       )}
 
       {/* Category */}
-      <Chip 
-        label={post.category.name}
-        color="primary"
-        sx={{ mb: 2 }}
-      />
+      <Badge 
+        variant="secondary" 
+        className="mb-4 text-blue-700 bg-blue-100"
+      >
+        {post.category.name}
+      </Badge>
 
       {/* Title */}
-      <Typography variant="h3" component="h1" gutterBottom>
+      <h1 className="text-4xl font-bold mb-6 break-words">
         {post.title}
-      </Typography>
+      </h1>
 
       {/* Meta info */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <AccessTime fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
+      <div className="flex items-center gap-6 text-gray-600 mb-6">
+        <div className="flex items-center gap-2">
+          <AccessTime className="h-4 w-4" />
+          <span className="text-sm">
             {calculateReadingTime(post.content)} phút đọc
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Visibility fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Visibility className="h-4 w-4" />
+          <span className="text-sm">
             {post.viewCount} lượt xem
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
+          </span>
+        </div>
+        <span className="text-sm">
           {formatDate(post.publishedAt)}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
       {/* Author */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <div className='flex-1 flex items-center gap-2'>
-          <Avatar
-            src={post.author.avatar}
-            alt={post.author.name}
-            sx={{ width: 48, height: 48 }}
-          />
-          <Box>
-            <Typography variant="subtitle1" fontWeight="bold">
-              {post.author.name}
-            </Typography>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={post.author.avatar} alt={post.author.name} />
+            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold">{post.author.name}</h3>
             {post.author.bio && (
-              <Typography variant="body2" color="text.secondary">
-                {post.author.bio}
-              </Typography>
+              <p className="text-sm text-gray-600">{post.author.bio}</p>
             )}
-          </Box>
+          </div>
         </div>
-        <div className='ml-auto' onClick={handleSavePost} title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}>
-            {saved ?  <Bookmark sx={{ cursor: 'pointer', color: 'primary.main' }} />: <BookmarkBorder sx={{ cursor: 'pointer' }} />}
-        </div>
-      </Box>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSavePost}
+          className="ml-auto"
+          title={saved ? 'Bỏ lưu' : 'Lưu bài viết'}
+        >
+          {saved ? (
+            <Bookmark className="h-5 w-5 text-blue-600" />
+          ) : (
+            <BookmarkBorder className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
 
-      <Divider sx={{ mb: 3 }} />
+      <hr className="mb-6" />
 
       {/* Content */}
-      <Paper elevation={0} sx={{ p: 3, mb: 3 }}>
-        <ReactMarkdown
-          components={{
-            code({node, inline, className, children, ...props}: any) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={tomorrow as any}
-                  language={match[1]}
-                  PreTag="div"
-                  customStyle={{
-                    backgroundColor: '#1e1e1e',
-                    color: '#d4d4d4',
-                    padding: '20px',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    margin: '20px 0',
-                    border: '1px solid #3c3c3c',
-                    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
-                    fontWeight: '400',
-                    overflow: 'auto',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                  }}
-                  codeTagProps={{
-                    style: {
-                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <ReactMarkdown
+            components={{
+              code({node, inline, className, children, ...props}: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={tomorrow as any}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{
+                      backgroundColor: '#1e1e1e',
+                      color: '#d4d4d4',
+                      padding: '20px',
+                      borderRadius: '6px',
                       fontSize: '14px',
-                      lineHeight: '1.6'
-                    }
-                  }}
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code 
-                  className={className} 
-                  {...props}
-                  style={{
-                    backgroundColor: '#2d2d30',
-                    color: '#cccccc',
-                    padding: '3px 6px',
-                    borderRadius: '3px',
-                    fontSize: '13px',
-                    fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
-                    border: '1px solid #404040',
-                    fontWeight: '400',
-                    letterSpacing: '0.025em'
-                  }}
-                >
-                  {children}
-                </code>
-              );
-            }
-          }}
-          rehypePlugins={[rehypeRaw]}
-        >
-          {post.content}
-        </ReactMarkdown>
-      </Paper>
+                      lineHeight: '1.6',
+                      margin: '20px 0',
+                      border: '1px solid #3c3c3c',
+                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                      fontWeight: '400',
+                      overflow: 'auto',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                    }}
+                    codeTagProps={{
+                      style: {
+                        fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                        fontSize: '14px',
+                        lineHeight: '1.6'
+                      }
+                    }}
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code 
+                    className={className} 
+                    {...props}
+                    style={{
+                      backgroundColor: '#2d2d30',
+                      color: '#cccccc',
+                      padding: '3px 6px',
+                      borderRadius: '3px',
+                      fontSize: '13px',
+                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
+                      border: '1px solid #404040',
+                      fontWeight: '400',
+                      letterSpacing: '0.025em'
+                    }}
+                  >
+                    {children}
+                  </code>
+                );
+              }
+            }}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {post.content}
+          </ReactMarkdown>
+        </CardContent>
+      </Card>
 
       {/* Tags */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+      <div className="flex flex-wrap gap-2 mb-6">
         {post.tags.map((tag) => (
-          <Chip
+          <Badge
             key={tag.slug}
-            label={tag.name}
-            variant="outlined"
-            size="small"
-          />
+            variant="outline"
+          >
+            {tag.name}
+          </Badge>
         ))}
-      </Box>
+      </div>
 
-      <Divider sx={{ mb: 3 }} />
+      <hr className="mb-6" />
 
       {/* Actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
           <Button
-            variant={liked ? 'contained' : 'outlined'}
-            startIcon={liked ? <ThumbUp /> : <ThumbUpOutlined />}
+            variant={liked ? 'default' : 'outline'}
             onClick={handleLike}
+            className="flex items-center gap-2"
           >
+            {liked ? <ThumbUp className="h-4 w-4" /> : <ThumbUpOutlined className="h-4 w-4" />}
             {likeCount} Thích
           </Button>
-        </Box>
+        </div>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton 
-            size="small" 
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleShare('facebook')}
-            sx={{ color: '#1877F2' }}
+            className="text-blue-600 hover:text-blue-700"
           >
-            <Facebook />
-          </IconButton>
-          <IconButton 
-            size="small" 
+            <Facebook className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleShare('twitter')}
-            sx={{ color: '#1DA1F2' }}
+            className="text-blue-400 hover:text-blue-500"
           >
-            <Twitter />
-          </IconButton>
-          <IconButton 
-            size="small" 
+            <Twitter className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleShare('linkedin')}
-            sx={{ color: '#0A66C2' }}
+            className="text-blue-700 hover:text-blue-800"
           >
-            <LinkedIn />
-          </IconButton>
-          <IconButton size="small" onClick={() => handleShare('copy')}>
-            <Share />
-          </IconButton>
-        </Box>
-      </Box>
+            <LinkedIn className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleShare('copy')}
+          >
+            <Share className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       <PostComment postId={post.id} />
-    </Container>
+    </div>
   );
 }

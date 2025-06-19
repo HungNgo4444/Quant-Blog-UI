@@ -2,18 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  Link as MuiLink,
-  Alert,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Checkbox } from '../ui/checkbox';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
   Visibility,
   VisibilityOff,
@@ -21,13 +15,14 @@ import {
   Lock,
 } from '@mui/icons-material';
 import Link from 'next/link';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loginUser } from '../../store/slices/authSlice';
 import { showNotification } from '../../store/slices/notificationSlice';
 import { LoginCredentials } from '../../types';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { cn } from '../../lib/utils';
 
 const loginSchema = z.object({
   email: z.string()
@@ -92,164 +87,165 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <Alert severity="error" className="mb-4">
-          {error}
-        </Alert>
-      )}
-      <Box className="text-center mb-4">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Đăng nhập
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Đăng nhập</CardTitle>
+        <CardDescription>
           Chào mừng bạn quay trở lại
-        </Typography>
-      </Box>
-
-      {/* Email Field */}
-      <Controller
-        name="email"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Email"
-            type="email"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Email className="text-gray-400" />
-                </InputAdornment>
-              ),
-            }}
-            className="bg-white dark:bg-gray-800"
-          />
-        )}
-      />
-
-      {/* Password Field */}
-      <Controller
-        name="password"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Mật khẩu"
-            type={showPassword ? 'text' : 'password'}
-            error={!!errors.password}
-            helperText={errors.password?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock className="text-gray-400" />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handleTogglePassword}
-                    edge="end"
-                    className="text-gray-400"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            className="bg-white dark:bg-gray-800"
-          />
-        )}
-      />
-
-      {/* Remember Me & Forgot Password */}
-      <Box className="flex items-center justify-between">
-        <Controller
-          name="rememberMe"
-          control={control}
-          render={({ field }) => (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  {...field}
-                  checked={field.value}
-                  color="primary"
-                />
-              }
-              label="Ghi nhớ đăng nhập"
-              className="text-gray-700 dark:text-gray-300"
-            />
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-        />
 
-        <MuiLink
-          component={Link}
-          href="/auth/forgot-password"
-          className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
-        >
-          Quên mật khẩu?
-        </MuiLink>
-      </Box>
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <Email className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    {...field}
+                    id="email"
+                    type="email"
+                    placeholder="Nhập email của bạn"
+                    className={cn(
+                      "pl-10",
+                      errors.email && "border-red-500 focus:border-red-500"
+                    )}
+                  />
+                </div>
+              )}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
+          </div>
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        size="large"
-        disabled={loading}
-        className="py-3 bg-primary-600 hover:bg-primary-700"
-      >
-        {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-      </Button>
+          {/* Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    {...field}
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Nhập mật khẩu của bạn"
+                    className={cn(
+                      "pl-10 pr-10",
+                      errors.password && "border-red-500 focus:border-red-500"
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTogglePassword}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <VisibilityOff className="w-4 h-4" /> : <Visibility className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
+            />
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            )}
+          </div>
 
-      {/* Register Link */}
-      <Box className="text-center">
-        <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
-          Chưa có tài khoản?{' '}
-          <MuiLink
-            component={Link}
-            href="/auth/register"
-            className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between">
+            <Controller
+              name="rememberMe"
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="rememberMe"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <Label
+                    htmlFor="rememberMe"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Ghi nhớ đăng nhập
+                  </Label>
+                </div>
+              )}
+            />
+
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm text-primary hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+            disabled={loading}
           >
-            Đăng ký ngay
-          </MuiLink>
-        </Typography>
-      </Box>
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          </Button>
 
-      {/* Social Login */}
-      <Box className="relative">
-        <Box className="absolute inset-0 flex items-center">
-          <Box className="w-full border-t border-gray-300 dark:border-gray-600" />
-        </Box>
-        <Box className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-            Hoặc đăng nhập với
-          </span>
-        </Box>
-      </Box>
+          {/* Register Link */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Chưa có tài khoản?{' '}
+              <Link
+                href="/auth/register"
+                className="text-primary hover:underline font-medium"
+              >
+                Đăng ký ngay
+              </Link>
+            </p>
+          </div>
 
-      <Box className="flex space-x-3">
-        <Button
-          fullWidth
-          variant="outlined"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          Google
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          Facebook
-        </Button>
-      </Box>
-    </Box>
+          {/* Social Login */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Hoặc đăng nhập với
+              </span>
+            </div>
+          </div>
+
+          <div className="flex space-x-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              type="button"
+            >
+              Google
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              type="button"
+            >
+              Facebook
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

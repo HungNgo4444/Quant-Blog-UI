@@ -2,19 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  Link as MuiLink,
-  Alert,
-  InputAdornment,
-  IconButton,
-  LinearProgress,
-} from '@mui/material';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Checkbox } from '../ui/checkbox';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Progress } from '../ui/progress';
 import {
   Visibility,
   VisibilityOff,
@@ -32,6 +26,7 @@ import { showNotification } from '../../store/slices/notificationSlice';
 import { RegisterCredentials } from '../../types';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { cn } from '../../lib/utils';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -116,11 +111,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
     }
   };
 
-  const getPasswordStrengthColor = (strength: number): 'error' | 'warning' | 'info' | 'success' => {
-    if (strength <= 1) return 'error';
-    if (strength === 2) return 'warning';
-    if (strength === 3) return 'info';
-    return 'success';
+  const getPasswordStrengthColor = (strength: number): string => {
+    if (strength <= 1) return 'bg-red-500';
+    if (strength === 2) return 'bg-orange-500';
+    if (strength === 3) return 'bg-blue-500';
+    return 'bg-green-500';
   };
 
   const onSubmit = async (data: RegisterCredentials) => {
@@ -159,283 +154,249 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
   const passwordStrength = getPasswordStrength(password || '');
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <Alert severity="error" className="mb-4">
-          {error}
-        </Alert>
-      )}
-      <Box className="text-center mb-4">
-        <Typography variant="h4" component="h1" gutterBottom>
-          Đăng ký
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Đăng ký</CardTitle>
+        <CardDescription>
           Tạo tài khoản mới để trải nghiệm đầy đủ tính năng của AdvancedBlog
-        </Typography>
-      </Box>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      {/* Name Field */}
-      <Controller
-        name="name"
-        control={control}
-        rules={{
-          required: 'Họ tên là bắt buộc',
-          minLength: {
-            value: 2,
-            message: 'Họ tên phải có ít nhất 2 ký tự',
-          },
-          maxLength: {
-            value: 50,
-            message: 'Họ tên không được quá 50 ký tự',
-          },
-        }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Họ và tên"
-            error={!!errors.name}
-            helperText={errors.name?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Person className="text-gray-400" />
-                </InputAdornment>
-              ),
-            }}
-            className="bg-white dark:bg-gray-800"
-          />
-        )}
-      />
-
-      {/* Email Field */}
-      <Controller
-        name="email"
-        control={control}
-        rules={{
-          required: 'Email là bắt buộc',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Email không hợp lệ',
-          },
-        }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Email"
-            type="email"
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Email className="text-gray-400" />
-                </InputAdornment>
-              ),
-            }}
-            className="bg-white dark:bg-gray-800"
-          />
-        )}
-      />
-
-      {/* Password Field */}
-      <Controller
-        name="password"
-        control={control}
-        rules={{
-          required: 'Mật khẩu là bắt buộc',
-          minLength: {
-            value: 8,
-            message: 'Mật khẩu phải có ít nhất 8 ký tự',
-          },
-          pattern: {
-            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-            message: 'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa và 1 số',
-          },
-        }}
-        render={({ field }) => (
-          <Box>
-            <TextField
-              {...field}
-              fullWidth
-              label="Mật khẩu"
-              type={showPassword ? 'text' : 'password'}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock className="text-gray-400" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      className="text-gray-400"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              className="bg-white dark:bg-gray-800"
+          {/* Name Field */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Họ và tên</Label>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <Person className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    {...field}
+                    id="name"
+                    placeholder="Nhập họ và tên của bạn"
+                    className={cn(
+                      "pl-10",
+                      errors.name && "border-red-500 focus:border-red-500"
+                    )}
+                  />
+                </div>
+              )}
             />
-            
-            {/* Password Strength Indicator */}
-            {password && (
-              <Box className="mt-2">
-                <Box className="flex items-center justify-between mb-1">
-                  <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
-                    Độ mạnh mật khẩu
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    className={`font-medium ${
-                      passwordStrength <= 1 ? 'text-red-500' :
-                      passwordStrength === 2 ? 'text-orange-500' :
-                      passwordStrength === 3 ? 'text-blue-500' :
-                      'text-green-500'
-                    }`}
-                  >
-                    {getPasswordStrengthLabel(passwordStrength)}
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={(passwordStrength / 5) * 100}
-                  color={getPasswordStrengthColor(passwordStrength)}
-                  className="h-2 rounded"
-                />
-                
-                {/* Password Requirements */}
-                <Box className="mt-2 space-y-1">
-                  {[
-                    { test: password.length >= 8, label: 'Ít nhất 8 ký tự' },
-                    { test: /[a-z]/.test(password), label: 'Chứa chữ thường' },
-                    { test: /[A-Z]/.test(password), label: 'Chứa chữ hoa' },
-                    { test: /[0-9]/.test(password), label: 'Chứa số' },
-                    { test: /[^a-zA-Z0-9]/.test(password), label: 'Chứa ký tự đặc biệt' },
-                  ].map((requirement, index) => (
-                    <Box key={index} className="flex items-center space-x-1">
-                      {requirement.test ? (
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                      ) : (
-                        <Cancel className="w-3 h-3 text-gray-400" />
-                      )}
-                      <Typography
-                        variant="caption"
-                        className={requirement.test ? 'text-green-600' : 'text-gray-500'}
-                      >
-                        {requirement.label}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
             )}
-          </Box>
-        )}
-      />
+          </div>
 
-      {/* Confirm Password Field */}
-      <Controller
-        name="confirmPassword"
-        control={control}
-        rules={{
-          required: 'Xác nhận mật khẩu là bắt buộc',
-          validate: (value) => value === password || 'Mật khẩu xác nhận không khớp',
-        }}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            fullWidth
-            label="Xác nhận mật khẩu"
-            type={showConfirmPassword ? 'text' : 'password'}
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword?.message}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock className="text-gray-400" />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <Email className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    {...field}
+                    id="email"
+                    type="email"
+                    placeholder="Nhập email của bạn"
+                    className={cn(
+                      "pl-10",
+                      errors.email && "border-red-500 focus:border-red-500"
+                    )}
+                  />
+                </div>
+              )}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      {...field}
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Nhập mật khẩu của bạn"
+                      className={cn(
+                        "pl-10 pr-10",
+                        errors.password && "border-red-500 focus:border-red-500"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <VisibilityOff className="w-4 h-4" /> : <Visibility className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  
+                  {/* Password Strength Indicator */}
+                  {password && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-600">
+                          Độ mạnh mật khẩu
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs font-medium",
+                            passwordStrength <= 1 ? 'text-red-500' :
+                            passwordStrength === 2 ? 'text-orange-500' :
+                            passwordStrength === 3 ? 'text-blue-500' :
+                            'text-green-500'
+                          )}
+                        >
+                          {getPasswordStrengthLabel(passwordStrength)}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={(passwordStrength / 5) * 100} 
+                        className="h-2"
+                      />
+                      
+                      {/* Password Requirements */}
+                      <div className="mt-2 space-y-1">
+                        {[
+                          { test: password.length >= 8, label: 'Ít nhất 8 ký tự' },
+                          { test: /[a-z]/.test(password), label: 'Chứa chữ thường' },
+                          { test: /[A-Z]/.test(password), label: 'Chứa chữ hoa' },
+                          { test: /[0-9]/.test(password), label: 'Chứa số' },
+                          { test: /[^a-zA-Z0-9]/.test(password), label: 'Chứa ký tự đặc biệt' },
+                        ].map((requirement, index) => (
+                          <div key={index} className="flex items-center space-x-1">
+                            {requirement.test ? (
+                              <CheckCircle className="w-3 h-3 text-green-500" />
+                            ) : (
+                              <Cancel className="w-3 h-3 text-gray-400" />
+                            )}
+                            <span
+                              className={cn(
+                                "text-xs",
+                                requirement.test ? 'text-green-600' : 'text-gray-500'
+                              )}
+                            >
+                              {requirement.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
+            {errors.password && (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            )}
+          </div>
+
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+            <Controller
+              name="confirmPassword"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    {...field}
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Xác nhận mật khẩu của bạn"
+                    className={cn(
+                      "pl-10 pr-10",
+                      errors.confirmPassword && "border-red-500 focus:border-red-500"
+                    )}
+                  />
+                  <button
+                    type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    edge="end"
-                    className="text-gray-400"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            className="bg-white dark:bg-gray-800"
-          />
-        )}
-      />
+                    {showConfirmPassword ? <VisibilityOff className="w-4 h-4" /> : <Visibility className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            )}
+          </div>
 
-      {/* Terms Agreement */}
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
-            color="primary"
-          />
-        }
-        label={
-          <Typography variant="body2" className="text-gray-700 dark:text-gray-300">
-            Tôi đồng ý với{' '}
-            <MuiLink
-              component={Link}
-              href="/terms"
-              className="text-primary-600 hover:text-primary-800 dark:text-primary-400"
+          {/* Terms Agreement */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="acceptTerms"
+              checked={acceptTerms}
+              onCheckedChange={(checked) => setAcceptTerms(checked === 'indeterminate' ? false : checked)}
+            />
+            <Label
+              htmlFor="acceptTerms"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Điều khoản sử dụng
-            </MuiLink>
-            {' '}và{' '}
-            <MuiLink
-              component={Link}
-              href="/privacy"
-              className="text-primary-600 hover:text-primary-800 dark:text-primary-400"
-            >
-              Chính sách bảo mật
-            </MuiLink>
-          </Typography>
-        }
-      />
+              Tôi đồng ý với{' '}
+              <Link
+                href="/terms"
+                className="text-primary hover:underline"
+              >
+                Điều khoản sử dụng
+              </Link>
+              {' '}và{' '}
+              <Link
+                href="/privacy"
+                className="text-primary hover:underline"
+              >
+                Chính sách bảo mật
+              </Link>
+            </Label>
+          </div>
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        size="large"
-        disabled={loading || !acceptTerms}
-        className="py-3 bg-primary-600 hover:bg-primary-700"
-      >
-        {loading ? 'Đang đăng ký...' : 'Đăng ký'}
-      </Button>
-
-      {/* Login Link */}
-      <Box className="text-center">
-        <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
-          Đã có tài khoản?{' '}
-          <MuiLink
-            component={Link}
-            href="/auth/login"
-            className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+            disabled={loading || !acceptTerms}
           >
-            Đăng nhập ngay
-          </MuiLink>
-        </Typography>
-      </Box>
-    </Box>
+            {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+          </Button>
+
+          {/* Login Link */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Đã có tài khoản?{' '}
+              <Link
+                href="/auth/login"
+                className="text-primary hover:underline font-medium"
+              >
+                Đăng nhập ngay
+              </Link>
+            </p>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

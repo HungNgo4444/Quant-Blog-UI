@@ -1,6 +1,4 @@
 import { Metadata } from 'next';
-import { Container, Box, Paper } from '@mui/material';
-import Image from 'next/image';
 import Link from 'next/link';
 import MainLayout from 'frontend/src/components/Layout/MainLayout';
 
@@ -19,27 +17,20 @@ export default function AuthLayout({
 }) {
   return (
     <MainLayout>
-      <Box
-        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-800 py-12 px-4 sm:px-6 lg:px-8"
-      >
-        <Container maxWidth="sm">
-          <Paper
-            elevation={3}
-            className="p-8 rounded-lg shadow-xl bg-white dark:bg-gray-800"
-          >
-            {children}
-          </Paper>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/40 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          {children}
 
-          <Box className="mt-8 text-center text-sm text-gray-100">
+          <div className="mt-8 text-center text-sm text-gray-600">
             <Link 
               href="/"
-              className="font-medium hover:text-gray-200 transition-colors"
+              className="font-medium hover:text-gray-800 transition-colors"
             >
               ← Quay về trang chủ
             </Link>
-          </Box>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </div>
     </MainLayout>
   );
 } 

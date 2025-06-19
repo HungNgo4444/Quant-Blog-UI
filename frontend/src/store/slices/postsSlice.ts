@@ -22,7 +22,7 @@ const initialState: PostsState = {
 // Async thunks
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
-  async (params: { page?: number; limit?: number; category?: string; tag?: string; search?: string; userId?: string } = {}, { rejectWithValue }) => {
+  async (params: { page?: number; limit?: number; category?: string; tag?: string; search?: string; userId?: string; sort?: string } = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
       if (params.page) queryParams.append('page', params.page.toString());
@@ -30,6 +30,7 @@ export const fetchPosts = createAsyncThunk(
       if (params.category) queryParams.append('category', params.category);
       if (params.tag) queryParams.append('tag', params.tag);
       if (params.search) queryParams.append('search', params.search);
+      if (params.sort) queryParams.append('sort', params.sort);
       if (params.userId) queryParams.append('userId', params.userId);
       const response = await axios.get(`${API_URL}/posts?${queryParams}`);
       

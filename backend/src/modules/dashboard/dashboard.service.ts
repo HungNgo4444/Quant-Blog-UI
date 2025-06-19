@@ -18,7 +18,6 @@ export class DashboardService {
   ) {}
 
   async getStats(): Promise<DashboardStats> {
-    // Sử dụng Promise.all để thực hiện các truy vấn song song
     const [
       postsCount,
       totalViews,
@@ -49,5 +48,33 @@ export class DashboardService {
         total: categoriesCount,
       },
     };
+  }
+
+  async getOverview(): Promise<any> {
+    const currentYear = new Date().getFullYear();
+    
+    const monthlyData = Array.from({ length: 12 }, (_, index) => ({
+      name: `T${index + 1}`,
+      month: index + 1,
+      total: 0,
+    }));
+
+    const results = await this.postRepository
+      .createQueryBuilder('post')
+      .select('EXTRACT(MONTH FROM post.createdAt)', 'month')
+      .addSelect('COUNT(*)', 'total')
+      .where('EXTRACT(YEAR FROM post.createdAt) = :year', { year: currentYear })
+      .groupBy('EXTRACT(MONTH FROM post.createdAt)')
+      .orderBy('EXTRACT(MONTH FROM post.createdAt)', 'ASC')
+      .getRawMany();
+      
+    results.forEach((result) => {
+      const monthIndex = parseInt(result.month) - 1;
+      if (monthIndex >= 0 && monthIndex < 12) {
+        monthlyData[monthIndex].total = parseInt(result.total);
+      }
+    });
+
+    return monthlyData;
   }
 }

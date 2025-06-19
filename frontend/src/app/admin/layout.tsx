@@ -1,88 +1,83 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Drawer,
-  AppBar,
-  Toolbar,
-  Typography,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  Avatar,
-  Menu,
-  MenuItem,
-  Divider,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import {
   Dashboard,
   Article,
-  Category,
-  Tag,
   People,
-  Analytics,
+  Category,
+  Comment,
   Settings,
-  Menu as MenuIcon,
-  Logout,
   AccountCircle,
+  Logout,
 } from '@mui/icons-material';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import {
+  MenuIcon,
+  X,
+  Sun,
+  Moon,
+  User,
+  LogOut,
+  ChevronDown,
+  Home,
+  Tag,
+} from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
+import { toggleTheme } from '../../store/slices/themeSlice';
+import { clientCookies } from '../../services/TokenService';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '../../components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 
-const drawerWidth = 280;
+interface AdminMenuItem {
+  text: string;
+  href: string;
+  icon: React.ReactNode;
+  description?: string;
+}
 
-const adminMenuItems = [
-  { 
-    text: 'Dashboard', 
-    icon: <Dashboard />, 
+const adminMenuItems: AdminMenuItem[] = [
+  {
+    text: 'Dashboard',
     href: '/admin',
-    description: 'Tổng quan và thống kê' 
+    icon: <Dashboard className="w-5 h-5" />,
+    description: 'Tổng quan hệ thống'
   },
-  { 
-    text: 'Bài viết', 
-    icon: <Article />, 
+  {
+    text: 'Bài viết',
     href: '/admin/posts',
-    description: 'Quản lý bài viết' 
+    icon: <Article className="w-5 h-5" />,
+    description: 'Quản lý bài viết'
   },
-  { 
-    text: 'Danh mục', 
-    icon: <Category />, 
-    href: '/admin/categories',
-    description: 'Quản lý danh mục' 
-  },
-  { 
-    text: 'Thẻ', 
-    icon: <Tag />, 
-    href: '/admin/tags',
-    description: 'Quản lý thẻ' 
-  },
-  { 
-    text: 'Người dùng', 
-    icon: <People />, 
+    {
+      text: 'Danh mục',
+      href: '/admin/categories',
+      icon: <Category className="w-5 h-5" />,
+      description: 'Quản lý danh mục'
+    },
+  {
+    text: 'Người dùng',
     href: '/admin/users',
-    description: 'Quản lý người dùng' 
+    icon: <People className="w-5 h-5" />,
+    description: 'Quản lý tài khoản'
   },
-  { 
-    text: 'Thống kê', 
-    icon: <Analytics />, 
-    href: '/admin/analytics',
-    description: 'Phân tích & báo cáo' 
-  },
-  { 
-    text: 'Cài đặt', 
-    icon: <Settings />, 
-    href: '/admin/settings',
-    description: 'Cấu hình blog' 
-  },
+  {
+    text: 'Thẻ',
+    href: '/admin/tags',
+    icon: <Tag className="w-5 h-5" />,
+    description: 'Quản lý thẻ'
+  }
 ];
 
 interface AdminLayoutProps {
@@ -90,39 +85,49 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const pathname = usePathname();
-  const router = useRouter();
   const dispatch = useAppDispatch();
-  
+  const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  
+  const { mode } = useAppSelector((state) => state.theme);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Redirect if not authenticated or not admin
-  React.useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      router.push('/auth/login');
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 0);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Check if user is admin
+    if (!isAuthenticated) {
+      router.push('/auth/login?redirect=' + encodeURIComponent(pathname));
+      return;
     }
-  }, [isAuthenticated, user, router]);
+
+    if (user && user.role !== 'admin') {
+      router.push('/');
+      return;
+    }
+  }, [isAuthenticated, user, router, pathname]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleLogout = () => {
     dispatch(logout());
+    setUserMenuOpen(false);
     router.push('/');
+  };
+
+  const handleThemeToggle = () => {
+    dispatch(toggleTheme());
   };
 
   const isActive = (href: string) => {
@@ -132,190 +137,193 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return pathname.startsWith(href);
   };
 
-  const drawer = (
-    <Box>
+  const SidebarContent = () => (
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <Box 
-        className="p-6 border-b border-gray-200 dark:border-gray-700"
-        sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}
-      >
-        <Typography variant="h6" className="font-bold">
-          Admin Panel
-        </Typography>
-        <Typography variant="body2" className="opacity-90">
-          Quản trị blog
-        </Typography>
-      </Box>
+      <div className="py-3 px-6 border-b border-gray-200 dark:border-gray-700 bg-gray-900 dark:bg-gray-900 text-white">
+        <h2 className="text-lg font-bold">Admin Panel</h2>
+        <p className="text-sm opacity-90">Quản trị blog</p>
+      </div>
 
       {/* Navigation */}
-      <List className="p-0">
+      <nav className="flex-1 p-0">
         {adminMenuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              component={Link}
-              href={item.href}
-              onClick={() => isMobile && setMobileOpen(false)}
-              selected={isActive(item.href)}
-              sx={{
-                py: 2,
-                px: 3,
-                '&.Mui-selected': {
-                  bgcolor: 'primary.50',
-                  borderRight: 3,
-                  borderColor: 'primary.main',
-                  '& .MuiListItemIcon-root': {
-                    color: 'primary.main',
-                  },
-                  '& .MuiListItemText-primary': {
-                    color: 'primary.main',
-                    fontWeight: 600,
-                  },
-                },
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText 
-                primary={item.text}
-                secondary={item.description}
-                primaryTypographyProps={{
-                  fontWeight: isActive(item.href) ? 600 : 400,
-                }}
-              />
-            </ListItemButton>
-          </ListItem>
+          <Link
+            key={item.text}
+            href={item.href}
+            onClick={() => setMobileOpen(false)}
+            className={`
+              flex items-center px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors
+              ${isActive(item.href) 
+                ? 'bg-primary/10 dark:bg-primary/20 border-r-4 border-gray-900 text-gray-900 dark:text-primary dark:border-primary font-semibold' 
+                : 'text-gray-700 dark:text-gray-300'
+              }
+            `}
+          >
+            <span className={`mr-3 ${isActive(item.href) ? 'text-gray-900 dark:text-primary' : 'text-gray-500 dark:text-gray-400'}`}>
+              {item.icon}
+            </span>
+            <div className="flex-1">
+              <div className={isActive(item.href) ? 'font-semibold' : ''}>{item.text}</div>
+              {item.description && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">{item.description}</div>
+              )}
+            </div>
+          </Link>
         ))}
-      </List>
-    </Box>
+      </nav>
+    </div>
   );
 
   if (!isAuthenticated || user?.role !== 'admin') {
-    return null; // or loading spinner
+    return null;
   }
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          boxShadow: 1,
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          
-          <Typography variant="h6" noWrap component="div" className="flex-1">
-            {adminMenuItems.find(item => isActive(item.href))?.text || 'Dashboard'}
-          </Typography>
-          <Typography onClick={() => router.push('/')} noWrap component="div" sx={{ mr: 2, cursor: 'pointer' }}>
-            Trang chủ
-          </Typography>
-          {/* User Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-            <IconButton onClick={handleUserMenuOpen} className="ml-2">
-              <Avatar
-                src={user?.avatar}
-                alt={user?.name}
-                sx={{ width: 32, height: 32 }}
-              >
-                {user?.name?.charAt(0).toUpperCase()}
-              </Avatar>
-              <KeyboardArrowDownIcon sx={{ position: 'absolute', right: 4, bottom: 4, width: 16, height: 16, backgroundColor: '#555', color: 'white', borderRadius: '50%', border: '1px solid #333' }} />
-            </IconButton>
-            
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleUserMenuClose}
-              onClick={handleUserMenuClose}
-            >
-              <MenuItem component={Link} href="/profile">
-                <AccountCircle className="mr-2" />
-                Hồ sơ
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout}>
-                <Logout className="mr-2" />
-                Đăng xuất
-              </MenuItem>
-            </Menu>
-          </Box>
-        </Toolbar>
-      </AppBar>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <div className="bg-transparent border-none shadow-none border-r border-gray-200 dark:border-gray-700 shadow-sm">
+          <SidebarContent />
+        </div>
+      </div>
 
-      {/* Drawer */}
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-      >
-        {/* Mobile drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: drawerWidth,
-              border: 'none',
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        
-        {/* Desktop drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
-              width: drawerWidth,
-              border: 'none',
-              borderRight: 1,
-              borderColor: 'divider',
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
+      {/* Mobile Sidebar */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-64 p-0 bg-white dark:bg-gray-800">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
 
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: 8, // AppBar height
-          minHeight: 'calc(100vh - 64px)',
-          bgcolor: 'background.default',
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
+      {/* Main Content */}
+      <div className="flex-1 md:ml-64">
+        {/* Header */}
+        <header className={`sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${scrolled ? 'shadow-lg' : ''}`}>
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              {/* Left side */}
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDrawerToggle}
+                  className="md:hidden"
+                >
+                  <MenuIcon className="w-5 h-5" />
+                </Button>
+                
+                <div>
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {adminMenuItems.find(item => isActive(item.href))?.text || 'Dashboard'}
+                  </h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                    {adminMenuItems.find(item => isActive(item.href))?.description || 'Tổng quan hệ thống'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right side */}
+              <div className="flex items-center space-x-3">
+                {/* Theme toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleThemeToggle}
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+
+                {/* Home button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push('/')}
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hidden sm:flex"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Trang chủ
+                </Button>
+
+                {/* User Menu */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center h-9 px-2"
+                  >
+                    <Avatar className="h-7 w-7">
+                      {user?.avatar ? (
+                        <AvatarImage src={user?.avatar} alt={user?.name} />
+                      ) : (
+                        <AvatarFallback className="text-xs bg-gray-300 dark:text-black">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                  </Button>
+
+                  {/* User dropdown menu */}
+                  {userMenuOpen && (
+                    <div className="absolute z-50 right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+                      <div className="px-4 py-3">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-8 w-8">
+                            {user?.avatar ? (
+                              <AvatarImage src={user?.avatar} alt={user?.name} />
+                            ) : (
+                              <AvatarFallback className="text-sm bg-gray-300 dark:text-black">
+                                {user?.name?.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <User className="h-4 w-4 mr-3" />
+                          Hồ sơ
+                        </Link>
+                      </div>
+                      <div className="py-1">
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <LogOut className="h-4 w-4 mr-3" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
+
+      {/* Click outside to close menus */}
+      {userMenuOpen && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={() => setUserMenuOpen(false)}
+        />
+      )}
+    </div>
   );
 } 

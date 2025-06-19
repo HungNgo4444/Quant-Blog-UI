@@ -2,22 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActionArea,
-  Box,
-  Chip,
-  Skeleton,
-  Alert,
-} from '@mui/material';
-import {
   Folder,
   Article,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Skeleton } from '../../components/ui/skeleton';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 
 interface Category {
   id: string;
@@ -101,126 +93,86 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Danh mục
-        </Typography>
-        <Grid container spacing={3}>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-6">Danh mục</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card>
-                <CardContent>
-                  <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
-                  <Skeleton variant="text" height={60} />
-                  <Skeleton variant="text" height={20} width="60%" />
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={index}>
+              <CardContent className="p-6">
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
-      </Container>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <Alert>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Danh mục
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">Danh mục</h1>
+        <p className="text-xl text-gray-600">
           Khám phá các chủ đề và danh mục bài viết
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((category) => (
-          <Grid item xs={12} sm={6} md={4} key={category.id}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4
-                }
-              }}
-            >
-              <CardActionArea
-                component={Link}
-                href={`/categories/${category.slug}`}
-                sx={{ height: '100%' }}
-              >
-                <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      mb: 2
-                    }}
+          <Link
+            key={category.id}
+            href={`/categories/${category.slug}`}
+            className="text-decoration-none"
+          >
+            <Card className="h-full transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer">
+              <CardContent className="h-full flex flex-col p-6">
+                <div className="flex items-center mb-4">
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center mr-4"
+                    style={{ backgroundColor: category.color }}
                   >
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 2,
-                        backgroundColor: category.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mr: 2
-                      }}
+                    <Folder className="text-white text-2xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold mb-2">{category.name}</h2>
+                    <Badge
+                      variant="outline"
+                      className="flex items-center gap-1"
                     >
-                      <Folder sx={{ color: 'white', fontSize: 24 }} />
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" component="h2" gutterBottom>
-                        {category.name}
-                      </Typography>
-                      <Chip
-                        icon={<Article />}
-                        label={`${category.postCount} bài viết`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </Box>
-                  </Box>
+                      <Article className="h-3 w-3" />
+                      {category.postCount} bài viết
+                    </Badge>
+                  </div>
+                </div>
 
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary"
-                    sx={{ 
-                      flex: 1,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {category.description}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
+                <p className="text-gray-600 flex-1 line-clamp-3">
+                  {category.description}
+                </p>
+              </CardContent>
             </Card>
-          </Grid>
+          </Link>
         ))}
-      </Grid>
+      </div>
 
       {categories.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary">
+        <div className="text-center py-16">
+          <h3 className="text-lg font-medium text-gray-900">
             Chưa có danh mục nào
-          </Typography>
-        </Box>
+          </h3>
+        </div>
       )}
-    </Container>
+    </div>
   );
 } 

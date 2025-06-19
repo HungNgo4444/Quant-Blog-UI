@@ -4,15 +4,45 @@ import axios from 'axios';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Client-side function
-export async function getPosts() {
+export async function getPosts(page?: number, limit?: number, category?: string, tag?: string, search?: string, sort?: string, userId?: string) {
     try {
-      const res = await instanceApi.get(`/posts?limit=6`);
+      const res = await instanceApi.get(`/posts?page=${page}&limit=${limit}&category=${category}&tag=${tag}&search=${search}&sort=${sort}&userId=${userId}`);
       
-      return res.data.posts || [];
+      return res.data || { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
     } catch (error) {
       console.error('Error fetching posts:', error);
-      return [];
+      return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
     }
+}
+
+export async function getFeaturedPosts(limit: number) {
+  try {
+    const res = await instanceApi.get(`/posts/featured?limit=${limit}`);
+    return res.data.posts || [];
+  } catch (error) {
+    console.error('Error fetching featured posts:', error);
+    return [];
+  }
+}
+
+export async function getRecentPost(limit: number) {
+  try {
+    const res = await instanceApi.get(`/posts/recent?limit=${limit}`);
+    return res.data.posts || [];
+  } catch (error) {
+    console.error('Error fetching recent posts:', error);
+    return [];
+  }
+}
+
+export async function getTopPosts(limit: number) {
+  try {
+    const res = await instanceApi.get(`/posts/top?limit=${limit}&sort=likes`);
+    return res.data.posts || [];
+  } catch (error) {
+    console.error('Error fetching top posts:', error);
+    return [];
+  }
 }
 
 export async function getPostsByUser(page: number, limit: number, category: string, tag: string, search: string) {
@@ -177,5 +207,21 @@ export async function getUserPostsStats() {
   } catch (error) {
     console.error('Error fetching user posts stats:', error);
     throw error;
+  }
+}
+
+export async function getAdminPosts(page?: number, limit?: number, status?: string, search?: string) {
+  try {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    if (status && status !== 'all') params.append('status', status);
+    if (search) params.append('search', search);
+
+    const res = await instanceApi.get(`/posts/admin/all?${params}`);
+    return res.data || { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
+  } catch (error) {
+    console.error('Error fetching admin posts:', error);
+    return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   }
 }

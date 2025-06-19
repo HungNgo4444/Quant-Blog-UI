@@ -2,26 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Container,
-  Typography,
-  TextField,
-  InputAdornment,
-  Box,
-  Card,
-  CardContent,
-  CardMedia,
-  Grid,
-  Chip,
-  Avatar,
-  Skeleton,
-  Alert,
-  Pagination,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import {
   Search as SearchIcon,
   AccessTime,
   Visibility,
@@ -35,6 +15,14 @@ import { useAppSelector, useAppDispatch } from '../../store';
 import { fetchPosts, fetchBulkSaveStatus, optimisticToggleSave, togglePostSave } from '../../store/slices/postsSlice';
 import { formatDate, calculateReadingTime } from '../../lib/utils';
 import { getAllCategories } from '../../services/CategoryService';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { Skeleton } from '../../components/ui/skeleton';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 interface Category {
   id: string;
@@ -195,268 +183,228 @@ export default function SearchPage() {
   }, [posts, sortBy]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Tìm kiếm
-        </Typography>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">Tìm kiếm</h1>
         
         {/* Search Form */}
-        <Box component="form" onSubmit={handleSearch} sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm bài viết..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 2 }}
-          />
+        <form onSubmit={handleSearch} className="mb-6">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm bài viết..."
+              className="pl-10 w-full"
+            />
+          </div>
           {/* Hiển thị indicator khi đang debounce */}
           {searchQuery !== debouncedSearchQuery && searchQuery.trim() && (
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+            <p className="text-sm text-gray-500 mt-2 ml-2">
               Đang tìm kiếm...
-            </Typography>
+            </p>
           )}
-        </Box>
+        </form>
 
         {/* Filters */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Danh mục</InputLabel>
-            <Select
-              value={category}
-              label="Danh mục"
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <MenuItem value="all">Tất cả danh mục</MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.slug}>
-                  {cat.name}
-                </MenuItem>
-              ))}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="min-w-[200px]">
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Danh mục" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.slug}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
+          </div>
 
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Sắp xếp</InputLabel>
-            <Select
-              value={sortBy}
-              label="Sắp xếp"
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              {sortOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
+          <div className="min-w-[200px]">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
-        </Box>
+          </div>
+        </div>
 
         {/* Search Results Count */}
         {debouncedSearchQuery && !loading && (
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          <p className="text-gray-600 mb-6">
             {pagination.totalItems > 0 
               ? `Tìm thấy ${pagination.totalItems} kết quả cho "${debouncedSearchQuery}"`
               : `Không tìm thấy kết quả nào cho "${debouncedSearchQuery}"`
             }
-          </Typography>
+          </p>
         )}
-      </Box>
+      </div>
 
       {/* Loading State */}
       {loading && (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card>
-                <Skeleton variant="rectangular" height={200} />
-                <CardContent>
-                  <Skeleton variant="text" height={40} />
-                  <Skeleton variant="text" height={60} />
-                  <Skeleton variant="text" height={20} width="60%" />
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={index}>
+              <Skeleton className="h-48 w-full" />
+              <CardContent className="p-4">
+                <Skeleton className="h-6 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {/* Error State */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
+        <Alert className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Search Results */}
       {!loading && sortedPosts.length > 0 && (
         <>
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedPosts.map((post) => (
-              <Grid item xs={12} sm={6} md={4} key={post.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                  {/* Save Button */}
-                  {isAuthenticated && (
-                    <Box 
-                      sx={{ 
-                        position: 'absolute', 
-                        top: 8, 
-                        right: 8, 
-                        zIndex: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        borderRadius: 1,
-                        minWidth: 'auto',
-                        width: 32,
-                        height: 32,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 255, 255, 1)',
-                        }
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSaveToggle(post.slug);
-                      }}
-                    >
-                      {saveStatus[post.slug] ? (
-                        <Bookmark sx={{ fontSize: 20, color: 'primary.main' }} />
-                      ) : (
-                        <BookmarkBorder sx={{ fontSize: 20, color: 'text.secondary' }} />
-                      )}
-                    </Box>
+              <Card key={post.id} className="h-full flex flex-col relative hover:shadow-lg transition-shadow">
+                {/* Save Button */}
+                {isAuthenticated && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 z-10 bg-black/60 hover:bg-black/80"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSaveToggle(post.slug);
+                    }}
+                  >
+                    {saveStatus[post.slug] ? (
+                      <Bookmark className="h-4 w-4 text-white" />
+                    ) : (
+                      <BookmarkBorder className="h-4 w-4 text-white" />
+                    )}
+                  </Button>
+                )}
+
+                <Link href={`/posts/${post.slug}`} className="flex flex-col h-full text-decoration-none">
+                  {post.featuredImage && (
+                    <img
+                      src={post.featuredImage}
+                      alt={post.title}
+                      className="w-full h-48 object-cover"
+                    />
                   )}
+                  <CardContent className="flex-1 flex flex-col p-4">
+                    <div className="mb-3">
+                      <Badge variant="secondary" className="mb-2">
+                        {post.category?.name || ''}
+                      </Badge>
+                    </div>
+                    
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">
+                      {post.excerpt}
+                    </p>
 
-                  <Link href={`/posts/${post.slug}`} style={{ textDecoration: 'none', height: '100%' }}>
-                    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      {post.featuredImage && (
-                        <CardMedia
-                          component="img"
-                          height="200"
-                          image={post.featuredImage}
-                          alt={post.title}
-                        />
-                      )}
-                      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ mb: 2 }}>
-                          <Chip
-                            label={post.category?.name || ''}
-                            size="small"
-                            color="primary"
-                            sx={{ mb: 1 }}
-                          />
-                        </Box>
-                        
-                        <Typography variant="h6" component="h3" gutterBottom>
-                          {post.title}
-                        </Typography>
-                        
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            flex: 1,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            mb: 2
-                          }}
-                        >
-                          {post.excerpt}
-                        </Typography>
+                    <div className="flex items-center mb-3">
+                      <Avatar className="h-6 w-6 mr-2">
+                        <AvatarImage src={post.author?.avatar || ''} alt={post.author?.name || ''} />
+                        <AvatarFallback>{post.author?.name?.charAt(0) || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs text-gray-500">
+                        {post.author?.name}
+                      </span>
+                    </div>
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Avatar
-                            src={post.author?.avatar || ''}
-                            alt={post.author?.name || ''}
-                            sx={{ width: 24, height: 24, mr: 1 }}
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {post.author?.name}
-                          </Typography>
-                        </Box>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <AccessTime className="h-3 w-3" />
+                        <span>{post.readingTime || calculateReadingTime(post.content)} phút</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Visibility className="h-3 w-3" />
+                          <span>{post.viewCount || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <ThumbUp className="h-3 w-3" />
+                          <span>{post.likeCount || 0}</span>
+                        </div>
+                      </div>
+                    </div>
 
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <AccessTime sx={{ fontSize: 14 }} />
-                            <Typography variant="caption">
-                              {post.readingTime || calculateReadingTime(post.content)} phút
-                            </Typography>
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Visibility sx={{ fontSize: 14 }} />
-                              <Typography variant="caption">{post.viewCount || 0}</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <ThumbUp sx={{ fontSize: 14 }} />
-                              <Typography variant="caption">{post.likeCount || 0}</Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                          {formatDate(post.publishedAt || post.createdAt)}
-                        </Typography>
-                      </CardContent>
-                    </Box>
-                  </Link>
-                </Card>
-              </Grid>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formatDate(post.publishedAt || post.createdAt)}
+                    </p>
+                  </CardContent>
+                </Link>
+              </Card>
             ))}
-          </Grid>
+          </div>
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={pagination.totalPages}
-                page={pagination.currentPage}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-              />
-            </Box>
+            <div className="flex justify-center mt-8">
+              <div className="flex items-center gap-2">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={page === pagination.currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange({} as any, page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
         </>
       )}
 
       {/* No Results */}
       {!loading && debouncedSearchQuery && sortedPosts.length === 0 && !error && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="text-center py-16">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
             Không tìm thấy kết quả
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-gray-600">
             Hãy thử tìm kiếm với từ khóa khác hoặc thay đổi bộ lọc
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
 
       {/* Empty State */}
       {!loading && !debouncedSearchQuery && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="text-center py-16">
+          <SearchIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
             Nhập từ khóa để tìm kiếm
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-gray-600">
             Tìm kiếm bài viết theo tiêu đề, nội dung hoặc thẻ
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
-    </Container>
+    </div>
   );
-} 
+}

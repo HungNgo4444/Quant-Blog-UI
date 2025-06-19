@@ -10,11 +10,13 @@ import { SavedPost } from '../../entities/saved-post.entity';
 import { Category } from '../../entities/category.entity';
 import { Tag } from '../../entities/tag.entity';
 import { AuthModule } from '../auth/auth.module';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, View, Like, SavedPost, Category, Tag]),
-    AuthModule
+    AuthModule,
+    SharedModule
   ],
   controllers: [PostsController],
   providers: [PostsService],

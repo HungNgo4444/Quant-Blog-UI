@@ -20,4 +20,17 @@ export class DashboardController {
       }
     };
   }
+
+  @Get('overview')
+  @CacheTTL(300) // Cache lưu trữ kết quả trong 5 phút
+  async getOverview(): Promise<ApiResponse<any[]>> {
+    const overview = await this.dashboardService.getOverview();
+    return {
+      data: overview,
+      meta: {
+        timestamp: new Date().toISOString(),
+        cached: true
+      }
+    };
+  }
 }

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Container, Alert, CircularProgress, Box } from '@mui/material';
 import PostEditor from '../../../../components/Editor/PostEditor';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import { updatePost } from '../../../../services/PostService';
@@ -11,6 +10,9 @@ import { getPostBySlugIncludingDrafts } from '../../../../services/PostService';
 import { getAllCategories } from '../../../../services/CategoryService';
 import { getAllTags } from '../../../../services/TagService';
 import { Post } from '../../../../types';
+import { Alert, AlertDescription } from '../../../../components/ui/alert';
+import { Card, CardContent } from '../../../../components/ui/card';
+import { Skeleton } from '../../../../components/ui/skeleton';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function EditPostPage() {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { loading: reduxLoading } = useAppSelector((state) => state.posts);
+  const [selectedImageBase64, setSelectedImageBase64] = useState("");
   
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,13 +122,12 @@ export default function EditPostPage() {
         excerpt: postData.excerpt,
         categoryId: postData.categoryId,
         tags: postData.tags,
-        featured_image: postData.featuredImage,
+        featured_image: selectedImageBase64,
         published: true, // Xuất bản
         seoTitle: postData.metaTitle,
         seoDescription: postData.metaDescription,
       };
 
-      console.log('🚀 Publishing post with data:', formattedData);
       const result = await updatePost(currentPost.slug, formattedData);
       
       toast.success('Đã cập nhật bài viết thành công!');
@@ -133,63 +135,67 @@ export default function EditPostPage() {
       // Redirect to the updated post
       router.push(`/posts/${result.slug}`);
     } catch (error) {
-      console.error('❌ Error publishing post:', error);
+      console.error('Error publishing post:', error);
       toast.error('Có lỗi xảy ra khi cập nhật bài viết');
     }
   };
 
   if (!authChecked || loading) {
     return (
-      <Box 
-        sx={{ 
-          height: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="warning">
-          Vui lòng đăng nhập để chỉnh sửa bài viết.
+      <div className="max-w-md mx-auto mt-8 px-4">
+        <Alert>
+          <AlertDescription>
+            Vui lòng đăng nhập để chỉnh sửa bài viết.
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">
-          {error}
+      <div className="max-w-md mx-auto mt-8 px-4">
+        <Alert>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   if (!currentPost) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">
-          Không tìm thấy bài viết.
+      <div className="max-w-md mx-auto mt-8 px-4">
+        <Alert>
+          <AlertDescription>
+            Không tìm thấy bài viết.
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
   if (!canEdit) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">
-          Bạn không có quyền chỉnh sửa bài viết này.
+      <div className="max-w-md mx-auto mt-8 px-4">
+        <Alert>
+          <AlertDescription>
+            Bạn không có quyền chỉnh sửa bài viết này.
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
@@ -221,6 +227,8 @@ export default function EditPostPage() {
       categories={categories}
       tags={tags}
       loading={reduxLoading}
+      selectedImageBase64={selectedImageBase64}
+      setSelectedImageBase64={setSelectedImageBase64}
     />
   );
 } 

@@ -120,11 +120,11 @@ export class Post {
   categoryId: string;
 
   // Relations
-  // @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
-  // author: User;
+  @ManyToOne(() => User, (user) => user.posts, { onDelete: 'CASCADE' })
+  author: User;
 
-  // @ManyToOne(() => Category, (category) => category.posts, { onDelete: 'SET NULL' })
-  // category: Category;
+  @ManyToOne(() => Category, (category) => category.posts, { onDelete: 'SET NULL' })
+  category: Category;
 
   @ManyToMany(() => Tag, (tag) => tag.posts)
   @JoinTable({

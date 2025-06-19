@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Box, Typography, CircularProgress, Button } from '@mui/material';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import { verifyEmail } from '../../../services/AuthService';
+import { Loader2 } from 'lucide-react';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -58,78 +60,74 @@ export default function VerifyEmailPage() {
   }, [token, isVerified, router]);
 
   return (
-    <Box className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <Box className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
-        {status === 'loading' && (
-          <Box className="text-center">
-            <CircularProgress size={64} className="mb-4" />
-            <Typography variant="h5" component="h1">
-              Đang xác thực email...
-            </Typography>
-          </Box>
-        )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          {status === 'loading' && (
+            <div className="text-center">
+              <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
+              <CardTitle className="text-xl">
+                Đang xác thực email...
+              </CardTitle>
+            </div>
+          )}
 
-        {status === 'success' && (
-          <Box className="text-center">
-            <CheckCircle 
-              color="success" 
-              sx={{ fontSize: 64 }} 
-              className="mb-4"
-            />
-            <Typography variant="h5" component="h1" className="mb-4">
-              Xác thực email thành công!
-            </Typography>
-            <Typography color="text.secondary" className="mb-6">
-              {message}
-            </Typography>
-            <Button
-              component={Link}
-              href="/auth/login"
-              variant="contained"
-              fullWidth
-              size="large"
-            >
-              Đăng nhập ngay
-            </Button>
-          </Box>
-        )}
+          {status === 'success' && (
+            <div className="text-center">
+              <CheckCircle 
+                className="w-16 h-16 text-green-500 mx-auto mb-4"
+              />
+              <CardTitle className="text-xl mb-4">
+                Xác thực email thành công!
+              </CardTitle>
+              <p className="text-gray-600 mb-6">
+                {message}
+              </p>
+              <Button
+                asChild
+                className="w-full"
+              >
+                <Link href="/auth/login">
+                  Đăng nhập ngay
+                </Link>
+              </Button>
+            </div>
+          )}
 
-        {status === 'error' && (
-          <Box className="text-center">
-            <ErrorIcon 
-              color="error" 
-              sx={{ fontSize: 64 }} 
-              className="mb-4"
-            />
-            <Typography variant="h5" component="h1" className="mb-4">
-              Xác thực thất bại
-            </Typography>
-            <Typography color="error" className="mb-6">
-              {message}
-            </Typography>
-            <Box className="space-y-3">
-              <Button
-                component={Link}
-                href="/auth/login"
-                variant="contained"
-                fullWidth
-                size="large"
-              >
-                Quay lại đăng nhập
-              </Button>
-              <Button
-                component={Link}
-                href="/auth/register"
-                variant="outlined"
-                fullWidth
-                size="large"
-              >
-                Đăng ký tài khoản mới
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Box>
+          {status === 'error' && (
+            <div className="text-center">
+              <ErrorIcon 
+                className="w-16 h-16 text-red-500 mx-auto mb-4"
+              />
+              <CardTitle className="text-xl mb-4">
+                Xác thực thất bại
+              </CardTitle>
+              <p className="text-red-600 mb-6">
+                {message}
+              </p>
+              <div className="space-y-3">
+                <Button
+                  asChild
+                  className="w-full"
+                >
+                  <Link href="/auth/login">
+                    Quay lại đăng nhập
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Link href="/auth/register">
+                    Đăng ký tài khoản mới
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 } 

@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Container, Alert, CircularProgress, Box } from '@mui/material';
 import PostEditor from '../../../components/Editor/PostEditor';
 import { useAppSelector, useAppDispatch } from '../../../store';
 import { toast } from 'react-toastify';
 import { getAllCategories } from '../../../services/CategoryService';
 import { getAllTags } from '../../../services/TagService';
 import { createPost } from 'frontend/src/services/PostService';
+import { Alert, AlertDescription } from '../../../components/ui/alert';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Skeleton } from '../../../components/ui/skeleton';
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -18,7 +20,7 @@ export default function CreatePostPage() {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [authChecked, setAuthChecked] = useState(false);
-
+  const [selectedImageBase64, setSelectedImageBase64] = useState("");
   // Check authentication - cho phép cả user và admin
   useEffect(() => {
     if (!isAuthenticated && authChecked) {
@@ -54,7 +56,7 @@ export default function CreatePostPage() {
         excerpt: postData.excerpt,
         categoryId: postData.categoryId,
         tags: postData.tags,
-        featured_image: postData.featuredImage,
+        featured_image: selectedImageBase64,
         published: false, // Lưu nháp
         seoTitle: postData.metaTitle,
         seoDescription: postData.metaDescription,
@@ -102,7 +104,7 @@ export default function CreatePostPage() {
         excerpt: postData.excerpt,
         categoryId: postData.categoryId,
         tags: postData.tags,
-        featured_image: postData.featuredImage,
+        featured_image: selectedImageBase64,
         published: true, // Xuất bản
         seoTitle: postData.metaTitle,
         seoDescription: postData.metaDescription,
@@ -134,26 +136,24 @@ export default function CreatePostPage() {
 
   if (!authChecked) {
     return (
-      <Box 
-        sx={{ 
-          height: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center' 
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="warning">
-          Vui lòng đăng nhập để tạo bài viết mới.
+      <div className="max-w-md mx-auto mt-8 px-4">
+        <Alert>
+          <AlertDescription>
+            Vui lòng đăng nhập để tạo bài viết mới.
+          </AlertDescription>
         </Alert>
-      </Container>
+      </div>
     );
   }
 
@@ -164,6 +164,8 @@ export default function CreatePostPage() {
       categories={categories}
       tags={tags}
       loading={loading}
+      selectedImageBase64={selectedImageBase64}
+      setSelectedImageBase64={setSelectedImageBase64}
     />
   );
 } 

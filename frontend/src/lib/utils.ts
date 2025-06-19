@@ -1,4 +1,6 @@
 import readingTime from 'reading-time';
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export const generateSlug = (text: string): string => {
   return text
@@ -212,7 +214,11 @@ export const readFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string); // Ép kiểu về string
+      reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
   });
 };
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}

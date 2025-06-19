@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Provider } from 'react-redux';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -8,6 +8,7 @@ import { store } from '../store';
 import { useAppSelector } from '../store';
 import AuthProvider from './Providers/AuthProvider';
 import { ToastContainer } from 'react-toastify';
+import { Box, Skeleton } from '@mui/material';
 
 const lightTheme = createTheme({
   palette: {
@@ -39,22 +40,48 @@ const darkTheme = createTheme({
 
 function ThemeWrapper({ children }: { children: React.ReactNode }) {
   const { mode } = useAppSelector((state) => state.theme);
+  const [mounted, setMounted] = useState(false);
   
-  React.useEffect(() => {
-    if (mode === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      if (mode === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
-  }, [mode]);
+  }, [mode, mounted]);
 
   const theme = mode === 'dark' ? darkTheme : lightTheme;
+
+  if (!mounted) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ 
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'background.default'
+        }}>
+          <Box sx={{ p: 2 }}>
+            <Skeleton variant="rectangular" height={60} sx={{ mb: 2 }} />
+            <Skeleton variant="rectangular" height={400} />
+          </Box>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-      <ToastContainer position="bottom-right" autoClose={3000} />
+        <ToastContainer position="bottom-right" autoClose={3000} />
         {children}
       </AuthProvider>
     </ThemeProvider>

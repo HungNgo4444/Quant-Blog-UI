@@ -1,556 +1,310 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
 import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
   Select,
-  MenuItem,
-  Chip,
-  IconButton,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Menu,
-  Tooltip,
-} from '@mui/material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 import {
-  Add,
-  Search,
-  FilterList,
-  Edit,
-  Delete,
-  Visibility,
-  MoreVert,
-  Public,
-  ArticleOutlined as Draft,
-  Schedule,
-} from '@mui/icons-material';
-import { DataGrid, GridColDef, GridRowParams } from '@mui/x-data-grid';
-import Link from 'next/link';
-import { formatDate } from '../../../lib/utils';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../components/ui/table";
+import { Badge } from "../../../components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../../../components/ui/pagination";
+import { PlusCircle, Pencil, Trash2, Eye } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { getAdminPosts } from "../../../services/PostService";
+import { useRouter } from "next/navigation";
 
-interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  status: 'published' | 'draft' | 'scheduled';
-  category: {
-    id: string;
-    name: string;
-  };
-  author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  tags: Array<{
-    id: string;
-    name: string;
-  }>;
-  views: number;
-  likes: number;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-}
+export default function PostsPage() {
+  const router = useRouter();
+  const [posts, setPosts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  });
+  const [loading, setLoading] = useState(false);
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export default function PostsManagement() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
-
+  // Debounce search term
   useEffect(() => {
-    fetchPosts();
-    fetchCategories();
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 1000);
 
-  const fetchPosts = async () => {
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchPosts = async (page: number = 1, search: string = "", status: string = "all") => {
     try {
-      // Simulated data - replace with actual API call
-      const mockPosts: Post[] = [
-        {
-          id: '1',
-          title: 'Hướng dẫn sử dụng TypeScript hiệu quả',
-          slug: 'huong-dan-su-dung-typescript-hieu-qua',
-          status: 'published',
-          category: { id: '1', name: 'Technology' },
-          author: { id: '1', name: 'John Doe', avatar: '/avatars/john.jpg' },
-          tags: [
-            { id: '1', name: 'TypeScript' },
-            { id: '2', name: 'Programming' }
-          ],
-          views: 1234,
-          likes: 89,
-          createdAt: '2024-01-15T10:00:00Z',
-          updatedAt: '2024-01-15T10:00:00Z',
-          publishedAt: '2024-01-15T10:00:00Z',
-        },
-        {
-          id: '2',
-          title: 'React Server Components: Tương lai của React',
-          slug: 'react-server-components-tuong-lai-cua-react',
-          status: 'draft',
-          category: { id: '2', name: 'Tutorial' },
-          author: { id: '2', name: 'Jane Smith', avatar: '/avatars/jane.jpg' },
-          tags: [
-            { id: '3', name: 'React' },
-            { id: '4', name: 'Frontend' }
-          ],
-          views: 0,
-          likes: 0,
-          createdAt: '2024-01-14T09:00:00Z',
-          updatedAt: '2024-01-14T09:00:00Z',
-        },
-        {
-          id: '3',
-          title: 'NestJS vs Express: So sánh chi tiết',
-          slug: 'nestjs-vs-express-so-sanh-chi-tiet',
-          status: 'scheduled',
-          category: { id: '1', name: 'Technology' },
-          author: { id: '3', name: 'Bob Wilson', avatar: '/avatars/bob.jpg' },
-          tags: [
-            { id: '5', name: 'NestJS' },
-            { id: '6', name: 'Express' },
-            { id: '7', name: 'Backend' }
-          ],
-          views: 0,
-          likes: 0,
-          createdAt: '2024-01-13T08:00:00Z',
-          updatedAt: '2024-01-13T08:00:00Z',
-          publishedAt: '2024-01-20T10:00:00Z',
-        },
-      ];
-
-      setPosts(mockPosts);
-      setLoading(false);
+      setLoading(true);
+      const res = await getAdminPosts(page, 7, status, search);
+      setPosts(res.posts || []);
+      setPagination(res.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 7
+      });
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setPosts([]);
+    } finally {
       setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const mockCategories: Category[] = [
-        { id: '1', name: 'Technology', slug: 'technology' },
-        { id: '2', name: 'Tutorial', slug: 'tutorial' },
-        { id: '3', name: 'News', slug: 'news' },
-        { id: '4', name: 'Review', slug: 'review' },
-      ];
-      setCategories(mockCategories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
 
-  const handleDeletePost = async (postId: string) => {
-    try {
-      // API call to delete post
-      setPosts(posts.filter(post => post.id !== postId));
-      setDeleteDialogOpen(false);
-      setSelectedPost(null);
-    } catch (error) {
-      console.error('Error deleting post:', error);
-    }
-  };
+  // Fetch posts when page, debouncedSearchTerm, or statusFilter changes
+  useEffect(() => {
+    fetchPosts(currentPage, debouncedSearchTerm, statusFilter);
+  }, [currentPage, debouncedSearchTerm, statusFilter]);
 
-  const handleStatusChange = async (postId: string, newStatus: string) => {
-    try {
-      // API call to update post status
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { ...post, status: newStatus as 'published' | 'draft' | 'scheduled' }
-          : post
-      ));
-    } catch (error) {
-      console.error('Error updating post status:', error);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published':
-        return <Public sx={{ fontSize: 16 }} />;
-      case 'draft':
-        return <Draft sx={{ fontSize: 16 }} />;
-      case 'scheduled':
-        return <Schedule sx={{ fontSize: 16 }} />;
+      case "published":
+        return "bg-green-500";
+      case "draft":
+        return "bg-yellow-500";
+      case "review":
+        return "bg-blue-500";
       default:
-        return <Draft sx={{ fontSize: 16 }} />;
+        return "bg-gray-500";
     }
   };
 
-  const getStatusColor = (status: string): 'success' | 'warning' | 'info' | 'default' => {
+  const getStatusText = (status: string) => {
     switch (status) {
-      case 'published':
-        return 'success';
-      case 'draft':
-        return 'warning';
-      case 'scheduled':
-        return 'info';
+      case "published":
+        return "Đã xuất bản";
+      case "draft":
+        return "Bản nháp";
+      case "review":
+        return "Đang duyệt";
       default:
-        return 'default';
+        return status;
     }
   };
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.author.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || post.category.id === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  const columns: GridColDef[] = [
-    {
-      field: 'title',
-      headerName: 'Tiêu đề',
-      flex: 1,
-      minWidth: 300,
-      renderCell: (params) => (
-        <Box>
-          <Typography variant="subtitle2" className="font-medium line-clamp-2">
-            {params.row.title}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {params.row.author.name}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Trạng thái',
-      width: 140,
-      renderCell: (params) => (
-        <Chip
-          icon={getStatusIcon(params.row.status)}
-          label={
-            params.row.status === 'published' ? 'Xuất bản' :
-            params.row.status === 'draft' ? 'Nháp' : 'Đã lên lịch'
-          }
-          size="small"
-          color={getStatusColor(params.row.status)}
-        />
-      ),
-    },
-    {
-      field: 'category',
-      headerName: 'Danh mục',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.row.category.name}
-          size="small"
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: 'tags',
-      headerName: 'Thẻ',
-      width: 200,
-      renderCell: (params) => (
-        <Box className="flex flex-wrap gap-1">
-          {params.row.tags.slice(0, 2).map((tag: any) => (
-            <Chip
-              key={tag.id}
-              label={tag.name}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 20 }}
-            />
-          ))}
-          {params.row.tags.length > 2 && (
-            <Chip
-              label={`+${params.row.tags.length - 2}`}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 20 }}
-            />
-          )}
-        </Box>
-      ),
-    },
-    {
-      field: 'stats',
-      headerName: 'Thống kê',
-      width: 120,
-      renderCell: (params) => (
-        <Box>
-          <Box className="flex items-center">
-            <Visibility sx={{ fontSize: 14, mr: 0.5 }} />
-            <Typography variant="caption">{params.row.views}</Typography>
-          </Box>
-          <Box className="flex items-center">
-            <Typography variant="caption" color="primary">♥ {params.row.likes}</Typography>
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Ngày tạo',
-      width: 120,
-      renderCell: (params) => (
-        <Typography variant="caption" color="text.secondary">
-          {formatDate(params.row.createdAt)}
-        </Typography>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Thao tác',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          <Tooltip title="Chỉnh sửa">
-            <IconButton
-              size="small"
-              component={Link}
-              href={`/admin/posts/edit/${params.row.id}`}
-            >
-              <Edit sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          
-          <Tooltip title="Xem trước">
-            <IconButton
-              size="small"
-              component={Link}
-              href={`/posts/${params.row.slug}`}
-              target="_blank"
-            >
-              <Visibility sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Thêm">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                setSelectedPost(params.row);
-                setActionMenuAnchor(e.currentTarget);
-              }}
-            >
-              <MoreVert sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
-    },
-  ];
 
   return (
-    <Box>
-      <Box className="flex items-center justify-between mb-6">
-        <Typography variant="h4" component="h1" className="font-bold">
-          Quản lý Bài viết
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          component={Link}
-          href="/admin/posts/create"
-          size="large"
-        >
-          Tạo bài viết mới
+    <div className="space-y-4 p-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Bài viết</h2>
+        <Button onClick={() => router.push('/posts/create')} className="bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 text-white dark:text-gray-900">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Bài viết mới
         </Button>
-      </Box>
+      </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent>
-          <Box className="flex flex-col md:flex-row gap-4">
-            <TextField
-              placeholder="Tìm kiếm bài viết..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ minWidth: 300 }}
-            />
-
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Trạng thái</InputLabel>
-              <Select
-                value={statusFilter}
-                label="Trạng thái"
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <MenuItem value="all">Tất cả</MenuItem>
-                <MenuItem value="published">Đã xuất bản</MenuItem>
-                <MenuItem value="draft">Bản nháp</MenuItem>
-                <MenuItem value="scheduled">Đã lên lịch</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Danh mục</InputLabel>
-              <Select
-                value={categoryFilter}
-                label="Danh mục"
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <MenuItem value="all">Tất cả</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Button
-              variant="outlined"
-              startIcon={<FilterList />}
-              onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('all');
-                setCategoryFilter('all');
-              }}
-            >
-              Xóa bộ lọc
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Posts DataGrid */}
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <DataGrid
-            rows={filteredPosts}
-            columns={columns}
-            loading={loading}
-            autoHeight
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 },
-              },
-            }}
-            disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell': {
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'grey.50',
-                borderBottom: '2px solid',
-                borderColor: 'divider',
-              },
-            }}
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center space-x-4">
+          <Input
+            placeholder="Tìm kiếm bài viết..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
           />
-        </CardContent>
-      </Card>
-
-      {/* Action Menu */}
-      <Menu
-        anchorEl={actionMenuAnchor}
-        open={Boolean(actionMenuAnchor)}
-        onClose={() => setActionMenuAnchor(null)}
-      >
-        <MenuItem
-          onClick={() => {
-            if (selectedPost) {
-              handleStatusChange(selectedPost.id, 'published');
-            }
-            setActionMenuAnchor(null);
-          }}
-          disabled={selectedPost?.status === 'published'}
-        >
-          <Public className="mr-2" />
-          Xuất bản
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (selectedPost) {
-              handleStatusChange(selectedPost.id, 'draft');
-            }
-            setActionMenuAnchor(null);
-          }}
-          disabled={selectedPost?.status === 'draft'}
-        >
-          <Draft className="mr-2" />
-          Chuyển thành nháp
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setDeleteDialogOpen(true);
-            setActionMenuAnchor(null);
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Delete className="mr-2" />
-          Xóa bài viết
-        </MenuItem>
-      </Menu>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Xác nhận xóa bài viết</DialogTitle>
-        <DialogContent>
-          {selectedPost && (
-            <>
-              <Alert severity="warning" className="mb-4">
-                Hành động này không thể hoàn tác!
-              </Alert>
-              <Typography>
-                Bạn có chắc chắn muốn xóa bài viết <strong>"{selectedPost.title}"</strong>?
-              </Typography>
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            Hủy
-          </Button>
-          <Button
-            onClick={() => selectedPost && handleDeletePost(selectedPost.id)}
-            color="error"
-            variant="contained"
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
           >
-            Xóa
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Lọc theo trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="published">Đã xuất bản</SelectItem>
+              <SelectItem value="draft">Bản nháp</SelectItem>
+              <SelectItem value="review">Đang duyệt</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Pagination Info */}
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          Hiển thị {posts.length} trong tổng số {pagination.totalItems} bài viết
+          {pagination.totalPages > 1 && (
+            <span className="ml-2">
+              (Trang {pagination.currentPage} / {pagination.totalPages})
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="py-4">Tiêu đề</TableHead>
+              <TableHead>Tác giả</TableHead>
+              <TableHead>Danh mục</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead>Ngày tạo</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+                    <span className="ml-2">Đang tải...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : posts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  Không tìm thấy bài viết nào
+                </TableCell>
+              </TableRow>
+            ) : (
+              posts.map((post:any) => (
+                <TableRow key={post.id}>
+                  <TableCell className="py-5">{post.title}</TableCell>
+                  <TableCell>{post.author?.name || 'N/A'}</TableCell>
+                  <TableCell>{post.category?.name || 'N/A'}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={getStatusColor(post.status)}>
+                      {getStatusText(post.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : 'Chưa xuất bản'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="mr-2">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="mr-2">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+
+              {/* First page */}
+              {currentPage > 3 && (
+                <>
+                  <PaginationItem>
+                    <PaginationLink 
+                      onClick={() => setCurrentPage(1)}
+                      className="cursor-pointer"
+                    >
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+                  {currentPage > 4 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                </>
+              )}
+
+              {/* Pages around current page */}
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                .filter(page => 
+                  page === currentPage || 
+                  page === currentPage - 1 || 
+                  page === currentPage + 1 ||
+                  (currentPage <= 2 && page <= 3) ||
+                  (currentPage >= pagination.totalPages - 1 && page >= pagination.totalPages - 2)
+                )
+                .map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+              {/* Last page */}
+              {currentPage < pagination.totalPages - 2 && (
+                <>
+                  {currentPage < pagination.totalPages - 3 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationLink 
+                      onClick={() => setCurrentPage(pagination.totalPages)}
+                      className="cursor-pointer"
+                    >
+                      {pagination.totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
+
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => {
+                    if (currentPage < pagination.totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={currentPage === pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+    </div>
   );
 } 

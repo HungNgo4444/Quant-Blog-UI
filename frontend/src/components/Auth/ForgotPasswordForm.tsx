@@ -1,17 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  InputAdornment,
-  CircularProgress,
-} from '@mui/material';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Email, ArrowBack, CheckCircle } from '@mui/icons-material';
 import Link from 'next/link';
+import { cn } from '../../lib/utils';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -63,129 +60,127 @@ export default function ForgotPasswordForm() {
 
   if (emailSent) {
     return (
-      <Box className="text-center">
-        <CheckCircle 
-          color="success" 
-          sx={{ fontSize: 64, mb: 3 }} 
-        />
-        
-        <Typography variant="h5" component="h1" className="mb-4">
-          Email đã được gửi!
-        </Typography>
-        
-        <Typography variant="body1" color="text.secondary" className="mb-6">
-          Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email:{' '}
-          <strong>{email}</strong>
-        </Typography>
-        
-        <Alert severity="info" className="mb-6">
-          Vui lòng kiểm tra hộp thư của bạn (bao gồm cả thư mục spam).
-          Liên kết sẽ hết hạn sau 1 giờ.
-        </Alert>
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <CheckCircle 
+              className="w-16 h-16 text-green-500 mx-auto mb-4"
+            />
+            
+            <CardTitle className="text-xl mb-4">
+              Email đã được gửi!
+            </CardTitle>
+            
+            <p className="text-sm text-gray-600 mb-6">
+              Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email:{' '}
+              <strong>{email}</strong>
+            </p>
+            
+            <Alert className="mb-6">
+              <AlertDescription>
+                Vui lòng kiểm tra hộp thư của bạn (bao gồm cả thư mục spam).
+                Liên kết sẽ hết hạn sau 1 giờ.
+              </AlertDescription>
+            </Alert>
 
-        <Box className="space-y-3">
-          <Button
-            component={Link}
-            href="/auth/login"
-            variant="contained"
-            fullWidth
-            size="large"
-          >
-            Quay lại đăng nhập
-          </Button>
-          
-          <Button
-            onClick={() => setEmailSent(false)}
-            variant="outlined"
-            fullWidth
-            size="large"
-          >
-            Gửi lại email
-          </Button>
-        </Box>
-      </Box>
+            <div className="space-y-3">
+              <Button
+                className="w-full"
+              >
+                <Link href="/auth/login">
+                  Quay lại đăng nhập
+                </Link>
+              </Button>
+              
+              <Button
+                onClick={() => setEmailSent(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Gửi lại email
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <Box>
-      <Box className="text-center mb-6">
-        <Email sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <Email className="w-12 h-12 text-black mx-auto mb-2" />
         
-        <Typography variant="h5" component="h1" className="mb-2">
+        <CardTitle className="text-xl">
           Quên mật khẩu?
-        </Typography>
+        </CardTitle>
         
-        <Typography variant="body1" color="text.secondary">
+        <CardDescription>
           Nhập email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu
-        </Typography>
-      </Box>
+        </CardDescription>
+      </CardHeader>
 
-      {error && (
-        <Alert severity="error" className="mb-4">
-          {error}
-        </Alert>
-      )}
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          fullWidth
-          required
-          disabled={loading}
-          error={!!error}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Email />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <div className="relative">
+              <Email className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Nhập email của bạn"
+                required
+                disabled={loading}
+                className={cn(
+                  "pl-10",
+                  error && "border-red-500 focus:border-red-500"
+                )}
+              />
+            </div>
+          </div>
 
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          size="large"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <CircularProgress size={20} className="mr-2" />
-              Đang gửi...
-            </>
-          ) : (
-            'Gửi liên kết đặt lại'
-          )}
-        </Button>
-
-        <Box className="flex justify-center mt-4">
           <Button
-            component={Link}
-            href="/auth/login"
-            startIcon={<ArrowBack />}
-            color="inherit"
+            type="submit"
+            className="w-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+            disabled={loading}
           >
-            Quay lại đăng nhập
+            {loading ? 'Đang gửi...' : 'Gửi liên kết đặt lại'}
           </Button>
-        </Box>
-      </form>
 
-      <Box className="mt-6 text-center">
-        <Typography variant="body2" color="text.secondary">
-          Chưa có tài khoản?{' '}
-          <Link 
-            href="/auth/register" 
-            className="text-primary-600 hover:text-primary-700 font-medium"
-          >
-            Đăng ký ngay
-          </Link>
-        </Typography>
-      </Box>
-    </Box>
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="ghost"
+              className="text-gray-600"
+            >
+              <Link href="/auth/login">
+                <ArrowBack className="w-4 h-4 mr-2" />
+                Quay lại đăng nhập
+              </Link>
+            </Button>
+          </div>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Chưa có tài khoản?{' '}
+            <Link 
+              href="/auth/register" 
+              className="text-primary hover:underline font-medium"
+            >
+              Đăng ký ngay
+            </Link>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

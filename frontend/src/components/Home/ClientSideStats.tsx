@@ -11,6 +11,11 @@ const ClientSideStats = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -27,8 +32,10 @@ const ClientSideStats = () => {
       }
     };
 
-    fetchStats();
-  }, []);
+    if (mounted) {
+      fetchStats();
+    }
+  }, [mounted]);
 
   const statsConfig = [
     {
@@ -56,6 +63,11 @@ const ClientSideStats = () => {
       loading: loading,
     },
   ];
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return null;
+  }
 
   if (error) {
     return (
