@@ -322,6 +322,22 @@ export class AuthService {
     return { message: 'Password reset successfully' };
   }
 
+  async changePassword(changePasswordDto: any, userId: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+        throw new NotFoundException('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid old password');
+    }
+
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    await this.userRepository.update(userId, { password: hashedPassword });
+    return { message: 'Password updated successfully' };
+}
+
   async logout(userId: string, token: string, ipAddress: string, userAgent: string): Promise<{ message: string }> {
     await this.sessionRepository.update(
       { userId, token },

@@ -82,8 +82,8 @@ const Header: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="font-bold text-xl text-gray-900 dark:text-white">
-              <span className="hidden md:block">AdvancedBlog</span>
-              <span className="md:hidden">Blog</span>
+              <span className="hidden md:block">QuantBlog</span>
+              <span className="md:hidden">QBlog</span>
             </div>
           </Link>
 

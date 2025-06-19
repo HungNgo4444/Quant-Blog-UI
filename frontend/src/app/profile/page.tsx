@@ -10,10 +10,10 @@ import {
   Link as LinkIcon,
   Visibility,
   VisibilityOff,
+  Lock,
 } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { useAppSelector, useAppDispatch } from '../../store';
-import { updateProfile } from '../../store/slices/authSlice';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -24,6 +24,11 @@ import { Textarea } from '../../components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+import { updateProfile } from 'frontend/src/services/UserService';
+import { changePassword } from 'frontend/src/services/AuthService';
+import { toast } from 'react-toastify';
+import { readFile } from 'frontend/src/lib/utils';
+import LoadingComponent from 'frontend/src/components/Common/LoadingComponent';
 
 interface ProfileFormData {
   name: string;
@@ -50,6 +55,7 @@ export default function ProfilePage() {
   const { user, loading } = useAppSelector((state) => state.auth);
   
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [avatarChanged, setAvatarChanged] = useState<boolean>(false);
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -62,7 +68,7 @@ export default function ProfilePage() {
     control: profileControl,
     handleSubmit: handleProfileSubmit,
     setValue: setProfileValue,
-    formState: { errors: profileErrors },
+    formState: { errors: profileErrors, isSubmitting },
   } = useForm<ProfileFormData>({
     defaultValues: {
       name: '',
@@ -102,6 +108,7 @@ export default function ProfilePage() {
       setProfileValue('bio', user.bio || '');
       setProfileValue('avatar', user.avatar || '');
       setAvatarPreview(user.avatar || '');
+      setAvatarChanged(false); // Reset when loading user data
       
       // Set social links if available
       if (user.socialLinks) {
@@ -114,49 +121,48 @@ export default function ProfilePage() {
   }, [user, setProfileValue]);
 
   const onProfileSubmit = async (data: ProfileFormData) => {
+
     try {
-      // API call to update profile
-      console.log('Updating profile:', data);
+      const payload = {
+        ...data,
+        avatar: avatarChanged ? data.avatar : undefined
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      dispatch(updateProfile(data));
-      setSuccessMessage('Cập nhật thông tin thành công!');
-      
-      setTimeout(() => setSuccessMessage(''), 3000);
+      const response = await updateProfile(payload);
+      if (response) {
+        toast.success("Cập nhật thông tin thành công!");
+        setAvatarChanged(false);
+      } else {
+        toast.error("Cập nhật thông tin thất bại!");
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Cập nhật thông tin thất bại!');
     }
   };
 
   const onSecuritySubmit = async (data: SecurityFormData) => {
     try {
-      // API call to update security settings
-      console.log('Updating security:', data);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      resetSecurity();
-      setSuccessMessage('Cập nhật bảo mật thành công!');
-      
-      setTimeout(() => setSuccessMessage(''), 3000);
+      const response= await changePassword(data);
+      if (response) {
+        toast.success("Cập nhật mật khẩu thành công!");
+        resetSecurity();
+      } else {
+        toast.error("Cập nhật mật khẩu thất bại!");
+      }
     } catch (error) {
       console.error('Error updating security:', error);
+      toast.error("Cập nhật mật khẩu thất bại!");
     }
   };
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleAvatarChange = async (file: File | null) => {
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarPreview(result);
-        setProfileValue('avatar', result);
-      };
-      reader.readAsDataURL(file);
+      readFile(file).then((base64) => {
+        setAvatarPreview(base64);
+        setProfileValue('avatar', base64);
+        setAvatarChanged(true);
+      });
     }
   };
 
@@ -182,6 +188,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {isSubmitting && <LoadingComponent/>}
       <h1 className="text-3xl font-bold mb-6">Quản lý tài khoản</h1>
 
       {successMessage && (
@@ -208,7 +215,7 @@ export default function ProfilePage() {
               <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="md:col-span-1">
-                    <div className="text-center">
+                    <div className="text-center relative">
                       <Avatar className="w-32 h-32 mx-auto mb-4">
                         <AvatarImage src={avatarPreview} alt={user?.name} />
                         <AvatarFallback className="text-2xl">
@@ -221,20 +228,13 @@ export default function ProfilePage() {
                         style={{ display: 'none' }}
                         id="avatar-upload"
                         type="file"
-                        onChange={handleAvatarChange}
+                        onChange={(e) => handleAvatarChange(e.target.files?.[0] || null)}
                       />
                       <label htmlFor="avatar-upload">
-                        <Button variant="outline" size="sm">
-                          <span className="cursor-pointer">
-                            <PhotoCamera className="h-4 w-4 mr-2" />
-                            Thay đổi ảnh
-                          </span>
-                        </Button>
+                        <span className="cursor-pointer absolute bottom-[-10px] right-[74px]">
+                          <PhotoCamera className="h-8 w-8 bg-gray-500 text-white rounded-full p-2" />
+                        </span>
                       </label>
-                      
-                      <p className="text-sm text-gray-500 mt-2">
-                        Nhấp để thay đổi ảnh đại diện
-                      </p>
                     </div>
                   </div>
 
@@ -280,6 +280,7 @@ export default function ProfilePage() {
                                 id="email"
                                 type="email"
                                 className={profileErrors.email ? 'border-red-500' : ''}
+                                disabled
                               />
                               {profileErrors.email && (
                                 <p className="text-sm text-red-500 mt-1">{profileErrors.email.message}</p>
@@ -307,7 +308,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Social Links */}
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                       <h3 className="text-lg font-medium mb-4">Liên kết mạng xã hội</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -370,12 +371,11 @@ export default function ProfilePage() {
                           />
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     <Button
                       type="submit"
-                      disabled={loading}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 text-white dark:text-gray-900"
                     >
                       <Save className="h-4 w-4" />
                       Lưu thay đổi
@@ -400,24 +400,27 @@ export default function ProfilePage() {
                           control={securityControl}
                           rules={{ required: 'Vui lòng nhập mật khẩu hiện tại' }}
                           render={({ field }) => (
-                            <div className="relative">
-                              <Input
-                                {...field}
-                                id="currentPassword"
-                                type={showPasswords.current ? 'text' : 'password'}
-                                className={securityErrors.currentPassword ? 'border-red-500' : ''}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                onClick={() => 
-                                  setShowPasswords(prev => ({ ...prev, current: !prev.current }))
-                                }
-                              >
-                                {showPasswords.current ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                              </Button>
+                            <div>
+                              <div className="relative">
+                                <Input
+                                  {...field}
+                                  id="currentPassword"
+                                  type={showPasswords.current ? 'text' : 'password'}
+                                  className={securityErrors.currentPassword ? 'border-red-500' : ''}
+                                  tabIndex={1}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                  onClick={() => 
+                                    setShowPasswords(prev => ({ ...prev, current: !prev.current }))
+                                  }
+                                >
+                                  {showPasswords.current ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                </Button>
+                              </div>
                               {securityErrors.currentPassword && (
                                 <p className="text-sm text-red-500 mt-1">{securityErrors.currentPassword.message}</p>
                               )}
@@ -437,24 +440,27 @@ export default function ProfilePage() {
                               validate: validatePassword,
                             }}
                             render={({ field }) => (
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  id="newPassword"
-                                  type={showPasswords.new ? 'text' : 'password'}
-                                  className={securityErrors.newPassword ? 'border-red-500' : ''}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                  onClick={() => 
-                                    setShowPasswords(prev => ({ ...prev, new: !prev.new }))
-                                  }
-                                >
-                                  {showPasswords.new ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                                </Button>
+                              <div>
+                                <div className="relative">
+                                  <Input
+                                    {...field}
+                                    id="newPassword"
+                                    type={showPasswords.new ? 'text' : 'password'}
+                                    className={securityErrors.newPassword ? 'border-red-500' : ''}
+                                    tabIndex={2}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                    onClick={() => 
+                                      setShowPasswords(prev => ({ ...prev, new: !prev.new }))
+                                    }
+                                  >
+                                    {showPasswords.new ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                  </Button>
+                                </div>
                                 {securityErrors.newPassword && (
                                   <p className="text-sm text-red-500 mt-1">{securityErrors.newPassword.message}</p>
                                 )}
@@ -473,24 +479,27 @@ export default function ProfilePage() {
                               validate: value => value === newPassword || 'Mật khẩu xác nhận không khớp',
                             }}
                             render={({ field }) => (
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  id="confirmPassword"
-                                  type={showPasswords.confirm ? 'text' : 'password'}
-                                  className={securityErrors.confirmPassword ? 'border-red-500' : ''}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                  onClick={() => 
-                                    setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))
-                                  }
-                                >
-                                  {showPasswords.confirm ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                                </Button>
+                              <div>
+                                <div className="relative">
+                                  <Input
+                                    {...field}
+                                    id="confirmPassword"
+                                    type={showPasswords.confirm ? 'text' : 'password'}
+                                    className={`${securityErrors.confirmPassword ? 'border-red-500' : ''}`}
+                                    tabIndex={3}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                                    onClick={() => 
+                                      setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))
+                                    }
+                                  >
+                                    {showPasswords.confirm ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                  </Button>
+                                </div>
                                 {securityErrors.confirmPassword && (
                                   <p className="text-sm text-red-500 mt-1">{securityErrors.confirmPassword.message}</p>
                                 )}
@@ -503,9 +512,16 @@ export default function ProfilePage() {
                   </div>
 
                   <hr className="border-gray-200" />
-
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 text-white dark:text-gray-900"
+                  >
+                    <Lock className="h-4 w-4" />
+                    Đổi mật khẩu
+                  </Button>
                   {/* Two Factor Authentication */}
-                  <div>
+                  {/* <div>
                     <h3 className="text-lg font-medium mb-4">Xác thực hai yếu tố (2FA)</h3>
                     
                     <Controller
@@ -537,10 +553,10 @@ export default function ProfilePage() {
                     Cập nhật bảo mật
                   </Button>
 
-                  <hr className="border-gray-200" />
+                  <hr className="border-gray-200" /> */}
 
                   {/* Danger Zone */}
-                  <div>
+                  {/* <div>
                     <h3 className="text-lg font-medium text-red-600 mb-4">Vùng nguy hiểm</h3>
                     
                     <Alert className="mb-4 border-yellow-200 bg-yellow-50">
@@ -555,7 +571,7 @@ export default function ProfilePage() {
                     >
                       Xóa tài khoản
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </form>
             </TabsContent>
@@ -564,7 +580,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Delete Account Dialog */}
-      <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
+      {/* <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-red-600">Xác nhận xóa tài khoản</DialogTitle>
@@ -586,7 +602,7 @@ export default function ProfilePage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 } 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import PostEditor from '../../../../components/Editor/PostEditor';
+import LoadingComponent from '../../../../components/Common/LoadingComponent';
 import { useAppSelector, useAppDispatch } from '../../../../store';
 import { updatePost } from '../../../../services/PostService';
 import { toast } from 'react-toastify';
@@ -21,6 +22,8 @@ export default function EditPostPage() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { loading: reduxLoading } = useAppSelector((state) => state.posts);
   const [selectedImageBase64, setSelectedImageBase64] = useState("");
+  const [publishingLoading, setPublishingLoading] = useState(false);
+  const [savingLoading, setSavingLoading] = useState(false);
   
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,6 +109,7 @@ export default function EditPostPage() {
     if (!currentPost) return;
 
     try {
+      setPublishingLoading(true);
       if (!postData.title || !postData.content) {
         toast.warning('Vui lòng nhập tiêu đề và nội dung bài viết');
         return;
@@ -137,6 +141,39 @@ export default function EditPostPage() {
     } catch (error) {
       console.error('Error publishing post:', error);
       toast.error('Có lỗi xảy ra khi cập nhật bài viết');
+    } finally {
+      setPublishingLoading(false);
+    }
+  };
+
+  const handleSave = async (postData: any) => {
+    if (!currentPost) return;
+
+    try {
+      setSavingLoading(true);
+      const formattedData = {
+        title: postData.title,
+        content: postData.content,
+        excerpt: postData.excerpt,
+        categoryId: postData.categoryId,
+        tags: postData.tags,
+        featured_image: selectedImageBase64,
+        published: false, // Lưu nháp
+        seoTitle: postData.metaTitle,
+        seoDescription: postData.metaDescription,
+      };
+
+      const result = await updatePost(currentPost.slug, formattedData);
+      
+      toast.success('Đã lưu bài viết thành công!');
+
+      // Update current post data
+      setCurrentPost(result);
+    } catch (error) {
+      console.error('Error saving post:', error);
+      toast.error('Có lỗi xảy ra khi lưu bài viết');
+    } finally {
+      setSavingLoading(false);
     }
   };
 
@@ -221,14 +258,19 @@ export default function EditPostPage() {
   };
 
   return (
-    <PostEditor
-      onPublish={handlePublish}
-      initialData={initialData}
-      categories={categories}
-      tags={tags}
-      loading={reduxLoading}
-      selectedImageBase64={selectedImageBase64}
-      setSelectedImageBase64={setSelectedImageBase64}
-    />
+    <>
+      {savingLoading && <LoadingComponent />}
+      {publishingLoading && <LoadingComponent />}
+      <PostEditor
+        onPublish={handlePublish}
+        onSave={handleSave}
+        initialData={initialData}
+        categories={categories}
+        tags={tags}
+        loading={reduxLoading}
+        selectedImageBase64={selectedImageBase64}
+        setSelectedImageBase64={setSelectedImageBase64}
+      />
+    </>
   );
 } 

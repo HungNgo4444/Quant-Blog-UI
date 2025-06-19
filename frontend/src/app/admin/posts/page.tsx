@@ -31,6 +31,7 @@ import { PlusCircle, Pencil, Trash2, Eye } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { getAdminPosts } from "../../../services/PostService";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogTitle, DialogContent, DialogHeader } from "../../../components/ui/dialog";
 
 export default function PostsPage() {
   const router = useRouter();
@@ -39,6 +40,8 @@ export default function PostsPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -199,7 +202,7 @@ export default function PostsPage() {
                     {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : 'Chưa xuất bản'}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="mr-2">
+                    <Button onClick={()=> {setOpenImageDialog(true); setSelectedImageUrl(post.featuredImage)}} variant="ghost" size="icon" className="mr-2">
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="mr-2">
@@ -304,6 +307,17 @@ export default function PostsPage() {
             </PaginationContent>
           </Pagination>
         </div>
+      )}
+
+      {openImageDialog && (
+        <Dialog open={openImageDialog} onOpenChange={setOpenImageDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ảnh bài viết</DialogTitle>
+            </DialogHeader>
+            <img src={selectedImageUrl} alt="Ảnh bài viết" className="w-full h-auto" />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

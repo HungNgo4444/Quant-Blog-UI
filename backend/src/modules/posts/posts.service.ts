@@ -665,36 +665,8 @@ export class PostsService {
     };
   }
 
-  async getRecentPost(limit = 10): Promise<PaginatedPostsResponseDto> {
-    // First, get the post IDs with proper pagination using raw SQL
-    const postIdsQuery = `
-      SELECT DISTINCT post.id, post.published_at
-      FROM posts post
-      WHERE post.status = $1 AND post.active = $2
-      ORDER BY post.published_at DESC
-      LIMIT $3
-    `;
-
-    const postIdsResult = await this.postRepository.query(
-      postIdsQuery, 
-      [PostStatus.PUBLISHED, true, limit]
-    );
-
-    if (postIdsResult.length === 0) {
-      return {
-        posts: [],
-        pagination: {
-          currentPage: 0,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 0,
-        },
-      };
-    }
-
-    const postIds = postIdsResult.map(row => row.id);
-
-    // Get total count for recent posts
+  async getRecentPost(page = 1, limit = 10): Promise<PaginatedPostsResponseDto> {
+    // Get total count first
     const totalQuery = `
       SELECT COUNT(DISTINCT post.id) as count
       FROM posts post
@@ -703,6 +675,34 @@ export class PostsService {
 
     const totalResult = await this.postRepository.query(totalQuery, [PostStatus.PUBLISHED, true]);
     const total = parseInt(totalResult[0].count);
+
+    // Get paginated post IDs using raw SQL
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, post.published_at
+      FROM posts post
+      WHERE post.status = $1 AND post.active = $2
+      ORDER BY post.published_at DESC
+      LIMIT $3 OFFSET $4
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [PostStatus.PUBLISHED, true, limit, (page - 1) * limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
 
     // Now get full post data for these specific posts
     const detailQuery = this.postRepository
@@ -830,7 +830,7 @@ export class PostsService {
     return {
       posts: mappedPosts,
       pagination: {
-        currentPage: 0,
+        currentPage: page,
         totalPages: Math.ceil(total / limit),
         totalItems: total,
         itemsPerPage: limit,
@@ -1716,6 +1716,7 @@ export class PostsService {
         'post.like_count as like_count',
         'post.created_at as created_at',
         'post.updated_at as updated_at',
+        'post.featured_image as featured_image',
         'user.id as author_id',
         'user.name as author_name',
         'user.avatar as author_avatar',
@@ -1760,6 +1761,7 @@ export class PostsService {
       likeCount: post.like_count,
       createdAt: post.created_at,
       updatedAt: post.updated_at,
+      featuredImage: post.featured_image,
       author: {
         id: post.author_id,
         name: post.author_name,
@@ -1774,6 +1776,207 @@ export class PostsService {
 
     return {
       posts: formattedPosts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
+  async getTopPost(page = 1, limit = 10, sort = 'likes'): Promise<PaginatedPostsResponseDto> {
+    // Tính ngày 30 ngày trước cho featured posts
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Build the base WHERE conditions for top posts
+    let whereConditions = 'post.status = $1 AND post.active = $2';
+    const parameters: any[] = [PostStatus.PUBLISHED, true];
+    
+    // For top posts, we might want to include all time or recent posts
+    if (sort === 'likes') {
+      // Include posts from last 30 days for better relevance
+      whereConditions += ' AND post.published_at >= $3';
+      parameters.push(thirtyDaysAgo);
+    }
+    
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(DISTINCT post.id) as count
+      FROM posts post
+      WHERE ${whereConditions}
+    `;
+    
+    const totalResult = await this.postRepository.query(countQuery, parameters);
+    const total = parseInt(totalResult[0].count);
+
+    // Determine sort column
+    let orderByColumn = 'post.like_count';
+    if (sort === 'views') {
+      orderByColumn = 'post.view_count';
+    }
+
+    // Get paginated post IDs
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, ${orderByColumn}, post.published_at
+      FROM posts post
+      WHERE ${whereConditions}
+      ORDER BY ${orderByColumn} DESC, post.published_at DESC
+      LIMIT $${parameters.length + 1} OFFSET $${parameters.length + 2}
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [...parameters, limit, (page - 1) * limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
+
+    // Get full post data
+    const detailQuery = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
+      .leftJoin('post_tags', 'post_tags', 'CAST(post_tags.post_id AS TEXT) = CAST(post.id AS TEXT)')
+      .leftJoin('tags', 'tag', 'CAST(tag.id AS TEXT) = CAST(post_tags.tag_id AS TEXT)')
+      .select([
+        'post.id as id',
+        'post.title as title',
+        'post.slug as slug',
+        'post.excerpt as excerpt',
+        'post.content as content',
+        'post.featured_image as featured_image',
+        'post.status as status',
+        'post.published_at as published_at',
+        'post.reading_time as reading_time',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.comment_count as comment_count',
+        'post.share_count as share_count',
+        'post.meta_title as meta_title',
+        'post.meta_description as meta_description',
+        'post.meta_keywords as meta_keywords',
+        'post.og_title as og_title',
+        'post.og_description as og_description',
+        'post.og_image as og_image',
+        'post.twitter_title as twitter_title',
+        'post.twitter_description as twitter_description',
+        'post.twitter_image as twitter_image',
+        'post.allow_comments as allow_comments',
+        'post.active as active',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'post.author_id as author_id',
+        'post.category_id as category_id',
+        'user.id as user_id',
+        'user.name as user_name',
+        'user.avatar as user_avatar',
+        'category.id as category_id',
+        'category.name as category_name',
+        'category.slug as category_slug',
+        'category.color as category_color',
+        'tag.id as tag_id',
+        'tag.name as tag_name',
+        'tag.slug as tag_slug'
+      ])
+      .where('post.id IN (:...postIds)', { postIds });
+
+    // Apply sorting
+    if (sort === 'views') {
+      detailQuery.orderBy('post.view_count', 'DESC');
+    } else {
+      detailQuery.orderBy('post.like_count', 'DESC');
+    }
+    detailQuery.addOrderBy('post.published_at', 'DESC');
+
+    const posts = await detailQuery.getRawMany();
+
+    // Group posts by ID to handle tags
+    const postsMap = new Map();
+    posts.forEach(raw => {
+      const postId = raw.id;
+      if (!postsMap.has(postId)) {
+        postsMap.set(postId, {
+          ...raw,
+          author: {
+            id: raw.user_id,
+            name: raw.user_name,
+            avatar: raw.user_avatar
+          },
+          category: {
+            id: raw.category_id,
+            name: raw.category_name,
+            slug: raw.category_slug,
+            color: raw.category_color
+          },
+          tags: []
+        });
+      }
+      if (raw.tag_id) {
+        const post = postsMap.get(postId);
+        if (!post.tags.some(t => t.id === raw.tag_id)) {
+          post.tags.push({
+            id: raw.tag_id,
+            name: raw.tag_name,
+            slug: raw.tag_slug
+          });
+        }
+      }
+    });
+
+    // Convert map to array and maintain order
+    const mappedPosts = postIds.map(id => {
+      const post = postsMap.get(id);
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        featuredImage: post.featured_image,
+        status: post.status,
+        publishedAt: post.published_at,
+        readingTime: post.reading_time,
+        viewCount: post.view_count,
+        likeCount: post.like_count,
+        commentCount: post.comment_count,
+        shareCount: post.share_count,
+        metaTitle: post.meta_title,
+        metaDescription: post.meta_description,
+        metaKeywords: post.meta_keywords,
+        ogTitle: post.og_title,
+        ogDescription: post.og_description,
+        ogImage: post.og_image,
+        twitterTitle: post.twitter_title,
+        twitterDescription: post.twitter_description,
+        twitterImage: post.twitter_image,
+        allowComments: post.allow_comments,
+        active: post.active,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        authorId: post.author_id,
+        categoryId: post.category_id,
+        author: post.author,
+        category: post.category,
+        tags: post.tags
+      };
+    });
+
+    return {
+      posts: mappedPosts,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),

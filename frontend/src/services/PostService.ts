@@ -25,23 +25,23 @@ export async function getFeaturedPosts(limit: number) {
   }
 }
 
-export async function getRecentPost(limit: number) {
+export async function getRecentPost(page: number = 1, limit: number = 10) {
   try {
-    const res = await instanceApi.get(`/posts/recent?limit=${limit}`);
-    return res.data.posts || [];
+    const res = await instanceApi.get(`/posts/recent?page=${page}&limit=${limit}`);
+    return res.data || { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   } catch (error) {
     console.error('Error fetching recent posts:', error);
-    return [];
+    return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   }
 }
 
-export async function getTopPosts(limit: number) {
+export async function getTopPosts(page: number = 1, limit: number = 10, sort: string = 'likes') {
   try {
-    const res = await instanceApi.get(`/posts/top?limit=${limit}&sort=likes`);
-    return res.data.posts || [];
+    const res = await instanceApi.get(`/posts/top?page=${page}&limit=${limit}&sort=${sort}`);
+    return res.data || { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   } catch (error) {
     console.error('Error fetching top posts:', error);
-    return [];
+    return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   }
 }
 

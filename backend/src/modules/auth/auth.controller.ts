@@ -11,6 +11,8 @@ import {
   HttpStatus,
   ValidationPipe,
   UnauthorizedException,
+  Put,
+  Request as NestRequest,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -131,6 +133,16 @@ export class AuthController {
   ) {
     const ipAddress = req.ip || req.connection.remoteAddress || '0.0.0.0';
     return this.authService.resetPassword(token, password, ipAddress);
+  }
+
+  @Put('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update password' })
+  @ApiResponse({ status: 200, description: 'Password updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async changePassword(@Body() changePasswordDto: any, @NestRequest() req: any) {
+    const userId = req.user.id;
+    return this.authService.changePassword(changePasswordDto, userId);
   }
 
   @Post('logout')

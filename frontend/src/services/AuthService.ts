@@ -48,3 +48,12 @@ export const getUserServer = async () => {
     }
 };
 
+export async function changePassword(changePasswordDto: any) {
+    try {
+      const res = await instanceApi.put(`/auth/change-password`, changePasswordDto);
+      return res.data;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      return null;
+    }
+  }

@@ -158,7 +158,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Đăng ký</CardTitle>
         <CardDescription>
-          Tạo tài khoản mới để trải nghiệm đầy đủ tính năng của AdvancedBlog
+          Tạo tài khoản mới để trải nghiệm đầy đủ tính năng của QuantBlog
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -183,9 +183,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
                     id="name"
                     placeholder="Nhập họ và tên của bạn"
                     className={cn(
-                      "pl-10",
+                      "pl-10 py-6",
                       errors.name && "border-red-500 focus:border-red-500"
                     )}
+                    tabIndex={1}
                   />
                 </div>
               )}
@@ -196,7 +197,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
           </div>
 
           {/* Email Field */}
-          <div className="space-y-2">
+          <div className="space-y-1 !mt-4">
             <Label htmlFor="email">Email</Label>
             <Controller
               name="email"
@@ -210,9 +211,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
                     type="email"
                     placeholder="Nhập email của bạn"
                     className={cn(
-                      "pl-10",
+                      "pl-10 py-6",
                       errors.email && "border-red-500 focus:border-red-500"
                     )}
+                    tabIndex={2}
                   />
                 </div>
               )}
@@ -223,7 +225,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
           </div>
 
           {/* Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1 !mt-4">
             <Label htmlFor="password">Mật khẩu</Label>
             <Controller
               name="password"
@@ -238,9 +240,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Nhập mật khẩu của bạn"
                       className={cn(
-                        "pl-10 pr-10",
+                        "pl-10 pr-10 py-6",
                         errors.password && "border-red-500 focus:border-red-500"
                       )}
+                      tabIndex={3}
                     />
                     <button
                       type="button"
@@ -312,7 +315,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
           </div>
 
           {/* Confirm Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1 !mt-4">
             <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
             <Controller
               name="confirmPassword"
@@ -326,9 +329,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Xác nhận mật khẩu của bạn"
                     className={cn(
-                      "pl-10 pr-10",
+                      "pl-10 pr-10 py-6",
                       errors.confirmPassword && "border-red-500 focus:border-red-500"
                     )}
+                    tabIndex={4}
                   />
                   <button
                     type="button"

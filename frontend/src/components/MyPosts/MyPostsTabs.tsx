@@ -19,6 +19,8 @@ import { Post } from '../../types';
 import { deletePost, toggleSavePost } from '../../services/PostService';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Button } from '../ui/button';
 
 interface MyPostsTabsProps {
   myPosts: Post[];
@@ -175,6 +177,7 @@ interface PostCardProps {
 function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Ẩn dropdown khi click ra ngoài
@@ -193,12 +196,6 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
-
-  const confirmDelete = () => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) {
-      handleDelete(post.slug);
-    }
-  };
   
   const handleDelete = async (slug: string) => {
     try {
@@ -332,7 +329,7 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
                 </button>
                 <hr className="my-1 border-gray-200 dark:border-gray-700" />
                 <button 
-                  onClick={confirmDelete}
+                  onClick={() => setOpenConfirmDelete(true)}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
                   <Trash2 className="w-4 h-4" />
                   Xóa
@@ -342,6 +339,20 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
           </div>
         )}
       </div>
+      <Dialog open={openConfirmDelete} onOpenChange={setOpenConfirmDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xóa bài viết</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Bạn có chắc chắn muốn xóa bài viết này không?
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenConfirmDelete(false)}>Hủy</Button>
+            <Button variant="destructive" onClick={() => handleDelete(post.slug)}>Xóa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

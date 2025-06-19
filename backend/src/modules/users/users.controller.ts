@@ -1,7 +1,10 @@
-import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put, Query, UseGuards, Body, Res, Req, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiQuery, ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { User } from 'src/entities/user.entity';
+import { Response } from 'express';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -36,13 +39,24 @@ export class UsersController {
     return this.usersService.deleteUser(id);
   }
 
-  @Post('/admin/restore/:id')
+  @Put('/admin/restore/:id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Admin: Restore user' })
   @ApiResponse({ status: 200, description: 'User restored successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async restoreUser(@Param('id') id: string) {
     return this.usersService.restoreUser(id);
+  }
+
+  @Put('update-profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateProfile(@Body() updateUserDto: any, @Request() req: any) {
+    const userId = req.user.id;
+    console.log(userId);
+    return this.usersService.updateProfile(updateUserDto, userId);
   }
 }
 

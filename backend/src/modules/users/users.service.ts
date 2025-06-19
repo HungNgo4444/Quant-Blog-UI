@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
+import { ImageService } from 'src/shared/services/image.service';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        private readonly imageService: ImageService,
     ) {}
 
     async getById(id: string): Promise<User> {
@@ -85,5 +87,18 @@ export class UsersService {
             active: true,
         });
         return { message: 'User restored successfully' };
+    }
+
+    async updateProfile(updateUserDto: any, userId: string) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        if (updateUserDto.avatar) {
+            const imageUrl = await this.imageService.uploadBase64Image(updateUserDto.avatar, 'users-avatar');
+            updateUserDto.avatar = imageUrl;
+        }
+        await this.userRepository.update(userId, updateUserDto);
+        return { message: 'User updated successfully' };
     }
 }

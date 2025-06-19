@@ -25,6 +25,7 @@ import {
   Linkedin,
   Calendar,
 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 
 const ClientSidePosts = ({ user }: { user: any }) => {
   const dispatch = useAppDispatch();
@@ -115,9 +116,6 @@ const ClientSidePosts = ({ user }: { user: any }) => {
     );
   }
 
-  const mainPost = posts[0];
-  const sidebarPosts = posts.slice(1, 4);
-
   return (
     <section className="py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -166,13 +164,21 @@ const ClientSidePosts = ({ user }: { user: any }) => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-sm">
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300">
-                  {user?.name?.charAt(0).toUpperCase()}
+                <Avatar className="h-20 w-20">
+                  {user?.avatar ? (
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                  ) : (
+                    <AvatarFallback className="text-sm bg-gray-300 dark:text-black">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 </div>
                 <h3 className="text-lg font-bold mb-2">
                   {user?.name}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Passionate developer và designer, chia sẻ kiến thức về tech và cuộc sống.
+                  Chia sẻ kiến thức, kinh nghiệm Tài chính và Công nghệ.
                 </p>
                 
                 <div className="flex justify-center gap-2">

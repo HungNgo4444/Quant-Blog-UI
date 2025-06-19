@@ -28,10 +28,20 @@ export async function adminDeleteUser(id: string) {
 
 export async function adminRestoreUser(id: string) {
   try {
-    const res = await instanceApi.post(`/users/admin/restore/${id}`);
+    const res = await instanceApi.put(`/users/admin/restore/${id}`);
     return res.data;
   } catch (error) {
     console.error('Error restoring user:', error);
+    return null;
+  }
+}
+
+export async function updateProfile(updateUserDto: any) {
+  try {
+    const res = await instanceApi.put(`/users/update-profile`, updateUserDto);
+    return res.data;
+  } catch (error) {
+    console.error('Error updating profile:', error);
     return null;
   }
 }

@@ -103,7 +103,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
           )}
 
           {/* Email Field */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Controller
               name="email"
@@ -117,7 +117,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
                     type="email"
                     placeholder="Nhập email của bạn"
                     className={cn(
-                      "pl-10",
+                      "pl-10 py-6",
                       errors.email && "border-red-500 focus:border-red-500"
                     )}
                   />
@@ -130,7 +130,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
           </div>
 
           {/* Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1 !mt-4">
             <Label htmlFor="password">Mật khẩu</Label>
             <Controller
               name="password"
@@ -144,7 +144,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Nhập mật khẩu của bạn"
                     className={cn(
-                      "pl-10 pr-10",
+                      "pl-10 pr-10 py-6",
                       errors.password && "border-red-500 focus:border-red-500"
                     )}
                   />
@@ -216,7 +216,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
           </div>
 
           {/* Social Login */}
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -242,7 +242,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
             >
               Facebook
             </Button>
-          </div>
+          </div> */}
         </form>
       </CardContent>
     </Card>

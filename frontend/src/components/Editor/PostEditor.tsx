@@ -85,6 +85,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
 }) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [selectedFont, setSelectedFont] = useState('system-ui');
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   
   
   // Post data state
@@ -109,20 +110,6 @@ const PostEditor: React.FC<PostEditorProps> = ({
     allowComments: true,
     ...initialData,
   });
-
-  // Set initial featured image when editing
-  useEffect(() => {
-    if (initialData?.featuredImage && !selectedImageBase64) {
-      setSelectedImageBase64(initialData.featuredImage);
-    }
-  }, [initialData?.featuredImage, selectedImageBase64, setSelectedImageBase64]);
-
-  // Sync selectedImageBase64 with postData.featuredImage
-  useEffect(() => {
-    if (selectedImageBase64) {
-      setPostData((prev: PostData) => ({ ...prev, featuredImage: selectedImageBase64 }));
-    }
-  }, [selectedImageBase64]);
 
   // Auto-generate excerpt from content
   useEffect(() => {
@@ -266,7 +253,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                 <Button
                   size="sm"
                   onClick={handlePublish}
-                  disabled={loading || !postData.title || !postData.content}
+                  disabled={loading || !postData.title || !postData.content || !selectedImageBase64}
                   className="bg-black text-white hover:bg-gray-800"
                 >
                   <Publish className="w-4 h-4 mr-2" />
@@ -533,9 +520,12 @@ const PostEditor: React.FC<PostEditorProps> = ({
                     })}
                   </div>
                   <Select 
+                    open={tagDropdownOpen}
+                    onOpenChange={setTagDropdownOpen}
                     onValueChange={(value) => {
                       if (!postData.tags.includes(value)) {
                         handleTagsChange([...postData.tags, value]);
+                        setTimeout(() => setTagDropdownOpen(true), 50);
                       }
                     }}
                   >

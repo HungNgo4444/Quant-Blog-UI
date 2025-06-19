@@ -58,7 +58,7 @@ const Footer: React.FC = () => {
               component="h3"
               className="font-bold text-black dark:text-white mb-4"
             >
-              Quant Blog
+              QuantBlog
             </Typography>
             <Typography variant="body2" className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
               Nền tảng blog tiên tiến, giúp bạn chia sẻ 
@@ -163,7 +163,7 @@ const Footer: React.FC = () => {
 
         <Box className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <Typography variant="body2" className="text-gray-500 dark:text-gray-400">
-            © {currentYear} Quant Blog.
+            © {currentYear} QuantBlog.
           </Typography>
           
           <Box className="flex items-center space-x-6">

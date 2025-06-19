@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PostEditor from '../../../components/Editor/PostEditor';
+import LoadingComponent from '../../../components/Common/LoadingComponent';
 import { useAppSelector, useAppDispatch } from '../../../store';
 import { toast } from 'react-toastify';
 import { getAllCategories } from '../../../services/CategoryService';
@@ -21,6 +22,8 @@ export default function CreatePostPage() {
   const [tags, setTags] = useState([]);
   const [authChecked, setAuthChecked] = useState(false);
   const [selectedImageBase64, setSelectedImageBase64] = useState("");
+  const [savingLoading, setSavingLoading] = useState(false);
+  const [publishingLoading, setPublishingLoading] = useState(false);
   // Check authentication - cho phép cả user và admin
   useEffect(() => {
     if (!isAuthenticated && authChecked) {
@@ -50,6 +53,7 @@ export default function CreatePostPage() {
 
   const handleSave = async (postData: any) => {
     try {
+      setSavingLoading(true);
       const formattedData = {
         title: postData.title,
         content: postData.content,
@@ -62,9 +66,7 @@ export default function CreatePostPage() {
         seoDescription: postData.metaDescription,
       };
 
-      console.log('Saving draft with data:', formattedData);
       const result = await createPost(formattedData);
-      console.log('Draft saved successfully:', result);
       
       toast.success('Đã lưu bài viết thành công!');
       
@@ -83,11 +85,14 @@ export default function CreatePostPage() {
       } else {
         toast.error('Có lỗi xảy ra khi lưu bài viết');
       }
+    } finally {
+      setSavingLoading(false);
     }
   };
 
   const handlePublish = async (postData: any) => {
     try {
+      setPublishingLoading(true);
       if (!postData.title || !postData.content) {
         toast.warning('Vui lòng nhập tiêu đề và nội dung bài viết');
         return;
@@ -131,6 +136,8 @@ export default function CreatePostPage() {
       } else {
         toast.error('Có lỗi xảy ra khi xuất bản bài viết');
       }
+    } finally {
+      setPublishingLoading(false);
     }
   };
 
@@ -158,14 +165,18 @@ export default function CreatePostPage() {
   }
 
   return (
-    <PostEditor
-      onSave={handleSave}
-      onPublish={handlePublish}
-      categories={categories}
-      tags={tags}
-      loading={loading}
-      selectedImageBase64={selectedImageBase64}
-      setSelectedImageBase64={setSelectedImageBase64}
-    />
+    <>
+      {savingLoading && <LoadingComponent />}
+      {publishingLoading && <LoadingComponent />}
+      <PostEditor
+        onSave={handleSave}
+        onPublish={handlePublish}
+        categories={categories}
+        tags={tags}
+        loading={loading}
+        selectedImageBase64={selectedImageBase64}
+        setSelectedImageBase64={setSelectedImageBase64}
+      />
+    </>
   );
 } 

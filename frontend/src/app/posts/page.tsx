@@ -74,7 +74,7 @@ export default function PostsPage() {
   const apiParams = useMemo(() => {
     const params: any = {
       page,
-      limit: 6,
+      limit: 8,
     };
 
     if (categoryParam) {
@@ -278,7 +278,7 @@ export default function PostsPage() {
       </div>
 
       {/* Posts Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {posts.map((post: Post) => {
           const isSaved = saveStatus[post.slug] || false;
           

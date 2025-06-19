@@ -44,24 +44,28 @@ export class PostsController {
 
   @Get('/recent')
   @ApiOperation({ summary: 'Get recent posts' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
   async getRecentPost(
+    @Query('page') page?: number,
     @Query('limit') limit?: number,
   ): Promise<PaginatedPostsResponseDto> {
-    return this.postsService.getRecentPost(limit);
+    return this.postsService.getRecentPost(page, limit);
   }
 
   @Get('/top')
   @ApiOperation({ summary: 'Get top posts' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'sort', required: false, type: String })
   @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
   async getTopPost(
+    @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('sort') sort?: string,
   ): Promise<PaginatedPostsResponseDto> {
-    return this.postsService.findAll(1, limit, '', '', '', sort);
+    return this.postsService.getTopPost(page, limit, sort);
   }
 
   @Post()
