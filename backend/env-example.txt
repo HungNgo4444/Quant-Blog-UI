@@ -1,8 +1,8 @@
 # Database Configuration
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=4000
 DB_USERNAME=postgres
-DB_PASSWORD=your_password_here
+DB_PASSWORD=postgres
 DB_NAME=quant_blog
 
 # Application Configuration
@@ -10,29 +10,33 @@ PORT=3001
 NODE_ENV=development
 
 # JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRES_IN=7d
-JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
-JWT_REFRESH_EXPIRES_IN=30d
+JWT_SECRET=67941cd45fe6ebd906ed2f751aaf49dea7be39a590b562bb3f88aa2f6194a2c1
+JWT_ACCESS_EXPIRATION_TIME=1d
+JWT_REFRESH_EXPIRATION_TIME=15d
 
-# Email Configuration (for password reset, email verification)
+# Email Configuration
 EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=your-email@gmail.com
+EMAIL_PORT=465
+EMAIL_SENDER=hoanyttv@gmail.com
+EMAIL_PASSWORD=leuk voke jcuk obnl
 
-# File Upload Configuration
-MAX_FILE_SIZE=5242880
-UPLOAD_DEST=./uploads
+# Frontend URL
+FRONTEND_URL=http://localhost:3000
 
-# Rate Limiting Configuration
-RATE_LIMIT_TTL=60
-RATE_LIMIT_LIMIT=10
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=Shinki_1809    # nếu có
+REDIS_DB=0                           # database index
+REDIS_TTL=3600                       # thời gian cache mặc định (giây)
 
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Các cấu hình cho registration
+REGISTRATION_EXPIRE_TIME=3600        # thời gian hết hạn token đăng ký (giây)
 
-# Frontend URL (for CORS)
-FRONTEND_URL=http://localhost:3000 
+API_PREFIX=v1
+COOKIE_DOMAIN=localhost
+
+CLOUDINARY_CLOUD_NAME=dac8qgcug
+CLOUDINARY_API_KEY=355279637337796
+CLOUDINARY_API_SECRET=mekeVlRa_eJa6qo4W3pjNDOEzdU

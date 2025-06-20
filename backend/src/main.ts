@@ -19,7 +19,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: [process.env.FRONTEND_URL, 'https://quant-blog-ten.vercel.app'],
     credentials: true,
   });
 

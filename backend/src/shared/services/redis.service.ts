@@ -8,11 +8,24 @@ export class RedisService implements OnModuleDestroy {
   private client: RedisClientType;
 
   constructor(private configService: ConfigService) {
+    // Nếu có REDIS_URL, dùng URL (ưu tiên cho production)
+    const redisUrl = process.env.REDIS_URL;
     
-    this.client = createClient({
-      url: process.env.REDIS_URL,
-      password: process.env.REDIS_PASSWORD,
-    });
+    if (redisUrl) {
+      this.client = createClient({
+        url: redisUrl,
+      });
+    } else {
+      // Fallback cho development với individual config
+      this.client = createClient({
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+        },
+        password: process.env.REDIS_PASSWORD,
+        database: parseInt(process.env.REDIS_DB || '0'),
+      });
+    }
     
     this.client.connect().catch(err => {
       console.error('Redis connection error:', err);
@@ -24,6 +37,7 @@ export class RedisService implements OnModuleDestroy {
 
     this.client.on('connect', () => {
       console.log('Connected to Redis successfully');
+      console.log('Redis URL:', redisUrl ? 'Using REDIS_URL' : 'Using individual config');
     });
   }
 

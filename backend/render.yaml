@@ -1,0 +1,68 @@
+services:
+  - type: web
+    name: quant-blog-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: true
+      - key: API_PREFIX
+        value: v1
+      - key: COOKIE_DOMAIN
+        value: .render.com
+      # Database will be set từ Neon
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: quant_blog
+      # Redis will be set từ Upstash
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_DB
+        value: 0
+      # JWT secrets (will be set manually)
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ACCESS_EXPIRATION_TIME
+        value: 1d
+      - key: JWT_REFRESH_EXPIRATION_TIME
+        value: 15d
+      # Frontend URL
+      - key: FRONTEND_URL
+        value: https://quant-blog-ten.vercel.app
+      # Email config
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 465
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      # Cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Registration
+      - key: REGISTRATION_EXPIRE_TIME
+        value: 3600 
