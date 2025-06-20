@@ -90,6 +90,8 @@ export class PostsController {
   @ApiQuery({ name: 'category', required: false, type: String })
   @ApiQuery({ name: 'tag', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, type: String })
   @ApiResponse({ status: 200, type: [PostResponseDto] })
   async getPostByUser(
     @Req() request: any,
@@ -98,9 +100,24 @@ export class PostsController {
     @Query('category') category?: string,
     @Query('tag') tag?: string,
     @Query('search') search?: string,
+    @Query('sort') sort?: string,
+    @Query('status') status?: string,
   ): Promise<any> {
     const userId = request.user.id; // From JWT payload
-    return this.postsService.getPostByUser(userId, page, limit, category, tag, search, request);
+    return this.postsService.getPostByUser(userId, page, limit, category, tag, search, sort, status);
+  }
+
+  @Get('/user/:id')
+  @ApiOperation({ summary: 'Get published posts by user ID' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
+  async getPostsByUserId(
+    @Param('id') userId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<PaginatedPostsResponseDto> {
+    return this.postsService.getPublishedPostsByUserId(userId, page, limit);
   }
 
   @Get('/my-stats')
@@ -123,6 +140,7 @@ export class PostsController {
   @ApiQuery({ name: 'category', required: false, type: String })
   @ApiQuery({ name: 'tag', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'sort', required: false, type: String })
   @ApiResponse({ status: 200, type: PaginatedPostsResponseDto })
   async getSavedPosts(
     @Req() request: any,
@@ -131,9 +149,10 @@ export class PostsController {
     @Query('category') category?: string,
     @Query('tag') tag?: string,
     @Query('search') search?: string,
+    @Query('sort') sort?: string,
   ): Promise<PaginatedPostsResponseDto> {
     const userId = request.user.id; // From JWT payload
-    return this.postsService.getSavedPostsByUser(userId, page, limit, category, tag, search);
+    return this.postsService.getSavedPostsByUser(userId, page, limit, category, tag, search, sort);
   }
 
   @Get(':slug')

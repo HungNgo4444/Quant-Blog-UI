@@ -88,7 +88,7 @@ const Header: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden mr-auto ml-6 md:flex items-center space-x-8">
             {navigationItems.map((item) => (
               <Link
                 key={item.href}

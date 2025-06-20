@@ -75,6 +75,7 @@ export default function FeaturedPosts() {
     event.stopPropagation();
     
     if (!isAuthenticated) {
+      toast.warn('Bạn cần đăng nhập để lưu bài viết.')
       return;
     }
 
@@ -106,8 +107,8 @@ export default function FeaturedPosts() {
   return (
     <section className="py-8 dark:bg-gray-800 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">
+        <div className="px-8">
+          <h2 className="text-xl md:text-2xl font-bold mb-2">
             Bài viết nổi bật
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
@@ -129,7 +130,7 @@ export default function FeaturedPosts() {
             ))}
           </div>
         ) : (
-          <div className="relative px-4 sm:px-8 md:px-12">
+          <div className="relative">
             <Carousel
               opts={{
                 align: "start",
@@ -142,23 +143,23 @@ export default function FeaturedPosts() {
                   const isSaved = saveStatus[post.slug] || false;
                   
                   return (
-                    <CarouselItem key={post.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-shadow duration-300 h-full">
+                    <CarouselItem key={post.id} className="pl-5 basis-full sm:basis-1/2 lg:basis-1/3">
+                      <div className="group bg-white dark:bg-gray-800 rounded-xl hover:shadow-lg hover:scale-[101%] transition-all duration-500 h-full">
                         <div className="relative">
                           {post.featuredImage && (
-                            <div className="h-48 bg-gray-200 dark:bg-gray-700 relative overflow-hidden rounded-t-xl">
+                            <div className="h-40 bg-gray-200 dark:bg-gray-700 relative overflow-hidden rounded-t-xl">
                               <Link href={`/posts/${post.slug}`}>
                                 <img
                                   src={post.featuredImage}
                                   alt={post.title}
-                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-cover group-hover:scale-[102%] transition-transform duration-500"
                                 />
                               </Link> 
                             </div>
                           )}
                           
                           {/* Save button overlay - chỉ hiển thị sau khi mounted */}
-                          {mounted && isAuthenticated && (
+                          {mounted && (
                             <div className="absolute top-2 right-2 bg-black/60 rounded-lg">
                               <button
                                 onClick={(e) => handleToggleSave(post.slug, isSaved, e)}
@@ -175,7 +176,7 @@ export default function FeaturedPosts() {
                           )}
                         </div>
                         
-                        <div className="p-6 flex flex-col justify-between h-56">
+                        <div className="p-6 dark:bg-gray-900 dark:rounded-b-xl flex flex-col justify-between h-56">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 rounded-full">
                               {post.category?.name || ''}
@@ -186,7 +187,7 @@ export default function FeaturedPosts() {
                             </div>
                           </div>
                           
-                          <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+                          <h3 className="text-md font-semibold mb-2 line-clamp-2">
                             <Link
                               href={`/posts/${post.slug}`}
                               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -200,25 +201,26 @@ export default function FeaturedPosts() {
                           </p>
 
                           <div className="flex items-center justify-between mt-auto">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-                                {post.author?.avatar ? (
-                                  <img
-                                    src={post.author.avatar}
-                                    alt={post.author.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {post.author?.name?.charAt(0)}
-                                  </span>
-                                )}
+                            <Link href={`/profile/${post.author?.id}`}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                                  {post.author?.avatar ? (
+                                    <img
+                                      src={post.author.avatar}
+                                      alt={post.author.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                      {post.author?.name?.charAt(0)}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 truncate hover:text-black dark:hover:text-white transition-colors">
+                                    {post.author?.name}
+                                </span>
                               </div>
-                              <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                {post.author?.name}
-                              </span>
-                            </div>
-                            
+                            </Link>
                             <div className="flex items-center gap-3 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Eye className="h-3 w-3" />
@@ -243,15 +245,19 @@ export default function FeaturedPosts() {
               
               {/* Navigation buttons with better positioning */}
               <CarouselPrevious 
-                className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white"
+                className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white hover:bg-black/80 hover:text-white"
                 style={{
                   left: '-20px',
+                  width: '45px',
+                  height: '45px',
                 }}
               />
               <CarouselNext 
-                className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white"
+                className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white hover:bg-black/80 hover:text-white"
                 style={{
                   right: '-20px',
+                  width: '45px',
+                  height: '45px',
                 }}
               />
             </Carousel>

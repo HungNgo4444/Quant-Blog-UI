@@ -45,3 +45,26 @@ export async function updateProfile(updateUserDto: any) {
     return null;
   }
 }
+
+export async function getUserProfile(id: string) {
+  try {
+    const res = await instanceApi.get(`/users/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
+  }
+}
+
+export async function getUserPosts(id: string, page?: number, limit?: number) {
+  try {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    const res = await instanceApi.get(`/posts/user/${id}?${params}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
+  }
+}

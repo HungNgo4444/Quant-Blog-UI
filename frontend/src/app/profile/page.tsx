@@ -308,7 +308,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Social Links */}
-                    {/* <div className="mb-6">
+                    <div className="mb-6">
                       <h3 className="text-lg font-medium mb-4">Liên kết mạng xã hội</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
                           />
                         </div>
                       </div>
-                    </div> */}
+                    </div>
 
                     <Button
                       type="submit"

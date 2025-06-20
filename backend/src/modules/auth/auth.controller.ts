@@ -235,6 +235,7 @@ export class AuthController {
       role: user.role,
       avatar: user.avatar,
       bio: user.bio,
+      socialLinks: user.socialLinks,
       active: user.active,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,

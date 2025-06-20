@@ -80,10 +80,12 @@ export default function CreatePostPage() {
       
       if (error.response?.status === 404) {
         toast.error('Không tìm thấy tài nguyên. Vui lòng thử lại.');
-      } else if (error.response?.status === 400) {
-        toast.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại cài đặt.');
+      } else if (error.response?.data.message === 'Featured image is required') {
+        toast.error('Vui lòng chọn ảnh đại diện cho bài viết.');
+      } else if (error.response?.data.message === 'Conflict slug') {
+        toast.error('Tiêu đề đã tồn tại. Vui lòng nhập tiêu đề khác.');
       } else {
-        toast.error('Có lỗi xảy ra khi lưu bài viết');
+        toast.error('Có lỗi xảy ra khi xuất bản bài viết');
       }
     } finally {
       setSavingLoading(false);
@@ -131,8 +133,10 @@ export default function CreatePostPage() {
       
       if (error.response?.status === 404) {
         toast.error('Không tìm thấy tài nguyên. Vui lòng thử lại.');
-      } else if (error.response?.status === 400) {
-        toast.error('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+      } else if (error.response?.data.message === 'Featured image is required') {
+        toast.error('Vui lòng chọn ảnh đại diện cho bài viết.');
+      } else if (error.response?.data.message === 'Conflict slug') {
+        toast.error('Tiêu đề đã tồn tại. Vui lòng nhập tiêu đề khác.');
       } else {
         toast.error('Có lỗi xảy ra khi xuất bản bài viết');
       }

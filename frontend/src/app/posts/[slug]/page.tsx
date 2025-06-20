@@ -16,7 +16,7 @@ import {
 import { useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import rehypeRaw from 'rehype-raw';
 import { formatDate, calculateReadingTime } from '../../../lib/utils';
 import axios from 'axios';
@@ -30,8 +30,47 @@ import { Badge } from '../../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Global variable to store base64 images for current render
+let currentBase64Images: Array<{ id: string; src: string; alt: string }> = [];
+
+// Function to process content and extract base64 images for separate handling
+const processContentWithImages = (content: string) => {
+  currentBase64Images = []; // Reset for each render
+  
+  // Find all base64 images and replace with placeholders
+  const base64ImageRegex = /<img[^>]+src="data:image\/[^;]+;base64,[^"]*"[^>]*>/g;
+  let processedContent = content;
+  let match;
+  let imageIndex = 0;
+  
+  while ((match = base64ImageRegex.exec(content)) !== null) {
+    const imgTag = match[0];
+    
+    // Extract src and alt from the img tag
+    const srcMatch = imgTag.match(/src="([^"]*)"/);
+    const altMatch = imgTag.match(/alt="([^"]*)"/);
+    
+    if (srcMatch) {
+      const imageId = `__IMAGE_PLACEHOLDER_${imageIndex}__`;
+      currentBase64Images.push({
+        id: imageId,
+        src: srcMatch[1],
+        alt: altMatch ? altMatch[1] : ''
+      });
+      
+      // Keep as HTML img tag but with placeholder src
+      processedContent = processedContent.replace(imgTag, `<img src="${imageId}" alt="${altMatch ? altMatch[1] : ''}" class="w-full h-auto rounded-lg" />`);
+      imageIndex++;
+    }
+  }
+  
+  
+  return { processedContent, base64Images: currentBase64Images };
+};
 
 interface Post {
   id: string;
@@ -55,6 +94,7 @@ interface Post {
     name: string;
     avatar?: string;
     bio?: string;
+    id: string;
   };
 }
 
@@ -298,18 +338,17 @@ export default function PostDetailPage() {
 
       {/* Author */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={post.author.avatar} alt={post.author.name} />
-            <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-semibold">{post.author.name}</h3>
-            {post.author.bio && (
-              <p className="text-sm text-gray-600">{post.author.bio}</p>
-            )}
+        <Link href={`/profile/${post.author.id}`}>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={post.author.avatar} alt={post.author.name} />
+              <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">{post.author.name}</h3>
+            </div>
           </div>
-        </div>
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -332,53 +371,200 @@ export default function PostDetailPage() {
         <CardContent className="p-6">
           <ReactMarkdown
             components={{
+              // Handle TipTap pre elements with data-language
+              pre({node, children, ...props}: any) {
+                const element = node;
+                const dataLanguage = element?.properties?.dataLanguage;
+                
+                if (dataLanguage) {
+                  // This is a TipTap code block - extract text content from children
+                  let codeContent = '';
+                  
+                  // Function to recursively extract text from nested elements
+                  const extractText = (child: any): string => {
+                    if (typeof child === 'string') return child;
+                    if (child?.props?.children) {
+                      if (Array.isArray(child.props.children)) {
+                        return child.props.children.map(extractText).join('');
+                      }
+                      return extractText(child.props.children);
+                    }
+                    return '';
+                  };
+                  
+                  // Extract text from React children
+                  if (children) {
+                    if (Array.isArray(children)) {
+                      codeContent = children.map(extractText).join('');
+                    } else {
+                      codeContent = extractText(children);
+                    }
+                  }
+                  
+                  return (
+                    <div className="my-6 rounded-xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                      {/* Language badge with copy button */}
+                      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                          {dataLanguage}
+                        </span>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(codeContent)}
+                          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                      
+                      <div className="bg-[#1e1e1e] dark:bg-[#0d1117]">
+                        <SyntaxHighlighter
+                          style={vscDarkPlus as any}
+                          language={dataLanguage}
+                          PreTag="div"
+                          customStyle={{
+                            margin: '0',
+                            padding: '24px',
+                            fontSize: '14px',
+                            lineHeight: '1.5',
+                            fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", monospace',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: '0',
+                            overflow: 'auto'
+                          }}
+                          showLineNumbers={true}
+                          lineNumberStyle={{
+                            color: '#6e7681',
+                            fontSize: '12px',
+                            paddingRight: '16px',
+                            marginRight: '16px',
+                            borderRight: '1px solid #30363d',
+                            textAlign: 'right',
+                            minWidth: '40px'
+                          }}
+                        >
+                          {codeContent}
+                        </SyntaxHighlighter>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Default pre behavior for markdown
+                return <pre {...props}>{children}</pre>;
+              },
+              
+              // Handle images (including base64 placeholders)
+              img({node, src, alt, ...props}: any) {
+                // Check if this is a base64 placeholder
+                const imageData = currentBase64Images.find(img => img.id === src);
+                
+                if (imageData) {
+                  return (
+                    <img 
+                      src={imageData.src} 
+                      alt={imageData.alt} 
+                      className="w-full h-auto rounded-lg my-4"
+                      onError={(e) => {
+                        console.error('Base64 Image failed to load:', e);
+                      }}
+                      onLoad={() => {
+                      }}
+                      {...props}
+                    />
+                  );
+                }
+                
+                // Regular image
+                console.log('Regular image - src length:', src?.length, 'alt:', alt);
+                return (
+                  <img 
+                    src={src} 
+                    alt={alt} 
+                    className="w-full h-auto rounded-lg my-4"
+                    {...props}
+                  />
+                );
+              },
+
+              h1({node, children, ...props}: any) {
+                return <h1 className="text-4xl font-bold mb-6 break-words" {...props}>{children}</h1>;
+              },
+
+              h2({node, children, ...props}: any) {
+                return <h2 className="text-3xl font-bold mb-6 break-words" {...props}>{children}</h2>;
+              },
+
+              h3({node, children, ...props}: any) {
+                return <h3 className="text-2xl font-bold mb-6 break-words" {...props}>{children}</h3>;
+              },
+
+              h4({node, children, ...props}: any) {
+                return <h4 className="text-xl font-bold mb-6 break-words" {...props}>{children}</h4>;
+              },
+
+              h5({node, children, ...props}: any) {
+                return <h5 className="text-lg font-bold mb-6 break-words" {...props}>{children}</h5>;
+              },
+
+              h6({node, children, ...props}: any) {
+                return <h6 className="text-base font-bold mb-6 break-words" {...props}>{children}</h6>;
+              },
+
+              // Handle markdown code blocks
               code({node, inline, className, children, ...props}: any) {
                 const match = /language-(\w+)/.exec(className || '');
                 return !inline && match ? (
-                  <SyntaxHighlighter
-                    style={tomorrow as any}
-                    language={match[1]}
-                    PreTag="div"
-                    customStyle={{
-                      backgroundColor: '#1e1e1e',
-                      color: '#d4d4d4',
-                      padding: '20px',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      lineHeight: '1.6',
-                      margin: '20px 0',
-                      border: '1px solid #3c3c3c',
-                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
-                      fontWeight: '400',
-                      overflow: 'auto',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-                    }}
-                    codeTagProps={{
-                      style: {
-                        fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
-                        fontSize: '14px',
-                        lineHeight: '1.6'
-                      }
-                    }}
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
+                  <div className="my-6 rounded-xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    {/* Language badge with copy button */}
+                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                        {match[1]}
+                      </span>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(String(children))}
+                        className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    
+                    <div className="bg-[#1e1e1e] dark:bg-[#0d1117]">
+                      <SyntaxHighlighter
+                        style={vscDarkPlus as any}
+                        language={match[1]}
+                        PreTag="div"
+                        customStyle={{
+                          margin: '0',
+                          padding: '24px',
+                          fontSize: '14px',
+                          lineHeight: '1.5',
+                          fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", monospace',
+                          background: 'transparent',
+                          border: 'none',
+                          borderRadius: '0',
+                          overflow: 'auto'
+                        }}
+                        showLineNumbers={true}
+                        lineNumberStyle={{
+                          color: '#6e7681',
+                          fontSize: '12px',
+                          paddingRight: '16px',
+                          marginRight: '16px',
+                          borderRight: '1px solid #30363d',
+                          textAlign: 'right',
+                          minWidth: '40px'
+                        }}
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    </div>
+                  </div>
                 ) : (
                   <code 
-                    className={className} 
+                    className="bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 px-2 py-1 rounded-md font-mono text-sm border border-red-200 dark:border-red-800/50"
                     {...props}
-                    style={{
-                      backgroundColor: '#2d2d30',
-                      color: '#cccccc',
-                      padding: '3px 6px',
-                      borderRadius: '3px',
-                      fontSize: '13px',
-                      fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", "SF Mono", Monaco, Inconsolata, "Roboto Mono", "Droid Sans Mono", "Liberation Mono", Menlo, Courier, monospace',
-                      border: '1px solid #404040',
-                      fontWeight: '400',
-                      letterSpacing: '0.025em'
-                    }}
                   >
                     {children}
                   </code>
@@ -387,7 +573,10 @@ export default function PostDetailPage() {
             }}
             rehypePlugins={[rehypeRaw]}
           >
-            {post.content}
+            {(() => {
+              const { processedContent } = processContentWithImages(post.content);
+              return processedContent;
+            })()}
           </ReactMarkdown>
         </CardContent>
       </Card>
@@ -412,7 +601,7 @@ export default function PostDetailPage() {
           <Button
             variant={liked ? 'default' : 'outline'}
             onClick={handleLike}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
             {liked ? <ThumbUp className="h-4 w-4" /> : <ThumbUpOutlined className="h-4 w-4" />}
             {likeCount} Thích

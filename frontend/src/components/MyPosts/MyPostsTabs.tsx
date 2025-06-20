@@ -100,15 +100,6 @@ export default function MyPostsTabs({
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
-                <span className={`
-                  inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-full
-                  ${isActive
-                    ? 'bg-gray-100 text-gray-800 dark:bg-white dark:text-gray-900'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                  }
-                `}>
-                  {tab.count}
-                </span>
               </button>
             );
           })}

@@ -45,31 +45,69 @@ export async function getTopPosts(page: number = 1, limit: number = 10, sort: st
   }
 }
 
-export async function getPostsByUser(page: number, limit: number, category: string, tag: string, search: string) {
-  try {
-    const res = await instanceApi.get(`/posts/getByUser?page=${page}&limit=${limit}&category=${category}&tag=${tag}&search=${search}`);
-    return res.data || [];
-  } catch (error) {
-    console.error('Error fetching posts by user:', error);
-    return [];
-  }
-}
-
-export async function getSavedPostsByUser(page: number = 1, limit: number = 10, category: string = '', tag: string = '', search: string = '') {
+export async function getPostsByUser(
+  page: number, 
+  limit: number, 
+  category: string = '', 
+  tag: string = '', 
+  search: string = '',
+  status: string = '',
+  sort: string = ''
+) {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(category && { category }),
       ...(tag && { tag }),
-      ...(search && { search })
+      ...(search && { search }),
+      ...(status && { status }),
+      ...(sort && { sort })
+    });
+
+    const res = await instanceApi.get(`/posts/getByUser?${params}`);
+    return res.data || {
+      posts: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 }
+    };
+  } catch (error) {
+    console.error('Error fetching posts by user:', error);
+    return {
+      posts: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 }
+    };
+  }
+}
+
+export async function getSavedPostsByUser(
+  page: number = 1, 
+  limit: number = 10, 
+  category: string = '', 
+  tag: string = '', 
+  search: string = '',
+  sort: string = ''
+) {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(category && { category }),
+      ...(tag && { tag }),
+      ...(search && { search }),
+      ...(sort && { sort })
     });
 
     const res = await instanceApi.get(`/posts/saved?${params}`);
-    return res.data;
+    return res.data || {
+      posts: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 }
+    };
   } catch (error) {
     console.error('Error fetching saved posts by user:', error);
-    throw error;
+    return {
+      posts: [],
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 }
+    };
   }
 }
 

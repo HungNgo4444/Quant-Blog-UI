@@ -88,6 +88,7 @@ const TopPosts = () => {
     event.stopPropagation();
     
     if (!isAuthenticated) {
+      toast.warn('Bạn cần đăng nhập để lưu bài viết.')
       return;
     }
 
@@ -183,9 +184,9 @@ const TopPosts = () => {
           const isSaved = saveStatus[post.slug] || false;
           
           return (
-            <div key={post.id} className="relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div key={post.id} className="relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow group hover:scale-[101%] transition-transform duration-500">
               {/* Save button overlay */}
-              {mounted && isAuthenticated && (
+              {mounted && (
                 <div className="absolute top-4 right-4 bg-black/60 rounded-lg z-10">
                   <button
                     onClick={(e) => handleToggleSave(post.slug, saveStatus[post.slug] || false, e)}
@@ -209,7 +210,7 @@ const TopPosts = () => {
                       <img
                         src={post.featuredImage}
                         alt={post.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full rounded-xl object-cover group-hover:scale-[102%] transition-transform duration-500"
                       />
                     </Link>
                   </div>
@@ -233,38 +234,40 @@ const TopPosts = () => {
                     </div>
                   </div>
                   
-                  <h2 className="text-xl font-bold mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2">
+                  <h2 className="text-md font-bold mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2">
                     <Link href={`/posts/${post.slug}`}>
                       {post.title}
                     </Link>
                   </h2>
                   
-                  <p className="text-gray-600 dark:text-gray-400 mb-3 leading-relaxed line-clamp-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed line-clamp-2">
                     {post.excerpt}
                   </p>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-                        {post.author?.avatar ? (
-                          <img
-                            src={post.author.avatar}
-                            alt={post.author.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {post.author?.name?.charAt(0)}
-                          </span>
-                        )}
+                    <Link href={`/profile/${post.author?.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
+                          {post.author?.avatar ? (
+                            <img
+                              src={post.author.avatar}
+                              alt={post.author.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {post.author?.name?.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                            {post.author?.name}
+                          </p>
+                        </div>
+                        
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {post.author?.name}
-                        </p>
-                      </div>
-                    </div>
-                    
+                    </Link>
                     <div className="flex items-center gap-4 text-gray-500 text-sm">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />

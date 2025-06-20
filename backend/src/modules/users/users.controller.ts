@@ -10,6 +10,14 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('/:id')
+  @ApiOperation({ summary: 'Get user profile by ID' })
+  @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUserProfile(@Param('id') id: string) {
+    return this.usersService.getUserProfile(id);
+  }
+
   @Get('/admin/all')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Admin: Get all users with post count' })

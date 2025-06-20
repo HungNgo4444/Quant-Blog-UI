@@ -20,6 +20,44 @@ export class UsersService {
         return user;
     }
 
+    async getUserProfile(id: string) {
+        const queryResult = await this.userRepository
+            .createQueryBuilder('user')
+            .leftJoin('posts', 'post', 'CAST(post.author_id AS TEXT) = CAST(user.id AS TEXT) AND post.active = true AND post.status = :status')
+            .select([
+                'user.id',
+                'user.name',
+                'user.avatar',
+                'user.bio',
+                'user.socialLinks',
+                'user.created_at',
+                'COUNT(post.id) as total_posts',
+                'COALESCE(SUM(post.view_count), 0) as total_views'
+            ])
+            .where('user.id = :id', { id })
+            .andWhere('user.active = :active', { active: true })
+            .setParameter('status', 'published')
+            .groupBy('user.id')
+            .getRawOne();
+
+        if (!queryResult) {
+            throw new NotFoundException('User not found');
+        }
+
+        return {
+            id: queryResult.user_id,
+            name: queryResult.user_name,
+            avatar: queryResult.user_avatar,
+            bio: queryResult.user_bio,
+            socialLinks: queryResult.user_socialLinks,
+            createdAt: queryResult.created_at,
+            stats: {
+                totalPosts: parseInt(queryResult.total_posts) || 0,
+                totalViews: parseInt(queryResult.total_views) || 0
+            }
+        };
+    }
+
     async findAllAdmin(page = 1, limit = 7, search?: string, active?: string, role?: string) {
         const queryBuilder = this.userRepository
             .createQueryBuilder('user')

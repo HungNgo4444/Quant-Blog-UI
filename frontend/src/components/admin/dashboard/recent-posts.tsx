@@ -10,8 +10,8 @@ export function RecentPosts() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response= await getRecentPost(5);
-        setPosts(response);
+        const response= await getRecentPost(1, 5);
+        setPosts(response.posts);
       } catch (error) {
         console.error('Error fetching recent posts:', error);
       }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, In } from 'typeorm';
 import { Post, PostStatus } from '../../entities/post.entity';
@@ -31,12 +31,42 @@ export class PostsService {
 
   // Helper function để generate slug
   private generateSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .trim() + '-' + Date.now(); // Add timestamp for uniqueness
+    // Vietnamese character mapping
+  const vietnameseMap: { [key: string]: string } = {
+    'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a', 'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
+    'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
+    'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
+    'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
+    'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o', 'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
+    'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
+    'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u', 'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
+    'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
+    'đ': 'd',
+    // Uppercase versions
+    'À': 'a', 'Á': 'a', 'Ạ': 'a', 'Ả': 'a', 'Ã': 'a', 'Â': 'a', 'Ầ': 'a', 'Ấ': 'a', 'Ậ': 'a', 'Ẩ': 'a', 'Ẫ': 'a',
+    'Ă': 'a', 'Ằ': 'a', 'Ắ': 'a', 'Ặ': 'a', 'Ẳ': 'a', 'Ẵ': 'a',
+    'È': 'e', 'É': 'e', 'Ẹ': 'e', 'Ẻ': 'e', 'Ẽ': 'e', 'Ê': 'e', 'Ề': 'e', 'Ế': 'e', 'Ệ': 'e', 'Ể': 'e', 'Ễ': 'e',
+    'Ì': 'i', 'Í': 'i', 'Ị': 'i', 'Ỉ': 'i', 'Ĩ': 'i',
+    'Ò': 'o', 'Ó': 'o', 'Ọ': 'o', 'Ỏ': 'o', 'Õ': 'o', 'Ô': 'o', 'Ồ': 'o', 'Ố': 'o', 'Ộ': 'o', 'Ổ': 'o', 'Ỗ': 'o',
+    'Ơ': 'o', 'Ờ': 'o', 'Ớ': 'o', 'Ợ': 'o', 'Ở': 'o', 'Ỡ': 'o',
+    'Ù': 'u', 'Ú': 'u', 'Ụ': 'u', 'Ủ': 'u', 'Ũ': 'u', 'Ư': 'u', 'Ừ': 'u', 'Ứ': 'u', 'Ự': 'u', 'Ử': 'u', 'Ữ': 'u',
+    'Ỳ': 'y', 'Ý': 'y', 'Ỵ': 'y', 'Ỷ': 'y', 'Ỹ': 'y',
+    'Đ': 'd'
+  };
+
+  let result = title.toLowerCase();
+  
+  // Replace Vietnamese characters
+  for (const [vietnamese, latin] of Object.entries(vietnameseMap)) {
+    result = result.replace(new RegExp(vietnamese.toLowerCase(), 'g'), latin);
+  }
+  
+  return result
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim()
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
   }
 
   // Helper function để calculate reading time
@@ -47,199 +77,240 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<PostResponseDto> {
-    console.log(11111111111,createPostDto);
-    // Verify category exists
-    const category = await this.categoryRepository.findOne({
-      where: { id: createPostDto.categoryId }
-    });
-
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
-
-    // Verify tags exist
-    let tags: Tag[] = [];
-    if (createPostDto.tags && createPostDto.tags.length > 0) {
-      tags = await this.tagRepository.findBy({
-        id: In(createPostDto.tags)
-      });
-
-      if (tags.length !== createPostDto.tags.length) {
-        throw new NotFoundException('One or more tags not found');
-      }
-    }
-
-    // Generate slug
-    const slug = this.generateSlug(createPostDto.title);
-
-    // Calculate reading time
-    const readingTime = this.calculateReadingTime(createPostDto.content);
-
-    if (createPostDto.featured_image) {
-      const imageUrl = await this.imageService.uploadBase64Image(createPostDto.featured_image, 'featured_image_posts');
-      createPostDto.featured_image = imageUrl;
-    }
-
-    // Create post
-    const post = this.postRepository.create({
-      title: createPostDto.title,
-      slug,
-      content: createPostDto.content,
-      excerpt: createPostDto.excerpt || createPostDto.content.substring(0, 200) + '...',
-      authorId,
-      categoryId: createPostDto.categoryId,
-      featuredImage: createPostDto.featured_image,
-      status: createPostDto.published ? PostStatus.PUBLISHED : PostStatus.DRAFT,
-      publishedAt: createPostDto.published ? new Date() : null,
-      readingTime,
-      metaTitle: createPostDto.seoTitle || createPostDto.title,
-      metaDescription: createPostDto.seoDescription || createPostDto.excerpt,
-      metaKeywords: createPostDto.metaKeywords,
-      ogTitle: createPostDto.ogTitle || createPostDto.title,
-      ogDescription: createPostDto.ogDescription || createPostDto.excerpt,
-      ogImage: createPostDto.ogImage || createPostDto.featured_image,
-      twitterTitle: createPostDto.twitterTitle || createPostDto.title,
-      twitterDescription: createPostDto.twitterDescription || createPostDto.excerpt,
-      twitterImage: createPostDto.twitterImage || createPostDto.featured_image,
-      allowComments: createPostDto.allowComments !== false,
-      active: true,
-      viewCount: 0,
-      likeCount: 0,
-      commentCount: 0,
-      shareCount: 0,
-    });
-
-    const savedPost = await this.postRepository.save(post);
-
-    // Associate tags
-    if (tags.length > 0) {
-      await this.postRepository
-        .createQueryBuilder()
-        .relation(Post, 'tags')
-        .of(savedPost)
-        .add(tags);
-    }
-
-    // Return formatted response using method that includes drafts
-    return this.findOneBySlugIncludingDrafts(slug);
-  }
-
-  async update(slug: string, updatePostDto: UpdatePostDto, userId: string, userRole: string): Promise<PostResponseDto> {
-    // Find the post
-    const post = await this.postRepository.findOne({
-      where: { slug, active: true },
-    });
-
-    if (!post) {
-      throw new NotFoundException('Post not found');
-    }
-
-    // Check permissions
-    if (userRole !== 'admin' && post.authorId !== userId) {
-      throw new ForbiddenException('You can only edit your own posts');
-    }
-
-    // Verify category if provided
-    if (updatePostDto.categoryId) {
+    try {
+      // Verify category exists
       const category = await this.categoryRepository.findOne({
-        where: { id: updatePostDto.categoryId }
+        where: { id: createPostDto.categoryId }
       });
 
       if (!category) {
         throw new NotFoundException('Category not found');
       }
-    }
 
-    // Verify tags if provided
-    let tags: Tag[] = [];
-    if (updatePostDto.tags) {
-      if (updatePostDto.tags.length > 0) {
+      // Verify tags exist
+      let tags: Tag[] = [];
+      if (createPostDto.tags && createPostDto.tags.length > 0) {
         tags = await this.tagRepository.findBy({
-          id: In(updatePostDto.tags)
+          id: In(createPostDto.tags)
         });
 
-        if (tags.length !== updatePostDto.tags.length) {
+        if (tags.length !== createPostDto.tags.length) {
           throw new NotFoundException('One or more tags not found');
         }
       }
-    }
 
-    // Update post fields
-    if (updatePostDto.title) {
-      post.title = updatePostDto.title;
-      // Regenerate slug if title changed
-      post.slug = this.generateSlug(updatePostDto.title);
-    }
+      // Generate slug
+      const slug = this.generateSlug(createPostDto.title);
 
-    if (updatePostDto.content) {
-      post.content = updatePostDto.content;
-      post.readingTime = this.calculateReadingTime(updatePostDto.content);
-    }
+      // Calculate reading time
+      const readingTime = this.calculateReadingTime(createPostDto.content);
 
-    if (updatePostDto.excerpt !== undefined) {
-      post.excerpt = updatePostDto.excerpt;
-    }
-
-    if (updatePostDto.categoryId) {
-      post.categoryId = updatePostDto.categoryId;
-    }
-
-    if (updatePostDto.featured_image !== undefined) {
-      const imageUrl = await this.imageService.uploadBase64Image(updatePostDto.featured_image, 'featured_image_posts');
-      post.featuredImage = imageUrl;
-    }
-
-    if (updatePostDto.published !== undefined) {
-      post.status = updatePostDto.published ? PostStatus.PUBLISHED : PostStatus.DRAFT;
-      if (updatePostDto.published && !post.publishedAt) {
-        post.publishedAt = new Date();
+      if (createPostDto.featured_image) {
+        const imageUrl = await this.imageService.uploadBase64Image(createPostDto.featured_image, 'featured_image_posts');
+        createPostDto.featured_image = imageUrl;
+      }else{
+        throw new BadRequestException('Featured image is required');
       }
-    }
 
-    // Update SEO fields
-    if (updatePostDto.seoTitle !== undefined) {
-      post.metaTitle = updatePostDto.seoTitle;
-    }
-    if (updatePostDto.seoDescription !== undefined) {
-      post.metaDescription = updatePostDto.seoDescription;
-    }
-    if (updatePostDto.metaKeywords !== undefined) {
-      post.metaKeywords = updatePostDto.metaKeywords;
-    }
-    if (updatePostDto.ogTitle !== undefined) {
-      post.ogTitle = updatePostDto.ogTitle;
-    }
-    if (updatePostDto.ogDescription !== undefined) {
-      post.ogDescription = updatePostDto.ogDescription;
-    }
-    if (updatePostDto.ogImage !== undefined) {
-      post.ogImage = updatePostDto.ogImage;
-    }
-    if (updatePostDto.twitterTitle !== undefined) {
-      post.twitterTitle = updatePostDto.twitterTitle;
-    }
-    if (updatePostDto.twitterDescription !== undefined) {
-      post.twitterDescription = updatePostDto.twitterDescription;
-    }
-    if (updatePostDto.twitterImage !== undefined) {
-      post.twitterImage = updatePostDto.twitterImage;
-    }
-    if (updatePostDto.allowComments !== undefined) {
-      post.allowComments = updatePostDto.allowComments;
-    }
+      // Create post
+      const post = this.postRepository.create({
+        title: createPostDto.title,
+        slug,
+        content: createPostDto.content,
+        excerpt: createPostDto.excerpt || createPostDto.content.substring(0, 200) + '...',
+        authorId,
+        categoryId: createPostDto.categoryId,
+        featuredImage: createPostDto.featured_image,
+        status: createPostDto.published ? PostStatus.PUBLISHED : PostStatus.DRAFT,
+        publishedAt: createPostDto.published ? new Date() : null,
+        readingTime,
+        metaTitle: createPostDto.seoTitle || createPostDto.title,
+        metaDescription: createPostDto.seoDescription || createPostDto.excerpt,
+        metaKeywords: createPostDto.metaKeywords,
+        ogTitle: createPostDto.ogTitle || createPostDto.title,
+        ogDescription: createPostDto.ogDescription || createPostDto.excerpt,
+        ogImage: createPostDto.ogImage || createPostDto.featured_image,
+        twitterTitle: createPostDto.twitterTitle || createPostDto.title,
+        twitterDescription: createPostDto.twitterDescription || createPostDto.excerpt,
+        twitterImage: createPostDto.twitterImage || createPostDto.featured_image,
+        allowComments: createPostDto.allowComments !== false,
+        active: true,
+        viewCount: 0,
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+      });
 
-    // Save updated post
-    await this.postRepository.save(post);
+      const savedPost = await this.postRepository.save(post);
 
-    // Update tags if provided (simplified approach)
-    if (updatePostDto.tags !== undefined) {
-      // For now, we'll skip the complex tag update logic
-      // This can be implemented with a proper junction table setup later
-      console.log('Tag update requested for post:', post.id, 'with tags:', updatePostDto.tags);
+      // Associate tags
+      if (tags.length > 0) {
+        await this.postRepository
+          .createQueryBuilder()
+          .relation(Post, 'tags')
+          .of(savedPost)
+          .add(tags);
+      }
+
+      return this.findOneBySlugIncludingDrafts(slug);
+
+    } catch (error) {
+      if (error.code === '23505' && error.constraint) {
+        throw new ConflictException('Conflict slug');
+      }
+      
+      // Re-throw other errors
+      throw error;
     }
+  }
 
-    // Return updated post
-    return this.findOneBySlugIncludingDrafts(post.slug);
+  async update(slug: string, updatePostDto: UpdatePostDto, userId: string, userRole: string): Promise<PostResponseDto> {
+    try {
+      // Find the post
+      const post = await this.postRepository.findOne({
+        where: { slug, active: true },
+      });
+
+      if (!post) {
+        throw new NotFoundException('Post not found');
+      }
+
+      // Check permissions
+      if (userRole !== 'admin' && post.authorId !== userId) {
+        throw new ForbiddenException('You can only edit your own posts');
+      }
+
+      // Verify category if provided
+      if (updatePostDto.categoryId) {
+        const category = await this.categoryRepository.findOne({
+          where: { id: updatePostDto.categoryId }
+        });
+
+        if (!category) {
+          throw new NotFoundException('Category not found');
+        }
+      }
+
+      // Verify tags if provided
+      let tags: Tag[] = [];
+      if (updatePostDto.tags) {
+        if (updatePostDto.tags.length > 0) {
+          tags = await this.tagRepository.findBy({
+            id: In(updatePostDto.tags)
+          });
+
+          if (tags.length !== updatePostDto.tags.length) {
+            throw new NotFoundException('One or more tags not found');
+          }
+        }
+      }
+
+      // Update post fields
+      if (updatePostDto.title) {
+        post.title = updatePostDto.title;
+        // Regenerate slug if title changed
+        post.slug = this.generateSlug(updatePostDto.title);
+      }
+
+      if (updatePostDto.content) {
+        post.content = updatePostDto.content;
+        post.readingTime = this.calculateReadingTime(updatePostDto.content);
+      }
+
+      if (updatePostDto.excerpt !== undefined) {
+        post.excerpt = updatePostDto.excerpt;
+      }
+
+      if (updatePostDto.categoryId) {
+        post.categoryId = updatePostDto.categoryId;
+      }
+
+      if (updatePostDto.featured_image !== undefined) {
+        const imageUrl = await this.imageService.uploadBase64Image(updatePostDto.featured_image, 'featured_image_posts');
+        post.featuredImage = imageUrl;
+      }
+
+      if (updatePostDto.published !== undefined) {
+        post.status = updatePostDto.published ? PostStatus.PUBLISHED : PostStatus.DRAFT;
+        if (updatePostDto.published && !post.publishedAt) {
+          post.publishedAt = new Date();
+        }
+      }
+
+      // Update SEO fields
+      if (updatePostDto.seoTitle !== undefined) {
+        post.metaTitle = updatePostDto.seoTitle;
+      }
+      if (updatePostDto.seoDescription !== undefined) {
+        post.metaDescription = updatePostDto.seoDescription;
+      }
+      if (updatePostDto.metaKeywords !== undefined) {
+        post.metaKeywords = updatePostDto.metaKeywords;
+      }
+      if (updatePostDto.ogTitle !== undefined) {
+        post.ogTitle = updatePostDto.ogTitle;
+      }
+      if (updatePostDto.ogDescription !== undefined) {
+        post.ogDescription = updatePostDto.ogDescription;
+      }
+      if (updatePostDto.ogImage !== undefined) {
+        post.ogImage = updatePostDto.ogImage;
+      }
+      if (updatePostDto.twitterTitle !== undefined) {
+        post.twitterTitle = updatePostDto.twitterTitle;
+      }
+      if (updatePostDto.twitterDescription !== undefined) {
+        post.twitterDescription = updatePostDto.twitterDescription;
+      }
+      if (updatePostDto.twitterImage !== undefined) {
+        post.twitterImage = updatePostDto.twitterImage;
+      }
+      if (updatePostDto.allowComments !== undefined) {
+        post.allowComments = updatePostDto.allowComments;
+      }
+
+      // Save updated post
+      await this.postRepository.save(post);
+
+      // Update tags if provided
+      if (updatePostDto.tags !== undefined) {
+        await this.postRepository
+          .createQueryBuilder()
+          .relation(Post, 'tags')
+          .of(post)
+          .remove(await this.postRepository
+            .createQueryBuilder('post')
+            .relation('tags')
+            .of(post)
+            .loadMany()
+          );
+
+        if (updatePostDto.tags.length > 0) {
+          const newTags = await this.tagRepository.findBy({
+            id: In(updatePostDto.tags)
+          });
+          
+          if (newTags.length > 0) {
+            await this.postRepository
+              .createQueryBuilder()
+              .relation(Post, 'tags')
+              .of(post)
+              .add(newTags);
+          }
+        }
+      }
+
+      // Return updated post
+      return this.findOneBySlugIncludingDrafts(post.slug);
+
+    } catch (error) {
+      if (error.code === '23505' && error.constraint) {
+        throw new ConflictException('Conflict slug');
+      }
+      
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   async delete(slug: string, userId: string, userRole: string): Promise<{ message: string }> {
@@ -1174,7 +1245,7 @@ export class PostsService {
     };
   }
 
-  async getPostByUser(userId: string, page: number, limit: number, category: string, tag: string, search: string, request: any): Promise<any> {
+  async getPostByUser(userId: string, page: number, limit: number, category: string, tag: string, search: string, sort: string, status: string): Promise<any> {
     // First, get the post IDs with proper pagination (without tags to avoid duplication)
     const baseQueryBuilder = this.postRepository
       .createQueryBuilder('post')
@@ -1182,6 +1253,11 @@ export class PostsService {
       .select(['post.id as post_id'])
       .where('post.authorId = :userId', { userId })
       .andWhere('post.active = :active', { active: true });
+
+    if(status !== 'all') {
+      
+      baseQueryBuilder.andWhere('post.status = :status', { status });
+    }
 
     if (category) {
       baseQueryBuilder.andWhere('category.slug = :categorySlug', { categorySlug: category });
@@ -1204,9 +1280,45 @@ export class PostsService {
     // Get total count
     const total = await baseQueryBuilder.getCount();
 
+    // Add sorting
+    let orderByField = 'post.publishedAt';
+    let orderDirection: 'ASC' | 'DESC' = 'DESC';
+    
+    if (sort) {
+      switch (sort) {
+        case 'oldest':
+          orderByField = 'post.publishedAt';
+          orderDirection = 'ASC';
+          break;
+        case 'newest':
+          orderByField = 'post.publishedAt';
+          orderDirection = 'DESC';
+          break;
+        case 'most-viewed':
+          orderByField = 'post.viewCount';
+          orderDirection = 'DESC';
+          break;
+        case 'most-liked':
+          orderByField = 'post.likeCount';
+          orderDirection = 'DESC';
+          break;
+        case 'title-asc':
+          orderByField = 'post.title';
+          orderDirection = 'ASC';
+          break;
+        case 'title-desc':
+          orderByField = 'post.title';
+          orderDirection = 'DESC';
+          break;
+        default:
+          orderByField = 'post.publishedAt';
+          orderDirection = 'DESC';
+      }
+    }
+
     // Get post IDs for current page
     const postIds = await baseQueryBuilder
-      .orderBy('post.publishedAt', 'DESC')
+      .orderBy(orderByField, orderDirection)
       .offset((page - 1) * limit)
       .limit(limit)
       .getRawMany();
@@ -1271,7 +1383,7 @@ export class PostsService {
         'tag.slug as tag_slug'
       ])
       .where('post.id IN (:...postIds)', { postIds: postIds.map(p => p.post_id) })
-      .orderBy('post.publishedAt', 'DESC');
+      .orderBy(orderByField, orderDirection);
 
     const posts = await detailQueryBuilder.getRawMany();
 
@@ -1361,6 +1473,179 @@ export class PostsService {
     };
   }
 
+  async getPublishedPostsByUserId(userId: string, page = 1, limit = 10): Promise<PaginatedPostsResponseDto> {
+    // Get total count first
+    const totalQuery = `
+      SELECT COUNT(DISTINCT post.id) as count
+      FROM posts post
+      WHERE post.author_id = $1 AND post.status = $2 AND post.active = $3
+    `;
+
+    const totalResult = await this.postRepository.query(totalQuery, [userId, PostStatus.PUBLISHED, true]);
+    const total = parseInt(totalResult[0].count);
+
+    // Get paginated post IDs using raw SQL
+    const postIdsQuery = `
+      SELECT DISTINCT post.id, post.published_at
+      FROM posts post
+      WHERE post.author_id = $1 AND post.status = $2 AND post.active = $3
+      ORDER BY post.published_at DESC
+      LIMIT $4 OFFSET $5
+    `;
+
+    const postIdsResult = await this.postRepository.query(
+      postIdsQuery, 
+      [userId, PostStatus.PUBLISHED, true, limit, (page - 1) * limit]
+    );
+
+    if (postIdsResult.length === 0) {
+      return {
+        posts: [],
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
+        },
+      };
+    }
+
+    const postIds = postIdsResult.map(row => row.id);
+
+    // Now get full post data for these specific posts
+    const detailQuery = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('users', 'user', 'CAST(user.id AS TEXT) = CAST(post.author_id AS TEXT)')
+      .leftJoin('categories', 'category', 'CAST(category.id AS TEXT) = CAST(post.category_id AS TEXT)')
+      .leftJoin('post_tags', 'post_tags', 'CAST(post_tags.post_id AS TEXT) = CAST(post.id AS TEXT)')
+      .leftJoin('tags', 'tag', 'CAST(tag.id AS TEXT) = CAST(post_tags.tag_id AS TEXT)')
+      .select([
+        'post.id as id',
+        'post.title as title',
+        'post.slug as slug',
+        'post.excerpt as excerpt',
+        'post.content as content',
+        'post.featured_image as featured_image',
+        'post.status as status',
+        'post.published_at as published_at',
+        'post.reading_time as reading_time',
+        'post.view_count as view_count',
+        'post.like_count as like_count',
+        'post.comment_count as comment_count',
+        'post.share_count as share_count',
+        'post.meta_title as meta_title',
+        'post.meta_description as meta_description',
+        'post.meta_keywords as meta_keywords',
+        'post.og_title as og_title',
+        'post.og_description as og_description',
+        'post.og_image as og_image',
+        'post.twitter_title as twitter_title',
+        'post.twitter_description as twitter_description',
+        'post.twitter_image as twitter_image',
+        'post.allow_comments as allow_comments',
+        'post.active as active',
+        'post.created_at as created_at',
+        'post.updated_at as updated_at',
+        'post.author_id as author_id',
+        'post.category_id as category_id',
+        'user.id as user_id',
+        'user.name as user_name',
+        'user.avatar as user_avatar',
+        'category.id as category_id',
+        'category.name as category_name',
+        'category.slug as category_slug',
+        'category.color as category_color',
+        'tag.id as tag_id',
+        'tag.name as tag_name',
+        'tag.slug as tag_slug'
+      ])
+      .where('post.id IN (:...postIds)', { postIds })
+      .orderBy('post.published_at', 'DESC');
+
+    const posts = await detailQuery.getRawMany();
+
+    // Group posts by ID to handle tags
+    const postsMap = new Map();
+    posts.forEach(raw => {
+      const postId = raw.id;
+      if (!postsMap.has(postId)) {
+        postsMap.set(postId, {
+          ...raw,
+          author: {
+            id: raw.user_id,
+            name: raw.user_name,
+            avatar: raw.user_avatar
+          },
+          category: {
+            id: raw.category_id,
+            name: raw.category_name,
+            slug: raw.category_slug,
+            color: raw.category_color
+          },
+          tags: []
+        });
+      }
+      if (raw.tag_id) {
+        const post = postsMap.get(postId);
+        if (!post.tags.some(t => t.id === raw.tag_id)) {
+          post.tags.push({
+            id: raw.tag_id,
+            name: raw.tag_name,
+            slug: raw.tag_slug
+          });
+        }
+      }
+    });
+
+    // Convert map to array and maintain the order from postIds
+    const mappedPosts = postIds.map(id => {
+      const post = postsMap.get(id);
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        featuredImage: post.featured_image,
+        status: post.status,
+        publishedAt: post.published_at,
+        readingTime: post.reading_time,
+        viewCount: post.view_count,
+        likeCount: post.like_count,
+        commentCount: post.comment_count,
+        shareCount: post.share_count,
+        metaTitle: post.meta_title,
+        metaDescription: post.meta_description,
+        metaKeywords: post.meta_keywords,
+        ogTitle: post.og_title,
+        ogDescription: post.og_description,
+        ogImage: post.og_image,
+        twitterTitle: post.twitter_title,
+        twitterDescription: post.twitter_description,
+        twitterImage: post.twitter_image,
+        allowComments: post.allow_comments,
+        active: post.active,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        authorId: post.author_id,
+        categoryId: post.category_id,
+        author: post.author,
+        category: post.category,
+        tags: post.tags
+      };
+    });
+
+    return {
+      posts: mappedPosts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
   async getSavedPostsByUser(
     userId: string,
     page = 1,
@@ -1368,6 +1653,7 @@ export class PostsService {
     category?: string,
     tag?: string,
     search?: string,
+    sort?: string,
   ): Promise<PaginatedPostsResponseDto> {
     // First, get the saved post IDs with proper pagination (without tags to avoid duplication)
     const baseQueryBuilder = this.savedPostRepository
@@ -1400,9 +1686,53 @@ export class PostsService {
     // Get total count
     const total = await baseQueryBuilder.getCount();
 
+    // Add sorting
+    let orderByField = 'saved_post.saved_at';
+    let orderDirection: 'ASC' | 'DESC' = 'DESC';
+    
+    if (sort) {
+      switch (sort) {
+        case 'oldest':
+          orderByField = 'post.publishedAt';
+          orderDirection = 'ASC';
+          break;
+        case 'newest':
+          orderByField = 'post.publishedAt';
+          orderDirection = 'DESC';
+          break;
+        case 'most-viewed':
+          orderByField = 'post.viewCount';
+          orderDirection = 'DESC';
+          break;
+        case 'most-liked':
+          orderByField = 'post.likeCount';
+          orderDirection = 'DESC';
+          break;
+        case 'title-asc':
+          orderByField = 'post.title';
+          orderDirection = 'ASC';
+          break;
+        case 'title-desc':
+          orderByField = 'post.title';
+          orderDirection = 'DESC';
+          break;
+        case 'saved-newest':
+          orderByField = 'saved_post.saved_at';
+          orderDirection = 'DESC';
+          break;
+        case 'saved-oldest':
+          orderByField = 'saved_post.saved_at';
+          orderDirection = 'ASC';
+          break;
+        default:
+          orderByField = 'saved_post.saved_at';
+          orderDirection = 'DESC';
+      }
+    }
+
     // Get saved post IDs for current page
     const savedPostIds = await baseQueryBuilder
-      .orderBy('saved_post.saved_at', 'DESC')
+      .orderBy(orderByField, orderDirection)
       .offset((page - 1) * limit)
       .limit(limit)
       .getRawMany();
@@ -1470,7 +1800,7 @@ export class PostsService {
         'saved_post.saved_at as saved_at'
       ])
       .where('post.id IN (:...postIds)', { postIds: savedPostIds.map(p => p.post_id) })
-      .orderBy('saved_post.saved_at', 'DESC');
+      .orderBy(orderByField, orderDirection);
 
     const posts = await detailQueryBuilder.getRawMany();
 

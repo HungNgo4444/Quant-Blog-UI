@@ -1,38 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Avatar,
-  Paper,
-  Divider,
-  IconButton,
-  Stack,
-  Collapse,
-  Alert,
-  CircularProgress,
-  Chip
-} from '@mui/material';
-import {
-  Reply as ReplyIcon,
-  ThumbUp as ThumbUpIcon,
-  ThumbUpOutlined as ThumbUpOutlinedIcon,
-  Image as ImageIcon,
-  Send as SendIcon,
-  MoreVert as MoreVertIcon,
-  Edit as EditIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { ImageIcon, Send, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import instanceApi from '../../lib/axios';
 import { clientCookies } from '../../services/TokenService';
 import CommentItem from './CommentItem';
 import { readFile } from 'frontend/src/lib/utils';
+import { Button } from "../../components/ui/button";
+import { Textarea } from "../../components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import { cn } from "../../lib/utils";
+import { useSelector } from 'react-redux';
+import { RootState } from 'frontend/src/store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -69,6 +52,7 @@ export default function PostComment({ postId }: PostCommentProps) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const {user} = useSelector((state: RootState) => state.auth);
 
   // Check authentication
   useEffect(() => {
@@ -164,16 +148,30 @@ export default function PostComment({ postId }: PostCommentProps) {
 
       const response = await instanceApi.post('/comments', replyData);
 
-      // Update comments to include new reply
-      setComments(prev => prev.map(comment => 
-        comment.id === parentId 
-          ? { 
+      // Helper function để update nested comments
+      const updateCommentsWithReply = (comments: Comment[], targetParentId: string, newReply: Comment): Comment[] => {
+        return comments.map(comment => {
+          if (comment.id === targetParentId) {
+            // Tìm thấy parent comment, thêm reply
+            return { 
               ...comment, 
-              children: [...(comment.children || []), response.data],
+              children: [...(comment.children || []), newReply],
               replyCount: comment.replyCount + 1
-            }
-          : comment
-      ));
+            };
+          } else if (comment.children && comment.children.length > 0) {
+            // Tìm trong children
+            const updatedChildren = updateCommentsWithReply(comment.children, targetParentId, newReply);
+            return {
+              ...comment,
+              children: updatedChildren
+            };
+          }
+          return comment;
+        });
+      };
+
+      // Update comments với reply mới
+      setComments(prev => updateCommentsWithReply(prev, parentId, response.data));
 
       setReplyContent('');
       setReplyTo(null);
@@ -206,85 +204,122 @@ export default function PostComment({ postId }: PostCommentProps) {
   }, []);
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
+    <div className="mt-8">
+      <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100">
         Bình luận ({comments.reduce((total, comment) => total + 1 + (comment.children?.length || 0), 0)})
-      </Typography>
+      </h3>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+        <Alert className="mb-4 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+          <AlertDescription className="text-red-800 dark:text-red-200">
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Comment Form */}
       {isAuthenticated ? (
-        <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Viết bình luận của bạn..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            variant="outlined"
-            sx={{ mb: 2 }}
-          />
-
-          {selectedImage && (
-            <Box sx={{ mb: 2 }}>
-              <span style={{position: 'relative', display: 'inline-block'}}>
-                <img src={selectedImage} alt="Selected" style={{ width: 'auto', height: '70px', borderRadius: '8px', border: '1px solid #aaa' }} />
-                <IconButton sx={{ '&:hover': { backgroundColor: '#ddd' }, position: 'absolute', top: 4, right: 4, backgroundColor: 'white', borderRadius: '50%', padding: '2px', border: '1px solid red'}} onClick={() => setSelectedImage('')}>
-                  <CloseIcon sx={{ color: 'red', fontSize: '14px' }} />
-                </IconButton>
-              </span>
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="image-upload"
-                type="file"
-                onChange={handleImageSelect}
+        <div className="mb-6">
+          <div className="flex gap-3 items-start">
+            <Avatar className="w-10 h-10">
+              {user?.avatar ? (
+                <AvatarImage src={user?.avatar} alt={user?.name} />
+              ) : (
+                <AvatarFallback className="bg-blue-500 text-white">
+                  {user?.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex-1">
+              <Textarea
+                placeholder="Viết bình luận..."
+                value={newComment}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewComment(e.target.value)}
+                className="resize-none rounded-3xl bg-gray-100 dark:bg-gray-700 border-none text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[48px]"
+                rows={3}
               />
-              <label htmlFor="image-upload">
-                <IconButton component="span" color="primary">
-                  <ImageIcon />
-                </IconButton>
-              </label>
-            </Box>
 
-            <Button
-              variant="contained"
-              startIcon={submitting ? <CircularProgress size={16} /> : <SendIcon />}
-              onClick={submitComment}
-              disabled={submitting || !newComment.trim()}
-            >
-              {submitting ? 'Đang gửi...' : 'Gửi bình luận'}
-            </Button>
-          </Box>
-        </Paper>
+              {selectedImage && (
+                <div className="mt-3 ml-2">
+                  <div className="relative inline-block">
+                    <img 
+                      src={selectedImage} 
+                      alt="Selected" 
+                      className="w-auto h-24 rounded-xl object-cover"
+                    />
+                    <Button 
+                      size="sm"
+                      variant="secondary"
+                      className="absolute top-1 right-1 w-6 h-6 p-0 rounded-full bg-black/70 hover:bg-black/80 text-white border-none"
+                      onClick={(e) => setSelectedImage('')}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mt-2">
+                <div>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="image-upload"
+                    type="file"
+                    onChange={handleImageSelect}
+                  />
+                  <label htmlFor="image-upload">
+                    <div
+                      className="cursor-pointer bg-gray-200 rounded-full p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <span>
+                        <ImageIcon className="w-5 h-5" />
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                <Button
+                  onClick={submitComment}
+                  disabled={submitting || !newComment.trim()}
+                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-3xl px-6 font-semibold"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Đang gửi...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Đăng
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Bạn cần đăng nhập để bình luận.
+        <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            Bạn cần đăng nhập để bình luận.
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Comments List */}
       {loading && page === 1 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
       ) : (
         <>
           {comments.map((comment) => (
             <CommentItem 
               key={comment.id} 
               comment={comment}
+              level={0} // Level 0 cho top-level comments
               replyTo={replyTo}
               replyContent={replyContent}
               submitting={submitting}
@@ -298,26 +333,27 @@ export default function PostComment({ postId }: PostCommentProps) {
 
           {/* Load More Button */}
           {page < totalPages && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <div className="flex justify-center mt-6">
               <Button
-                variant="outlined"
+                variant="outline"
                 onClick={() => setPage(prev => prev + 1)}
                 disabled={loading}
+                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
-                {loading ? <CircularProgress size={20} /> : 'Xem thêm bình luận'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Xem thêm bình luận'}
               </Button>
-            </Box>
+            </div>
           )}
 
           {comments.length === 0 && !loading && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color="text.secondary">
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
                 Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
         </>
       )}
-    </Box>
+    </div>
   );
 }

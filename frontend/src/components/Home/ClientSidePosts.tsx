@@ -161,7 +161,7 @@ const ClientSidePosts = ({ user }: { user: any }) => {
           {/* Sidebar */}
           <div className="lg:col-span-4">
             {/* Author Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300">
                 <Avatar className="h-20 w-20">
@@ -196,7 +196,7 @@ const ClientSidePosts = ({ user }: { user: any }) => {
             </div>
 
             {/* Categories */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               <h3 className="text-lg font-bold mb-4">
                 Chủ đề
               </h3>

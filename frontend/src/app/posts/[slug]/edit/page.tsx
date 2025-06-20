@@ -57,17 +57,15 @@ export default function EditPostPage() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Loading post data for slug:', slug);
       const response = await getPostBySlugIncludingDrafts(slug);
-      console.log('📊 Post data received:', response);
-      
+      console.log(response);
       if (response) {
         setCurrentPost(response);
       } else {
         setError('Không tìm thấy bài viết');
       }
     } catch (err: any) {
-      console.error('❌ Error loading post:', err);
+      console.error('Error loading post:', err);
       if (err.response?.status === 404) {
         setError('Bài viết không tồn tại');
       } else {
@@ -126,7 +124,7 @@ export default function EditPostPage() {
         excerpt: postData.excerpt,
         categoryId: postData.categoryId,
         tags: postData.tags,
-        featured_image: selectedImageBase64,
+        featured_image: selectedImageBase64.includes('data:image') ? selectedImageBase64 : undefined,
         published: true, // Xuất bản
         seoTitle: postData.metaTitle,
         seoDescription: postData.metaDescription,
@@ -157,7 +155,7 @@ export default function EditPostPage() {
         excerpt: postData.excerpt,
         categoryId: postData.categoryId,
         tags: postData.tags,
-        featured_image: selectedImageBase64,
+        featured_image: selectedImageBase64.includes('data:image') ? selectedImageBase64 : undefined,
         published: false, // Lưu nháp
         seoTitle: postData.metaTitle,
         seoDescription: postData.metaDescription,

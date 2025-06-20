@@ -74,7 +74,7 @@ export default function PostsPage() {
   const apiParams = useMemo(() => {
     const params: any = {
       page,
-      limit: 8,
+      limit: 6,
     };
 
     if (categoryParam) {
@@ -167,7 +167,7 @@ export default function PostsPage() {
   // Handle toggle save với optimistic update
   const handleToggleSave = useCallback((slug: string, currentSaved: boolean) => {
     if (!isAuthenticated) {
-      // Có thể hiện modal login hoặc redirect
+      toast.warn('Bạn cần đăng nhập để lưu bài viết.')
       return;
     }
 
@@ -278,30 +278,32 @@ export default function PostsPage() {
       </div>
 
       {/* Posts Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts.map((post: Post) => {
           const isSaved = saveStatus[post.slug] || false;
           
           return (
             <Card 
-              key={post.id}
-              className="h-full flex flex-col transition-transform duration-200 hover:scale-105 hover:shadow-lg"
-            >
-              <div className="relative">
-                {post.featuredImage && (
-                  <img
-                    src={post.featuredImage}
-                    alt={post.title}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                )}
-                
-                {/* Save button overlay */}
-                {isAuthenticated && (
+                key={post.id}
+                className="group h-full flex flex-col transition-transform duration-500 hover:scale-[101%] hover:shadow-lg overflow-hidden"
+              >
+              <div className="flex-1 flex flex-col">
+                <div className="relative">
+                  {post.featuredImage && (
+                    <Link href={`/posts/${post.slug}`}>
+                      <img
+                        src={post.featuredImage}
+                        alt={post.title}
+                        className="w-full h-48 object-cover rounded-t-lg group-hover:scale-[102%] transition-transform duration-500 cursor-pointer"
+                      />
+                    </Link>
+                  )}
+                  
+                  {/* Save button overlay */}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-lg"
+                    className="absolute top-2 right-2 bg-black/30 text-white rounded-lg"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -310,69 +312,70 @@ export default function PostsPage() {
                   >
                     {isSaved ? <Bookmark className="h-4 w-4" /> : <BookmarkBorder className="h-4 w-4" />}
                   </Button>
-                )}
-              </div>
+                </div>
 
-              <Link href={`/posts/${post.slug}`} className="flex-1 flex flex-col text-decoration-none">
-                <CardContent className="h-[303px] flex-1 flex flex-col p-4">
-                  <div className="mb-3">
-                    <Badge 
-                      variant="secondary" 
-                      className="mb-2 text-blue-700 bg-blue-100 font-semibold"
-                    >
-                      {post.category?.name || ''}
-                    </Badge>
-                  </div>
-                  
-                  <h3 className="text-lg font-bold mb-2 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">
-                    {post.excerpt}
-                  </p>
-
-                  <div className="flex items-center mb-3">
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarImage src={post.author?.avatar || ''} alt={post.author?.name || ''} />
-                      <AvatarFallback>{post.author?.name?.charAt(0) || 'U'}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-gray-500">
-                      {post.author?.name}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <AccessTime className="h-3 w-3" />
-                      <span>{calculateReadingTime(post.content)} phút đọc</span>
+                
+                  <CardContent className="h-[303px] flex-1 flex flex-col p-4">
+                    <div className="mb-3">
+                      <Badge 
+                        variant="secondary" 
+                        className="mb-2 text-blue-700 bg-blue-100 font-semibold"
+                      >
+                        {post.category?.name || ''}
+                      </Badge>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Visibility className="h-3 w-3" />
-                        <span>{post.viewCount}</span>
+                    <Link href={`/posts/${post.slug}`}>
+                      <h3 className="text-lg font-bold mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                        {post.title}
+                      </h3>
+                    </Link>
+                    
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">
+                      {post.excerpt}
+                    </p>
+                    <div className="mb-3">
+                      <Link href={`/profile/${post.author?.id}`} className="flex items-center">
+                        <Avatar className="h-6 w-6 mr-2">
+                          <AvatarImage src={post.author?.avatar || ''} alt={post.author?.name || ''} />
+                          <AvatarFallback>{post.author?.name?.charAt(0) || 'U'}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                          {post.author?.name}
+                        </span>
+                      </Link>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <AccessTime className="h-3 w-3" />
+                        <span>{calculateReadingTime(post.content)} phút đọc</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <ThumbUp className="h-3 w-3" />
-                        <span>{post.likeCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Comment className="h-3 w-3" />
-                        <span>{post.commentCount}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Share className="h-3 w-3" />
-                        <span>{post.shareCount}</span>
+                      
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Visibility className="h-3 w-3" />
+                          <span>{post.viewCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <ThumbUp className="h-3 w-3" />
+                          <span>{post.likeCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Comment className="h-3 w-3" />
+                          <span>{post.commentCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Share className="h-3 w-3" />
+                          <span>{post.shareCount}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <p className="text-xs text-gray-500 mt-2">
-                    {formatDate(post.publishedAt)}
-                  </p>
-                </CardContent>
-              </Link>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {formatDate(post.publishedAt)}
+                    </p>
+                  </CardContent>
+              </div>
             </Card>
           );
         })}
