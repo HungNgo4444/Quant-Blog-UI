@@ -84,7 +84,6 @@ export default function VerifyEmailPage() {
                 {message}
               </p>
               <Button
-                asChild
                 className="w-full"
               >
                 <Link href="/auth/login">
@@ -107,7 +106,6 @@ export default function VerifyEmailPage() {
               </p>
               <div className="space-y-3">
                 <Button
-                  asChild
                   className="w-full"
                 >
                   <Link href="/auth/login">
@@ -115,7 +113,6 @@ export default function VerifyEmailPage() {
                   </Link>
                 </Button>
                 <Button
-                  asChild
                   variant="outline"
                   className="w-full"
                 >
