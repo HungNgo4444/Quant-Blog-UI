@@ -32,7 +32,7 @@ export default registerAs(
       ActivityLog,
       SavedPost,
     ],
-    synchronize: process.env.NODE_ENV !== 'production',
+    synchronize: true,
     logging: process.env.NODE_ENV === 'development',
     migrations: ['dist/migrations/*{.ts,.js}'],
     migrationsTableName: 'migrations',
