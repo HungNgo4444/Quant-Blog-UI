@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Email, ArrowBack, CheckCircle } from '@mui/icons-material';
 import Link from 'next/link';
 import { cn } from '../../lib/utils';
+import { forgotPassword } from 'frontend/src/services/AuthService';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -37,19 +38,12 @@ export default function ForgotPasswordForm() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response = await forgotPassword(email);
 
-      if (response.ok) {
+      if (response) {
         setEmailSent(true);
       } else {
-        const data = await response.json();
-        setError(data.message || 'Có lỗi xảy ra khi gửi email');
+        setError('Có lỗi xảy ra khi gửi email');
       }
     } catch (err) {
       setError('Không thể kết nối đến server');
