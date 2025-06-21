@@ -62,7 +62,7 @@ export class CreatePostDto {
   @ApiProperty({ description: 'SEO Title', required: false })
   @IsOptional()
   @IsString()
-  @MaxLength(60)
+  @MaxLength(200)
   seoTitle?: string;
 
   @ApiProperty({ description: 'SEO Description', required: false })
