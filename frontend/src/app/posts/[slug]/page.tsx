@@ -68,6 +68,11 @@ const processContentWithImages = (content: string) => {
     }
   }
   
+  // Process empty paragraphs to preserve line breaks
+  processedContent = processedContent
+    .replace(/<p><\/p>/g, '<p>&nbsp;</p>') // Replace empty paragraphs with non-breaking space
+    .replace(/<p>\s*<br\s*\/?>\s*<\/p>/g, '<p>&nbsp;</p>') // Replace paragraphs with only br tags
+    .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>'); // Replace paragraphs with only whitespace
   
   return { processedContent, base64Images: currentBase64Images };
 };
@@ -509,6 +514,24 @@ export default function PostDetailPage() {
 
               h6({node, children, ...props}: any) {
                 return <h6 className="text-base font-bold mb-6 break-words" {...props}>{children}</h6>;
+              },
+
+              // Handle paragraphs with proper whitespace preservation
+              p({node, children, ...props}: any) {
+                // Check if paragraph contains only non-breaking space (our empty line marker)
+                const isEmptyLineMarker = children === '\u00a0' || 
+                  (Array.isArray(children) && children.length === 1 && children[0] === '\u00a0');
+                
+                if (isEmptyLineMarker) {
+                  return <div className="h-6" />; // Empty line spacer
+                }
+                
+                return <p className="mb-4 leading-7 whitespace-pre-wrap" {...props}>{children}</p>;
+              },
+
+              // Handle line breaks
+              br({node, ...props}: any) {
+                return <br className="block h-4" {...props} />;
               },
 
               // Handle markdown code blocks

@@ -410,6 +410,8 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
               <TooltipContent>Danh sách checkbox</TooltipContent>
             </Tooltip>
 
+
+
             <Separator orientation="vertical" className="h-6" />
 
             {/* Code Block */}

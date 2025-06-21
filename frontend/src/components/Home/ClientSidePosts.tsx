@@ -3,27 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { calculateReadingTime } from '../../lib/utils';
-import { Post } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { 
-  fetchBulkSaveStatus, 
   togglePostSave, 
   optimisticToggleSave 
 } from '../../store/slices/postsSlice';
 import { toast } from 'react-toastify';
-import { getRecentPost } from '../../services/PostService';
 import RecentPosts from './RecentPosts';
 import TopPosts from './TopPosts';
 import { getAllCategoriesWithPostCount } from 'frontend/src/services/CategoryService';
 import { 
-  Clock,
-  Bookmark,
-  BookmarkIcon,
-  User,
   Twitter,
   Github,
   Linkedin,
-  Calendar,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 
@@ -31,8 +23,6 @@ const ClientSidePosts = ({ user }: { user: any }) => {
   const dispatch = useAppDispatch();
   const { saveStatus } = useAppSelector((state) => state.posts);
   const { isAuthenticated } = useAppSelector((state: any) => state.auth);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -54,29 +44,8 @@ const ClientSidePosts = ({ user }: { user: any }) => {
       }
     };
 
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const res = await getRecentPost(6);
-        setPosts(res || []);
-      } catch (err) {
-        console.error('Error fetching posts:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch posts');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
     fetchCategories();
   }, []);
-
-  useEffect(() => {
-    if (mounted && isAuthenticated && posts.length > 0) {
-      const slugs = posts.map(post => post.slug);
-      dispatch(fetchBulkSaveStatus(slugs));
-    }
-  }, [dispatch, mounted, isAuthenticated, posts]);
 
   // Handle toggle save với optimistic update
   const handleToggleSave = (slug: string, currentSaved: boolean, event: React.MouseEvent) => {

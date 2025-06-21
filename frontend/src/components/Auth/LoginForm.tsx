@@ -8,21 +8,15 @@ import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-} from '@mui/icons-material';
+import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loginUser } from '../../store/slices/authSlice';
-import { showNotification } from '../../store/slices/notificationSlice';
-import { LoginCredentials } from '../../types';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '../../lib/utils';
+import { toast } from 'react-toastify';
 
 const loginSchema = z.object({
   email: z.string()
@@ -62,11 +56,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
     try {
       const result = await dispatch(loginUser(data)).unwrap();
       
-      dispatch(showNotification({
-        type: 'success',
-        message: `Chào mừng bạn trở lại, ${result.name}!`,
-        duration: 5000,
-      }));
+      toast.success(`Chào mừng bạn trở lại, ${result.name}!`);
 
       if (onSuccess) {
         onSuccess();
@@ -74,11 +64,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/' }) =>
         router.push(redirectTo);
       }
     } catch (error: any) {
-      dispatch(showNotification({
-        type: 'error',
-        message: error || 'Đăng nhập thất bại',
-        duration: 5000,
-      }));
+      toast.error(error || 'Đăng nhập thất bại');
     }
   };
 

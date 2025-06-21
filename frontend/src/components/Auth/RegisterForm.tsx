@@ -22,11 +22,11 @@ import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { registerUser } from '../../store/slices/authSlice';
-import { showNotification } from '../../store/slices/notificationSlice';
 import { RegisterCredentials } from '../../types';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '../../lib/utils';
+import { toast } from 'react-toastify';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -120,22 +120,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
 
   const onSubmit = async (data: RegisterCredentials) => {
     if (!acceptTerms) {
-      dispatch(showNotification({
-        type: 'error',
-        message: 'Vui lòng đồng ý với điều khoản sử dụng',
-        duration: 5000,
-      }));
+      toast.error('Vui lòng đồng ý với điều khoản sử dụng');
       return;
     }
 
     try {
       const result = await dispatch(registerUser(data)).unwrap();
       
-      dispatch(showNotification({
-        type: 'success',
-        message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.',
-        duration: 8000,
-      }));
+      toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
 
       if (onSuccess) {
         onSuccess();
@@ -143,11 +135,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, redirectTo = '/'
         router.push('/auth/login');
       }
     } catch (error: any) {
-      dispatch(showNotification({
-        type: 'error',
-        message: error || 'Đăng ký thất bại',
-        duration: 5000,
-      }));
+      toast.error(error || 'Đăng ký thất bại');
     }
   };
 

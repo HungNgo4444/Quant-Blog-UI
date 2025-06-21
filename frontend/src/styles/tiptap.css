@@ -89,6 +89,18 @@
 .ProseMirror p {
   margin: 0.75rem 0;
   line-height: 1.7;
+  white-space: pre-wrap;
+  min-height: 1.5rem; /* Ensure empty paragraphs have height */
+}
+
+.ProseMirror p:empty::before {
+  content: '\00a0'; /* Non-breaking space to maintain paragraph height */
+  color: transparent;
+}
+
+.ProseMirror .hard-break::after {
+  content: '\A';
+  white-space: pre;
 }
 
 .ProseMirror ul,
