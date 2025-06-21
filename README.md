@@ -1,5 +1,4 @@
-#  Quant Blog - Nền tảng Blog Chuyên nghiệp
-
+#  Quant Blog - Nền tảng viết Blog
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.0.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![NestJS](https://img.shields.io/badge/NestJS-11.0.1-red?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
@@ -9,13 +8,43 @@
 
 ## Tổng quan
 
-**Quant Blog** là một nền tảng blog hiện đại được thiết kế để cung cấp trải nghiệm viết, đọc, tương tác với blog tối ưu. Dự án sử dụng các công nghệ tiên tiến nhất để đảm bảo hiệu suất cao, bảo mật và khả năng mở rộng.
+**Quant Blog** là một nền tảng blog hiện đại được thiết kế để cung cấp trải nghiệm viết, đọc, tương tác với blog tối ưu. Dự án đảm bảo hiệu suất cao, bảo mật và khả năng mở rộng.
 
-###  Mục tiêu dự án
-- Tạo ra một nền tảng blog chuyên nghiệp với UX/UI hiện đại
-- Áp dụng các best practices trong phát triển Full-stack
-- Tối ưu hóa hiệu suất và SEO
-- Xây dựng hệ thống quản lý nội dung linh hoạt
+### Truy cập ứng dụng
+https://quant-blog-ten.vercel.app
+
+
+##  Screenshots & Demo
+
+###  Trang chủ
+- Giao diện với featured posts, recent posts, top posts
+- Search và filter functionality
+- Responsive design
+![Giao diện trang chủ](./frontend/public/screenshot/blog-home.png)
+
+###  Editor
+- Rich text editor với TipTap
+- Real-time preview
+- Image upload và embed
+![Giao diện viết bài](./frontend/public/screenshot/blog-create-post.png)
+
+### Quản lý bài viết
+- Người dùng quản lý bài viết của mình
+![Giao diện quản lý bài](./frontend/public/screenshot/blog-posts-management.png)
+
+### Bài viết
+- Xem bài viết
+![Giao diện bài viết](./frontend/public/screenshot/blog-post1.png)
+![Giao diện bài viết](./frontend/public/screenshot/blog-post2.png)
+
+### Profile tác giả
+- Xem thông tin tác giả và các bài viết
+![Giao diện bài viết](./frontend/public/screenshot/blog-profile.png)
+
+###  Admin Dashboard
+- Quản lý Bài viết, người dùng, danh mục, thẻ, thống kê
+![Giao diện admin](./frontend/public/screenshot/blog-admin-dashboard.png)
+![Giao diện admin quản lý](./frontend/public/screenshot/blog-admin-management.png)
 
 ##  Tính năng chính
 
@@ -83,26 +112,6 @@
 - **Code Quality**: ESLint + Prettier
 - **Testing**: Jest
 - **Build Tool**: SWC (Super-fast bundler)
-
-### 5. Truy cập ứng dụng
-- **Frontend**: https://quant-blog-ten.vercel.app
-
-##  Screenshots & Demo
-
-###  Trang chủ
-- Giao diện hiện đại với featured posts
-- Search và filter functionality
-- Responsive design
-
-###  Editor
-- Rich text editor với TipTap
-- Real-time preview
-- Image upload và embed
-
-###  Admin Dashboard
-- Analytics và insights
-- User management
-- Content moderation
 
 ##  Performance & Optimization
 
