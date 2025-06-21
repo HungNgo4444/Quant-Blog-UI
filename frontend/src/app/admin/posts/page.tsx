@@ -29,9 +29,10 @@ import {
 } from "../../../components/ui/pagination";
 import { PlusCircle, Pencil, Trash2, Eye } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { getAdminPosts } from "../../../services/PostService";
+import { deletePost, getAdminPosts } from "../../../services/PostService";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogTitle, DialogContent, DialogHeader } from "../../../components/ui/dialog";
+import { Dialog, DialogTitle, DialogContent, DialogHeader, DialogDescription, DialogFooter } from "../../../components/ui/dialog";
+import { toast } from "react-toastify";
 
 export default function PostsPage() {
   const router = useRouter();
@@ -49,7 +50,8 @@ export default function PostsPage() {
     itemsPerPage: 10
   });
   const [loading, setLoading] = useState(false);
-
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [slug, setSlug] = useState("");
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -111,6 +113,20 @@ export default function PostsPage() {
         return "Đang duyệt";
       default:
         return status;
+    }
+  };
+
+  const handleDeletePost = async (slug: string) => {
+    try {
+      const res = await deletePost(slug);
+      if (res.message === 'Post deleted successfully') {
+        toast.success('Bài viết đã được xóa thành công');
+        setPosts(posts.filter((post: any) => post.slug !== slug));
+      } else {
+        toast.error('Lỗi khi xóa bài viết');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
     }
   };
 
@@ -202,13 +218,10 @@ export default function PostsPage() {
                     {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : 'Chưa xuất bản'}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button onClick={()=> {setOpenImageDialog(true); setSelectedImageUrl(post.featuredImage)}} variant="ghost" size="icon" className="mr-2">
+                    <Button onClick={()=> {setOpenImageDialog(true); setSelectedImageUrl(post.featuredImage)}} variant="ghost" size="icon">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="mr-2">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-red-500">
+                    <Button onClick={()=> {setOpenDeleteDialog(true); setSlug(post.slug)}} variant="ghost" size="icon" className="text-red-500">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -319,6 +332,19 @@ export default function PostsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa bài viết</DialogTitle>
+            <DialogDescription>Bạn có chắc chắn muốn xóa bài viết này không?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={()=> {setOpenDeleteDialog(false)}} variant="outline" className="bg-gray-100 text-gray-900">Hủy</Button>
+            <Button onClick={()=> {handleDeletePost(slug)}} variant="destructive">Xóa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

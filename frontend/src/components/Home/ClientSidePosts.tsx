@@ -93,9 +93,9 @@ const ClientSidePosts = ({ user }: { user: any }) => {
           <div className="lg:col-span-8">
             
             {/* Tab Navigation */}
-            <div className="mb-10">
+            <div className="mb-6">
               <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-8">
+                <nav className="-mb-px flex space-x-8 bg-gray-100 rounded-lg p-2">
                   <button
                     onClick={() => handleTabChange(0)}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -129,66 +129,57 @@ const ClientSidePosts = ({ user }: { user: any }) => {
 
           {/* Sidebar */}
           <div className="lg:col-span-4">
-            {/* Author Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300">
-                <Avatar className="h-20 w-20">
-                  {user?.avatar ? (
-                    <AvatarImage src={user?.avatar} alt={user?.name} />
-                  ) : (
-                    <AvatarFallback className="text-sm bg-gray-300 dark:text-black">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                </div>
-                <h3 className="text-lg font-bold mb-2">
-                  {user?.name}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Chia sẻ kiến thức, kinh nghiệm Tài chính và Công nghệ.
-                </p>
-                
-                <div className="flex justify-center gap-2">
-                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <Twitter className="w-4 h-4" />
-                  </button>
-                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <Github className="w-4 h-4" />
-                  </button>
-                  <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <Linkedin className="w-4 h-4" />
-                  </button>
+            <div className="sticky top-20 space-y-6">
+              {/* Author Info */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+                <div className="text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
+                      <img src="/logo.png" alt="logo" className="w-full h-full object-cover rounded-full" />
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Chia sẻ kiến thức, kinh nghiệm Tài chính và Công nghệ.
+                  </p>
+                  
+                  <div className="flex justify-center gap-2">
+                    <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <Twitter className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <Github className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <Linkedin className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Categories */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-bold mb-4">
-                Chủ đề
-              </h3>
-              
-              <div className="space-y-1">
-                {categories.map((category, index) => (
-                  <div key={index}>
-                    <Link 
-                      href={`/posts?category=${category.slug}`}
-                      className="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{category.name}</span>
-                        <span className="text-sm text-gray-500">
-                          ({category.postCount})
-                        </span>
-                      </div>
-                    </Link>
-                    {index < categories.length - 1 && (
-                      <div className="border-b border-gray-200 dark:border-gray-700" />
-                    )}
-                  </div>
-                ))}
+              {/* Categories */}
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+                <h3 className="text-lg font-bold mb-4">
+                  Chủ đề
+                </h3>
+                
+                <div className="space-y-1 max-h-96 overflow-y-auto">
+                  {categories.map((category, index) => (
+                    <div key={index}>
+                      <Link 
+                        href={`/posts?category=${category.slug}`}
+                        className="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{category.name}</span>
+                          <span className="text-sm text-gray-500">
+                            ({category.postCount})
+                          </span>
+                        </div>
+                      </Link>
+                      {index < categories.length - 1 && (
+                        <div className="border-b border-gray-200 dark:border-gray-700" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

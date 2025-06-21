@@ -479,9 +479,6 @@ export default function PostDetailPage() {
                     />
                   );
                 }
-                
-                // Regular image
-                console.log('Regular image - src length:', src?.length, 'alt:', alt);
                 return (
                   <img 
                     src={src} 

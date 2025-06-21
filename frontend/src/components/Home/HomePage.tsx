@@ -14,7 +14,7 @@ const AuthenticatedActions = ({ user, mounted }: { user: any; mounted: boolean }
   if (!mounted) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+        <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
           Khám phá bài viết
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -29,7 +29,7 @@ const AuthenticatedActions = ({ user, mounted }: { user: any; mounted: boolean }
     return (
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link href="/posts/create">
-          <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+          <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
             Tạo bài viết mới
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -50,7 +50,7 @@ const AuthenticatedActions = ({ user, mounted }: { user: any; mounted: boolean }
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
       <Link href="/posts">
-        <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+        <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
           Khám phá bài viết
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -110,7 +110,7 @@ const HomePage = () => {
               </p>
               <div className="space-y-3 max-w-md mx-auto">
                 <Link href="/auth/register" className="block">
-                  <Button size="lg" className="w-full">
+                  <Button size="lg" className="w-full bg-gray-900 text-white hover:bg-gray-800">
                     Tạo tài khoản
                   </Button>
                 </Link>

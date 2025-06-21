@@ -23,7 +23,7 @@ import {
 } from '../../store/slices/postsSlice';
 import { Post } from '../../types';
 import { toast } from 'react-toastify';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getAllCategories } from 'frontend/src/services/CategoryService';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -55,20 +55,50 @@ export default function PostsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { posts, loading, error, pagination, saveStatus, saveLoading } = useSelector((state: RootState) => state.posts);
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
+  const router = useRouter();
+  const params = useSearchParams();
+  
+  // Lấy các giá trị từ URL parameters
+  const pageParam = params.get('page');
+  const searchParam = params.get('search');
+  const categoryParam = params.get('category');
+  const sortParam = params.get('sort');
+  
+  const [page, setPage] = useState(pageParam ? parseInt(pageParam) : 1);
+  const [searchTerm, setSearchTerm] = useState(searchParam || '');
+  const [categoryFilter, setCategoryFilter] = useState(categoryParam || 'all');
+  const [sortBy, setSortBy] = useState(sortParam || 'date');
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const [categories, setCategories] = useState([
     { value: 'all', label: 'Tất cả danh mục' },
   ]);
 
-  const params = useSearchParams();
-  let categoryParam = params.get('category');
-
   // Debounce search term để tránh gọi API quá nhiều khi user đang gõ
   const debouncedSearchTerm = useDebounce(searchTerm, 1000);
+
+  // Function để cập nhật URL
+  const updateURL = useCallback((newParams: any) => {
+    const searchParams = new URLSearchParams();
+    
+    if (newParams.page && newParams.page !== 1) {
+      searchParams.set('page', newParams.page.toString());
+    }
+    
+    if (newParams.search) {
+      searchParams.set('search', newParams.search);
+    }
+    
+    if (newParams.category && newParams.category !== 'all') {
+      searchParams.set('category', newParams.category);
+    }
+    
+    if (newParams.sort && newParams.sort !== 'date') {
+      searchParams.set('sort', newParams.sort);
+    }
+    
+    const newURL = searchParams.toString() ? `/posts?${searchParams.toString()}` : '/posts';
+    router.replace(newURL, { scroll: false });
+  }, [router]);
 
   // Memoize params để tránh re-render không cần thiết
   const apiParams = useMemo(() => {
@@ -76,10 +106,6 @@ export default function PostsPage() {
       page,
       limit: 6,
     };
-
-    if (categoryParam) {
-      params.category = categoryParam;
-    }
 
     if (categoryFilter !== 'all') {
       params.category = categoryFilter;
@@ -135,7 +161,19 @@ export default function PostsPage() {
     }
   }, [dispatch, isAuthenticated, posts]);
 
-  // Reset page về 1 khi filter thay đổi
+  // Cập nhật URL khi các params thay đổi
+  useEffect(() => {
+    if (hasInitialLoad) {
+      updateURL({
+        page,
+        search: debouncedSearchTerm,
+        category: categoryFilter,
+        sort: sortBy
+      });
+    }
+  }, [page, debouncedSearchTerm, categoryFilter, sortBy, hasInitialLoad, updateURL]);
+
+  // Reset page về 1 khi filter thay đổi (trừ khi đang load initial)
   useEffect(() => {
     if (hasInitialLoad && page !== 1) {
       setPage(1);
@@ -290,7 +328,13 @@ export default function PostsPage() {
               <div className="flex-1 flex flex-col">
                 <div className="relative">
                   {post.featuredImage && (
-                    <Link href={`/posts/${post.slug}`}>
+                    <Link 
+                      href={`/posts/${post.slug}`}
+                      onClick={() => {
+                        // Lưu current URL vào sessionStorage để có thể quay lại
+                        sessionStorage.setItem('postsPageURL', window.location.href);
+                      }}
+                    >
                       <img
                         src={post.featuredImage}
                         alt={post.title}
@@ -325,7 +369,13 @@ export default function PostsPage() {
                       </Badge>
                     </div>
                     
-                    <Link href={`/posts/${post.slug}`}>
+                    <Link 
+                      href={`/posts/${post.slug}`}
+                      onClick={() => {
+                        // Lưu current URL vào sessionStorage để có thể quay lại
+                        sessionStorage.setItem('postsPageURL', window.location.href);
+                      }}
+                    >
                       <h3 className="text-lg font-bold mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                         {post.title}
                       </h3>
@@ -402,7 +452,7 @@ export default function PostsPage() {
                 key={pageNum}
                 variant={pageNum === page ? "default" : "outline"}
                 size="sm"
-                onClick={() => handlePageChange(pageNum)}
+                onClick={() => (handlePageChange(pageNum))}
                 disabled={loading}
               >
                 {pageNum}

@@ -184,7 +184,7 @@ const TopPosts = () => {
           const isSaved = saveStatus[post.slug] || false;
           
           return (
-            <div key={post.id} className="relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow group hover:scale-[101%] transition-transform duration-500">
+            <div key={post.id} className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow group hover:scale-[101%] transition-transform duration-500">
               {/* Save button overlay */}
               {mounted && (
                 <div className="absolute top-4 right-4 bg-black/60 rounded-lg z-10">

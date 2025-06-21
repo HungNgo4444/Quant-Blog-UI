@@ -17,10 +17,7 @@ export class CategoriesService {
     }
 
     async findAllWithPostCount() {
-        //limit 7 categories
-        const categories = await this.categoriesRepository.find({
-            take: 7,
-        });
+        const categories = await this.categoriesRepository.find();
     
         const categoriesWithPostCount = await Promise.all(
             categories.map(async category => {
@@ -33,7 +30,7 @@ export class CategoriesService {
             })
         );
     
-        return categoriesWithPostCount;
+        return categoriesWithPostCount.sort((a, b) => b.postCount - a.postCount).slice(0, 8);
     }
 
     async findAllAdmin(page = 1, limit = 7, search?: string) {

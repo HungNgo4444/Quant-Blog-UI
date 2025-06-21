@@ -152,7 +152,7 @@ interface CommentItemProps {
             <div className="flex items-center gap-4 ml-2 mb-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formatDistanceToNow(
-                  new Date(new Date(comment.createdAt).getTime() + 7 * 60 * 60 * 1000), 
+                  new Date(comment.createdAt),
                   {
                     addSuffix: true,
                     locale: vi
