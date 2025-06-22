@@ -63,7 +63,10 @@ const PostEditor: React.FC<PostEditorProps> = ({
   setSelectedImageBase64,
 }) => {
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
-  
+  useEffect(() => {
+    setTagsfiltered(tags);
+  }, [tags]);
+  const [tagsfiltered, setTagsfiltered] = useState(tags);
   
   // Post data state
   const [postData, setPostData] = useState<PostData>({
@@ -111,6 +114,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
   }, []);
 
   const handleTagsChange = useCallback((tagIds: string[]) => {
+    // setTagsfiltered(tags.filter(tag => !tagIds.includes(tag.id)));
     setPostData((prev: PostData) => ({ ...prev, tags: tagIds }));
   }, []);
 
@@ -240,6 +244,7 @@ const PostEditor: React.FC<PostEditorProps> = ({
                     onValueChange={(value) => {
                       if (!postData.tags.includes(value)) {
                         handleTagsChange([...postData.tags, value]);
+                        setTagsfiltered(tags.filter(tag => !postData.tags.includes(tag.id)));
                         setTimeout(() => setTagDropdownOpen(true), 50);
                       }
                     }}
@@ -248,7 +253,11 @@ const PostEditor: React.FC<PostEditorProps> = ({
                       <SelectValue placeholder="Thêm thẻ" />
                     </SelectTrigger>
                     <SelectContent>
-                      {tags.filter(tag => !postData.tags.includes(tag.id)).map((tag) => (
+                      <Input placeholder="Tìm thẻ" className='mb-1' onChange={(e) => {
+                        const filterTags = tags.filter(tag => tag.name.toLowerCase().includes(e.target.value.toLowerCase()));
+                        setTagsfiltered(filterTags);
+                      }}/>
+                      {tagsfiltered.filter(tag => !postData.tags.includes(tag.id)).map((tag) => (
                         <SelectItem key={tag.id} value={tag.id}>
                           {tag.name}
                         </SelectItem>

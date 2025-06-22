@@ -79,20 +79,20 @@ export default function ForgotPasswordForm() {
 
             <div className="space-y-3">
               <Button
-                className="w-full"
+                className="w-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
               >
                 <Link href="/auth/login">
                   Quay lại đăng nhập
                 </Link>
               </Button>
               
-              <Button
+              {/* <Button
                 onClick={() => setEmailSent(false)}
                 variant="outline"
                 className="w-full"
               >
                 Gửi lại email
-              </Button>
+              </Button> */}
             </div>
           </div>
         </CardContent>

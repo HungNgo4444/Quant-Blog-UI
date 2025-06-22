@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Skeleton } from '../../components/ui/skeleton';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { cn } from '../../lib/utils';
 
 // Custom hook để debounce search
 function useDebounce(value: string, delay: number) {
@@ -454,6 +455,10 @@ export default function PostsPage() {
                 size="sm"
                 onClick={() => (handlePageChange(pageNum))}
                 disabled={loading}
+                className={cn(
+                  "min-w-[2.5rem] dark:bg-gray-700 dark:hover:bg-gray-600",
+                  pageNum === page && "bg-gray-900 hover:bg-gray-700 text-white dark:bg-black dark:hover:bg-gray-700"
+                )}
               >
                 {pageNum}
               </Button>

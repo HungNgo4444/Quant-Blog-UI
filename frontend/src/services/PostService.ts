@@ -248,18 +248,28 @@ export async function getUserPostsStats() {
   }
 }
 
-export async function getAdminPosts(page?: number, limit?: number, status?: string, search?: string) {
+export async function getAdminPosts(page?: number, limit?: number, status?: string, search?: string, active?: string) {
   try {
     const params = new URLSearchParams();
     if (page) params.append('page', page.toString());
     if (limit) params.append('limit', limit.toString());
     if (status && status !== 'all') params.append('status', status);
     if (search) params.append('search', search);
-
+    if (active) params.append('active', active);
     const res = await instanceApi.get(`/posts/admin/all?${params}`);
     return res.data || { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   } catch (error) {
     console.error('Error fetching admin posts:', error);
     return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
+  }
+}
+
+export async function restorePost(slug: string) {
+  try {
+    const res = await instanceApi.post(`/posts/${slug}/restore`);
+    return res.data;
+  } catch (error) {
+    console.error('Error restoring post:', error);
+    throw error;
   }
 }

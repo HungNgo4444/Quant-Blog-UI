@@ -19,7 +19,7 @@ export class CommentsService {
     private readonly userService: UsersService
   ) {}
 
-  async create(createCommentDto: CreateCommentDto, userId: string, userAgent?: string, ipAddress?: string): Promise<CommentResponseDto> {
+  async create(createCommentDto: CreateCommentDto, userId: string, userAgent?: string, ipAddress?: string): Promise<any> {
     // Kiểm tra post có tồn tại và cho phép comment không
     const post = await this.postRepository.findOne({
       where: { 
@@ -81,7 +81,29 @@ export class CommentsService {
       commentCount: post.commentCount + 1
     });
 
-    return this.mapToResponseDto(savedComment);
+    const userInfo = await this.userService.getById(savedComment.userId);
+
+    return {
+      id: savedComment.id,
+      content: savedComment.content,
+      status: savedComment.status,
+      likeCount: savedComment.likeCount,
+      replyCount: savedComment.replyCount,
+      imageUrl: savedComment.imageUrl,
+      createdAt: savedComment.createdAt,
+      updatedAt: savedComment.updatedAt,
+      author: {
+        id: userInfo.id,
+        name: userInfo.name || `User ${userInfo.id.substring(0, 8)}`,
+        avatar: userInfo.avatar || null
+      },
+      post: {
+        authorId: post.authorId,
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+      }
+    };
   }
 
   async findByPostId(postId: string, page = 1, limit = 10): Promise<{ comments: CommentResponseDto[]; total: number }> {

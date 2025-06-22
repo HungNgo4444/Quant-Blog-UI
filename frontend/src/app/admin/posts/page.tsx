@@ -27,9 +27,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../../../components/ui/pagination";
-import { PlusCircle, Pencil, Trash2, Eye } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Eye, RefreshCcw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { deletePost, getAdminPosts } from "../../../services/PostService";
+import { deletePost, getAdminPosts, restorePost } from "../../../services/PostService";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogTitle, DialogContent, DialogHeader, DialogDescription, DialogFooter } from "../../../components/ui/dialog";
 import { toast } from "react-toastify";
@@ -52,6 +52,9 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [slug, setSlug] = useState("");
+  const [activeFilter, setActiveFilter] = useState("true");
+  const [openRestoreDialog, setOpenRestoreDialog] = useState(false);
+  const [slugRestore, setSlugRestore] = useState("");
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -61,10 +64,10 @@ export default function PostsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const fetchPosts = async (page: number = 1, search: string = "", status: string = "all") => {
+  const fetchPosts = async (page: number = 1, search: string = "", status: string = "all", active: string = "active") => {
     try {
       setLoading(true);
-      const res = await getAdminPosts(page, 7, status, search);
+      const res = await getAdminPosts(page, 7, status, search, active);
       setPosts(res.posts || []);
       setPagination(res.pagination || {
         currentPage: 1,
@@ -83,12 +86,12 @@ export default function PostsPage() {
   // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, statusFilter]);
+  }, [debouncedSearchTerm, statusFilter, activeFilter]);
 
   // Fetch posts when page, debouncedSearchTerm, or statusFilter changes
   useEffect(() => {
-    fetchPosts(currentPage, debouncedSearchTerm, statusFilter);
-  }, [currentPage, debouncedSearchTerm, statusFilter]);
+    fetchPosts(currentPage, debouncedSearchTerm, statusFilter, activeFilter);
+  }, [currentPage, debouncedSearchTerm, statusFilter, activeFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -109,8 +112,6 @@ export default function PostsPage() {
         return "Đã xuất bản";
       case "draft":
         return "Bản nháp";
-      case "review":
-        return "Đang duyệt";
       default:
         return status;
     }
@@ -127,6 +128,24 @@ export default function PostsPage() {
       }
     } catch (error) {
       console.error('Error deleting post:', error);
+    } finally {
+      setOpenDeleteDialog(false);
+    }
+  };
+
+  const handleRestorePost = async (slug: string) => {
+    try {
+      const res = await restorePost(slug);
+      if (res.message === 'Post restored successfully') {
+        toast.success('Bài viết đã được khôi phục thành công');
+        setPosts(posts.filter((post: any) => post.slug !== slug));
+      } else {
+        toast.error('Lỗi khi khôi phục bài viết');
+      }
+    } catch (error) {
+      console.error('Error restoring post:', error);
+    } finally {
+      setOpenRestoreDialog(false);
     }
   };
 
@@ -159,7 +178,18 @@ export default function PostsPage() {
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
               <SelectItem value="published">Đã xuất bản</SelectItem>
               <SelectItem value="draft">Bản nháp</SelectItem>
-              <SelectItem value="review">Đang duyệt</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={activeFilter}
+            onValueChange={setActiveFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Lọc theo hoạt động" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Hoạt động</SelectItem>
+              <SelectItem value="false">Đã xóa</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -221,9 +251,16 @@ export default function PostsPage() {
                     <Button onClick={()=> {setOpenImageDialog(true); setSelectedImageUrl(post.featuredImage)}} variant="ghost" size="icon">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button onClick={()=> {setOpenDeleteDialog(true); setSlug(post.slug)}} variant="ghost" size="icon" className="text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {activeFilter === "true" ? (
+                      <Button onClick={()=> {setOpenDeleteDialog(true); setSlug(post.slug)}} variant="ghost" size="icon" className="text-red-500">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ):(
+                      <Button variant="ghost" size="icon" className="text-green-500" onClick={() => {setOpenRestoreDialog(true); setSlugRestore(post.slug)}}>
+                        <RefreshCcw className="h-4 w-4" />
+                      </Button>
+                    )
+                    }
                   </TableCell>
                 </TableRow>
               ))
@@ -342,6 +379,19 @@ export default function PostsPage() {
           <DialogFooter>
             <Button onClick={()=> {setOpenDeleteDialog(false)}} variant="outline" className="bg-gray-100 text-gray-900">Hủy</Button>
             <Button onClick={()=> {handleDeletePost(slug)}} variant="destructive">Xóa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openRestoreDialog} onOpenChange={setOpenRestoreDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận khôi phục bài viết</DialogTitle>
+            <DialogDescription>Bạn có chắc chắn muốn khôi phục bài viết này không?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={()=> {setOpenRestoreDialog(false)}} variant="outline" className="bg-gray-100 text-gray-900">Hủy</Button>
+            <Button onClick={()=> {handleRestorePost(slugRestore)}} variant="destructive" className="bg-green-500 hover:bg-green-600">Khôi phục</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

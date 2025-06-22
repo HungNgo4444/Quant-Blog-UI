@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert";
 import { cn } from "../../lib/utils";
 import { useSelector } from 'react-redux';
 import { RootState } from 'frontend/src/store';
+import { notificationService } from 'frontend/src/services/NotificationService';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -118,6 +119,24 @@ export default function PostComment({ postId }: PostCommentProps) {
       setNewComment('');
       setSelectedImage('');
       setError(null);
+
+      try {
+        await notificationService.createNotification({
+          type: 'post_commented',
+          title: 'Bình luận mới',
+          message: `bình luận về bài viết "${response.data.post.title.substring(0, 25)}..." của bạn.`,
+          recipientId: response.data.post.authorId || '',
+          actorId: user?.id || '',
+          postId: postId || '',
+          metadata: {
+            postTitle: response.data.post.title || '',
+            postSlug: response.data.post.slug || '',
+            actionUrl: `/posts/${response.data.post.slug}`
+          }
+        })
+      } catch (error) {
+        console.error('Error creating notification:', error);
+      }
     } catch (err: any) {
       console.error('Error submitting comment:', err);
       if (err.response?.status === 401) {

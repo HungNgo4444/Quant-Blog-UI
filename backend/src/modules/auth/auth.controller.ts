@@ -128,11 +128,10 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async resetPassword(
     @Body('token') token: string,
-    @Body('password') password: string,
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection.remoteAddress || '0.0.0.0';
-    return this.authService.resetPassword(token, password, ipAddress);
+    return this.authService.resetPassword(token, ipAddress);
   }
 
   @Put('change-password')

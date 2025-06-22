@@ -31,6 +31,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avat
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 import Link from 'next/link';
+import { notificationService } from '../../../services/NotificationService';
+import { useSelector } from 'react-redux';
+import { RootState } from 'frontend/src/store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -114,6 +117,7 @@ export default function PostDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   // Check authentication status
   useEffect(() => {
@@ -204,6 +208,25 @@ export default function PostDetailPage() {
       if (response) {
         setLiked(response.liked);
         setLikeCount(response.likeCount);
+        if(response.liked){
+          try {
+            await notificationService.createNotification({
+              type: 'post_liked',
+              title: 'Thích bài viết',
+              message: `thích bài viết "${post?.title.substring(0, 25)}..." của bạn.`,
+              recipientId: post?.author.id || '',
+              actorId: user?.id || '',
+              postId: post?.id || '',
+              metadata: {
+                postTitle: post?.title || '',
+                postSlug: post?.slug || '',
+                actionUrl: `/posts/${post?.slug}`
+              }
+            })
+          } catch (error) {
+            console.error('Error creating notification:', error);
+          }
+        }
       }
     } catch (err: any) {
       if (err.response?.status === 401) {

@@ -15,6 +15,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { UsersModule } from './modules/users/users.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { TagsModule } from './modules/tags/tags.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { TagsModule } from './modules/tags/tags.module';
     UsersModule,
     CommentsModule,
     TagsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

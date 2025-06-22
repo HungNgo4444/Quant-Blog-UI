@@ -284,7 +284,7 @@ export class AuthService {
     return { message: 'If the email exists, a password reset link has been sent.' };
   }
 
-  async resetPassword(token: string, newPassword: string, ipAddress: string): Promise<{ message: string }> {
+  async resetPassword(token: string, ipAddress: string): Promise<{ newPassword: string }> {
     const user = await this.userRepository.findOne({
       where: {
         passwordResetToken: token,
@@ -294,6 +294,8 @@ export class AuthService {
     if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
       throw new BadRequestException('Invalid or expired reset token');
     }
+
+    const newPassword = `${Math.random().toString(36).substring(2, 15)}_QBlog1`;
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
@@ -319,7 +321,7 @@ export class AuthService {
       userAgent: 'Password reset',
     });
 
-    return { message: 'Password reset successfully' };
+    return { newPassword: newPassword };
   }
 
   async changePassword(changePasswordDto: any, userId: string) {
@@ -421,8 +423,8 @@ export class AuthService {
     const attempts = user.loginAttempts + 1;
     let lockedUntil: Date | undefined = undefined;
 
-    if (attempts >= 5) {
-      lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    if (attempts >= 7) {
+      lockedUntil = new Date(Date.now() + 10 * 60 * 1000);
     }
 
     await this.userRepository.update(user.id, {

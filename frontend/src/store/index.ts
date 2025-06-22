@@ -10,7 +10,7 @@ export const store = configureStore({
     auth: authSlice,
     posts: postsSlice,
     theme: themeSlice,
-    notification: notificationSlice,
+    notifications: notificationSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

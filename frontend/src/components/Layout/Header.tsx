@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Edit,
 } from 'lucide-react';
+import NotificationDropdown from '../Notifications/NotificationDropdown';
 
 const Header: React.FC = () => {
   const pathname = usePathname();
@@ -110,7 +111,7 @@ const Header: React.FC = () => {
             {!searchOpen ? (
               <button
                 onClick={handleSearchToggle}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="hidden md:block p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -127,7 +128,7 @@ const Header: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!searchQuery.trim()}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                  className="hidden md:block p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
                 >
                   <Search className="h-4 w-4" />
                 </button>
@@ -144,16 +145,18 @@ const Header: React.FC = () => {
             {/* Theme toggle */}
             <button
               onClick={handleThemeToggle}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="hidden md:block p-2 !ml-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
 
+            {isAuthenticated && <NotificationDropdown />}
+
             {/* Write post button (authenticated users) */}
             {isAuthenticated && (
-              <Link href="/posts/create" className="hidden md:flex">
+              <Link href="/posts/create" className="md:flex !ml-1">
                 <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-4 w-4 md:mr-2" />
                   Viết bài
                 </Button>
               </Link>
@@ -261,7 +264,7 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="md:hidden relative !z-50 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navigationItems.map((item) => (
                 <Link
@@ -277,6 +280,48 @@ const Header: React.FC = () => {
                   {item.label}
                 </Link>
               ))}
+              {/* Search */}
+              {!searchOpen ? (
+                <button
+                  onClick={handleSearchToggle}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
+              ) : (
+                <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2">
+                  <Input
+                    type="text"
+                    placeholder="Tìm kiếm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-64"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    disabled={!searchQuery.trim()}
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSearchToggle}
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </form>
+              )}
+
+              {/* Theme toggle */}
+              <button
+                onClick={handleThemeToggle}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
               
               {!isAuthenticated && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">

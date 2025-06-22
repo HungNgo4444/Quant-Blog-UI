@@ -10,6 +10,7 @@ import { View } from '../entities/view.entity';
 import { Session } from '../entities/session.entity';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { SavedPost } from '../entities/saved-post.entity';
+import { Notification } from '../entities/notification.entity';
 
 export default registerAs(
   'database',
@@ -31,6 +32,7 @@ export default registerAs(
       Session,
       ActivityLog,
       SavedPost,
+      Notification,
     ],
     synchronize: true,
     logging: process.env.NODE_ENV === 'development',

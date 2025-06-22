@@ -67,3 +67,13 @@ export async function forgotPassword(email: string) {
     return null;
   }
 }
+
+export async function resetPassword(token: string) {
+  try {
+    const res = await axios.post(`${API_URL}/auth/reset-password`, { token });
+    return res.data;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    return null;
+  }
+}

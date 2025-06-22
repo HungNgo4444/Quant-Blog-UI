@@ -11,12 +11,14 @@ import { Category } from '../../entities/category.entity';
 import { Tag } from '../../entities/tag.entity';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from 'src/shared/shared.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, View, Like, SavedPost, Category, Tag]),
     AuthModule,
-    SharedModule
+    SharedModule,
+    NotificationsModule
   ],
   controllers: [PostsController],
   providers: [PostsService],

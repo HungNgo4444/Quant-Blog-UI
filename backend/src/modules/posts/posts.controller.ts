@@ -304,9 +304,24 @@ export class PostsController {
     @Query('limit') limit?: number,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('active') active?: string,
   ): Promise<any> {
     // Check if user is admin (you might want to add admin role check here)
     // For now, any authenticated user can access
-    return this.postsService.getAdminPosts(page, limit, status, search);
+    return this.postsService.getAdminPosts(page, limit, status, search, active);
+  }
+
+  @Post(':slug/restore')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Restore a post' })
+  @ApiResponse({ status: 200, description: 'Post restored successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async restorePost(
+    @Param('slug') slug: string,
+    @Req() request: any,
+  ): Promise<{ message: string }> {
+    const userId = request.user.id;
+    const userRole = request.user.role;
+    return this.postsService.restorePost(slug, userId, userRole);
   }
 }

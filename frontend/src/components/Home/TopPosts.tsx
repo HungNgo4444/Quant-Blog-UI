@@ -292,7 +292,7 @@ const TopPosts = () => {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2 mt-8">
+        <div className="flex items-center justify-center space-x-2 p-3 bg-gray-100 rounded-lg dark:bg-gray-800">
           {/* Previous button */}
           <Button
             variant="outline"
@@ -317,8 +317,8 @@ const TopPosts = () => {
                     size="sm"
                     onClick={() => handlePageChange(page as number)}
                     className={cn(
-                      "min-w-[2.5rem]",
-                      pagination.currentPage === page && "bg-gray-900 hover:bg-gray-700 text-white"
+                      "min-w-[2.5rem] dark:bg-gray-700 dark:hover:bg-gray-600",
+                      pagination.currentPage === page && "bg-gray-900 hover:bg-gray-700 text-white dark:bg-black dark:hover:bg-gray-700"
                     )}
                   >
                     {page}

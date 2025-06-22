@@ -95,7 +95,7 @@ const ClientSidePosts = ({ user }: { user: any }) => {
             {/* Tab Navigation */}
             <div className="mb-6">
               <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-8 bg-gray-100 rounded-lg p-2">
+                <nav className="-mb-px flex space-x-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-2">
                   <button
                     onClick={() => handleTabChange(0)}
                     className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${

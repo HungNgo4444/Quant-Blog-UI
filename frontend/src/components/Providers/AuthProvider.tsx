@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { checkAuth, setUser } from '../../store/slices/authSlice';
 import { clientCookies } from '../../services/TokenService';
+import NotificationManager from '../Common/NotificationManager';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -26,7 +27,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialUser }) =>
     }
   }, [dispatch, user, initialUser]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <NotificationManager />
+    </>
+  );
 };
 
 export default AuthProvider; 

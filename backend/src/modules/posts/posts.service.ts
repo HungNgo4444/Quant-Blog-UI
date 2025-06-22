@@ -10,6 +10,7 @@ import { Like } from '../../entities/like.entity';
 import { SavedPost } from '../../entities/saved-post.entity';
 import { Tag } from '../../entities/tag.entity';
 import { ImageService } from 'src/shared/services/image.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PostsService {
@@ -27,6 +28,7 @@ export class PostsService {
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
     private readonly imageService: ImageService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // Helper function để generate slug
@@ -330,6 +332,20 @@ export class PostsService {
 
     // Soft delete (set active to false)
     await this.postRepository.update(post.id, { active: false });
+
+    // Gửi thông báo cho tác giả nếu bài viết bị admin xóa
+    if (userRole === 'admin' && post.authorId !== userId) {
+      try {
+        await this.notificationsService.createPostDeletedNotification(
+          post.authorId,
+          userId,
+          post.title,
+          'Bài viết không phù hợp với quy định của website'
+        );
+      } catch (error) {
+        console.error('Failed to send delete notification:', error);
+      }
+    }
 
     return { message: 'Post deleted successfully' };
   }
@@ -2029,6 +2045,7 @@ export class PostsService {
     limit = 7,
     status?: string,
     search?: string,
+    active?: string,
   ): Promise<any> {
     // Build query with simple conditions
     const queryBuilder = this.postRepository
@@ -2054,7 +2071,7 @@ export class PostsService {
         'category.name as category_name',
         'category.color as category_color'
       ])
-      .where('post.active = :active', { active: true });
+      .where('post.active = :active', { active: active });
 
     // Filter by status if provided
     if (status && status !== 'all') {
@@ -2314,5 +2331,18 @@ export class PostsService {
         itemsPerPage: limit,
       },
     };
+  }
+
+  async restorePost(slug: string, userId: string, userRole: string): Promise<{ message: string }> {
+    const post = await this.postRepository.findOne({ where: { slug } });
+    if (!post) {
+      throw new NotFoundException(`Post with slug "${slug}" not found`);
+    }
+    if (userRole !== 'admin') {
+      throw new ForbiddenException('You are not authorized to restore this post');
+    }
+    post.active = true;
+    await this.postRepository.save(post);
+    return { message: 'Post restored successfully' };
   }
 }
