@@ -30,7 +30,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialUser }) =>
   return (
     <>
       {children}
-      <NotificationManager />
+      {/* <NotificationManager /> */}
     </>
   );
 };

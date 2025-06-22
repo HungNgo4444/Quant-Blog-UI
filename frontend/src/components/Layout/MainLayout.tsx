@@ -29,7 +29,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, className = '' }) => 
       <Footer />
       
       {/* Global notification manager */}
-      <NotificationManager />
+      {/* <NotificationManager /> */}
     </Box>
   );
 };
