@@ -5,8 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { AppModule } from './app.module';
+import { webcrypto } from 'crypto';
 
 async function bootstrap() {
+  if (!global.crypto) {
+    global.crypto = webcrypto as any;
+  }
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
