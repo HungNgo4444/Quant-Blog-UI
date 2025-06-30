@@ -9,6 +9,7 @@ import { cn } from "../../lib/utils";
 import { Comment } from "./PostComment";
 import { useSelector } from "react-redux";
 import { RootState } from "frontend/src/store";
+import Link from "next/link";
 
 // Di chuyển CommentItem ra ngoài để tránh re-creation
 interface CommentItemProps {
@@ -102,16 +103,18 @@ interface CommentItemProps {
         >
           {/* Avatar với đường nhánh xuất phát cho children */}
           <div className="relative">
-            <Avatar className={cn(
-              "relative z-20 bg-white dark:bg-gray-800",
-              level === 0 ? "w-10 h-10" : level === 1 ? "w-9 h-9" : "w-8 h-8",
-              level > 0 && "border-2 border-white dark:border-gray-800"
-            )}>
-              <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
-              <AvatarFallback className="bg-blue-500 text-white">
-                {comment.author.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <Link href={`/profile/${comment.author.id}`}>
+              <Avatar className={cn(
+                "relative z-20 bg-white dark:bg-gray-800",
+                level === 0 ? "w-10 h-10" : level === 1 ? "w-9 h-9" : "w-8 h-8",
+                level > 0 && "border-2 border-white dark:border-gray-800"
+              )}>
+                <AvatarImage src={comment.author.avatar} alt={comment.author.name} />
+                <AvatarFallback className="bg-blue-500 text-white">
+                  {comment.author.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
             
             {/* Đường dọc xuất phát từ avatar này xuống children */}
             {comment.children && comment.children.length > 0 && (level === 0 ? showReplies : true) && (
@@ -130,7 +133,9 @@ interface CommentItemProps {
             {/* Comment Bubble */}
             <div className="inline-block max-w-full break-words bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3 mb-1">
               <div className="font-semibold text-sm mb-1 text-gray-900 dark:text-gray-100">
-                {comment.author.name}
+                <Link href={`/profile/${comment.author.id}`}>
+                  {comment.author.name}
+                </Link>
               </div>
               
               <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-200">
