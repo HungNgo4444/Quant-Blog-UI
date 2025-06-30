@@ -132,7 +132,7 @@ export default function PostsPage() {
             await notificationService.createNotification({
               type: 'post_deleted',
               title: 'Xoá bài viết',
-              message: `bài viết "${res.post.title.substring(0, 25)}..." đã bị xóa bởi quản trị viên`,
+              message: `xóa bài viết "${res.post.title.substring(0, 25)}..." của bạn. (Quản trị viên)`,
               recipientId: res.post.authorId || '',
               actorId: user?.id || '',
               postId: res.post.id || '',
