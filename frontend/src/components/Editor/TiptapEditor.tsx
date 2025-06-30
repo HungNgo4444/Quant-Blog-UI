@@ -229,9 +229,9 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
   return (
     <TooltipProvider>
-      <div className={`border rounded-lg overflow-hidden ${className}`}>
+      <div className={`border rounded-lg overflow-hidden relative ${className}`}>
         {/* Toolbar */}
-        <div className="border-b bg-gray-50 dark:bg-gray-800 p-2">
+        <div className="sticky top-0 z-20 border-b bg-gray-50 dark:bg-gray-800 p-2 shadow-sm backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
           <div className="flex flex-wrap gap-1 items-center">
             {/* Heading Selector */}
             <Select
@@ -623,7 +623,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         </div>
 
         {/* Editor Content */}
-        <div className="bg-white dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-900 overflow-y-auto max-h-[calc(100vh-200px)]">
           <EditorContent 
             editor={editor} 
             className="min-h-[400px] focus-within:outline-none"

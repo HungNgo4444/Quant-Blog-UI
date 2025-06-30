@@ -33,9 +33,13 @@ import { deletePost, getAdminPosts, restorePost } from "../../../services/PostSe
 import { useRouter } from "next/navigation";
 import { Dialog, DialogTitle, DialogContent, DialogHeader, DialogDescription, DialogFooter } from "../../../components/ui/dialog";
 import { toast } from "react-toastify";
+import { notificationService } from "frontend/src/services/NotificationService";
+import { useSelector } from "react-redux";
+import { RootState } from 'frontend/src/store';
 
 export default function PostsPage() {
   const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.auth);
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -123,6 +127,24 @@ export default function PostsPage() {
       if (res.message === 'Post deleted successfully') {
         toast.success('Bài viết đã được xóa thành công');
         setPosts(posts.filter((post: any) => post.slug !== slug));
+        if(res.post.authorId !== user?.id) {
+          try {
+            await notificationService.createNotification({
+              type: 'post_deleted',
+              title: 'Xoá bài viết',
+              message: `bài viết "${res.post.title.substring(0, 25)}..." đã bị xóa bởi quản trị viên`,
+              recipientId: res.post.authorId || '',
+              actorId: user?.id || '',
+              postId: res.post.id || '',
+              metadata: {
+                postTitle: res.post.title || '',
+                postSlug: res.post.slug || '',
+              }
+            })
+          } catch (error) {
+            console.error('Error creating notification:', error);
+          }
+        }
       } else {
         toast.error('Lỗi khi xóa bài viết');
       }

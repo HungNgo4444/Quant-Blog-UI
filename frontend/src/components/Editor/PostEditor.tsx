@@ -93,8 +93,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
 
   // Auto-generate excerpt from content
   useEffect(() => {
-    if (postData.content && postData.excerpt.length < 100) {
-      const excerpt = `${extractExcerpt(postData.content, 100)}...`;
+    if (postData.content && postData.excerpt.length < 100 && !initialData) {
+      const excerpt = `${extractExcerpt(postData.content, 100)}`;
       setPostData((prev: PostData) => ({ ...prev, excerpt }));
     }
   }, [postData.content]);

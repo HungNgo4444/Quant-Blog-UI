@@ -208,7 +208,7 @@ export default function PostDetailPage() {
       if (response) {
         setLiked(response.liked);
         setLikeCount(response.likeCount);
-        if(response.liked){
+        if(response.liked && post?.author.id !== user?.id){
           try {
             await notificationService.createNotification({
               type: 'post_liked',
@@ -397,7 +397,8 @@ export default function PostDetailPage() {
       {/* Content */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <ReactMarkdown
+          <div className="prose max-w-none [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_li]:leading-7 [&_ul[data-type='taskList']]:list-none [&_ul[data-type='taskList']]:ml-0">
+            <ReactMarkdown
             components={{
               // Handle TipTap pre elements with data-language
               pre({node, children, ...props}: any) {
@@ -554,6 +555,46 @@ export default function PostDetailPage() {
                 return <br className="block h-4" {...props} />;
               },
 
+              // Handle unordered lists
+              ul({node, children, ...props}: any) {
+                // Check if this is a task list
+                const isTaskList = node?.properties?.dataType === 'taskList';
+                
+                if (isTaskList) {
+                  return <ul data-type="taskList" {...props}>{children}</ul>;
+                }
+                
+                return <ul {...props}>{children}</ul>;
+              },
+
+              // Handle ordered lists
+              ol({node, children, ...props}: any) {
+                return <ol {...props}>{children}</ol>;
+              },
+
+              // Handle list items
+              li({node, children, ...props}: any) {
+                // Check if this is a task list item
+                const isTaskItem = node?.properties?.dataType === 'taskItem';
+                const isChecked = node?.properties?.dataChecked === 'true' || node?.properties?.dataChecked === true;
+                
+                if (isTaskItem) {
+                  return (
+                    <li className="flex items-center gap-2 list-none" {...props}>
+                      <input 
+                        type="checkbox" 
+                        checked={isChecked} 
+                        disabled 
+                        className="rounded border-gray-300 mt-1 flex-shrink-0"
+                      />
+                      <span className={isChecked ? 'line-through text-gray-500' : ''}>{children}</span>
+                    </li>
+                  );
+                }
+                
+                return <li {...props}>{children}</li>;
+              },
+
               // Handle markdown code blocks
               code({node, inline, className, children, ...props}: any) {
                 const match = /language-(\w+)/.exec(className || '');
@@ -615,12 +656,14 @@ export default function PostDetailPage() {
               }
             }}
             rehypePlugins={[rehypeRaw]}
-          >
-            {(() => {
-              const { processedContent } = processContentWithImages(post.content);
-              return processedContent;
-            })()}
-          </ReactMarkdown>
+            remarkPlugins={[]}
+                      >
+                            {(() => {
+                const { processedContent } = processContentWithImages(post.content);
+                return processedContent;
+              })()}
+            </ReactMarkdown>
+          </div>
         </CardContent>
       </Card>
 

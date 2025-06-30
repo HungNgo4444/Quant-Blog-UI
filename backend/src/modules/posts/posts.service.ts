@@ -315,7 +315,7 @@ export class PostsService {
     }
   }
 
-  async delete(slug: string, userId: string, userRole: string): Promise<{ message: string }> {
+  async delete(slug: string, userId: string, userRole: string): Promise<{ message: string, post: Post }> {
     // Find the post
     const post = await this.postRepository.findOne({
       where: { slug, active: true }
@@ -333,21 +333,7 @@ export class PostsService {
     // Soft delete (set active to false)
     await this.postRepository.update(post.id, { active: false });
 
-    // Gửi thông báo cho tác giả nếu bài viết bị admin xóa
-    if (userRole === 'admin' && post.authorId !== userId) {
-      try {
-        await this.notificationsService.createPostDeletedNotification(
-          post.authorId,
-          userId,
-          post.title,
-          'Bài viết không phù hợp với quy định của website'
-        );
-      } catch (error) {
-        console.error('Failed to send delete notification:', error);
-      }
-    }
-
-    return { message: 'Post deleted successfully' };
+    return { message: 'Post deleted successfully', post };
   }
 
   async findAll(

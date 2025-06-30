@@ -120,22 +120,24 @@ export default function PostComment({ postId }: PostCommentProps) {
       setSelectedImage('');
       setError(null);
 
-      try {
-        await notificationService.createNotification({
-          type: 'post_commented',
-          title: 'Bình luận mới',
-          message: `bình luận về bài viết "${response.data.post.title.substring(0, 25)}..." của bạn.`,
-          recipientId: response.data.post.authorId || '',
-          actorId: user?.id || '',
-          postId: postId || '',
-          metadata: {
-            postTitle: response.data.post.title || '',
-            postSlug: response.data.post.slug || '',
-            actionUrl: `/posts/${response.data.post.slug}`
-          }
-        })
-      } catch (error) {
-        console.error('Error creating notification:', error);
+      if(response.data.post.authorId !== user?.id) {
+        try {
+          await notificationService.createNotification({
+            type: 'post_commented',
+            title: 'Bình luận mới',
+            message: `bình luận về bài viết "${response.data.post.title.substring(0, 25)}..." của bạn.`,
+            recipientId: response.data.post.authorId || '',
+            actorId: user?.id || '',
+            postId: postId || '',
+            metadata: {
+              postTitle: response.data.post.title || '',
+              postSlug: response.data.post.slug || '',
+              actionUrl: `/posts/${response.data.post.slug}`
+            }
+          })
+        } catch (error) {
+          console.error('Error creating notification:', error);
+        }
       }
     } catch (err: any) {
       console.error('Error submitting comment:', err);
@@ -166,7 +168,25 @@ export default function PostComment({ postId }: PostCommentProps) {
       };
 
       const response = await instanceApi.post('/comments', replyData);
-
+      if(response.data.post.authorId !== user?.id) {
+        try {
+          await notificationService.createNotification({
+            type: 'comment_replied',
+            title: 'Trả lời bình luận',
+            message: `trả lời bình luận của bạn tại bài viết "${response.data.post.title.substring(0, 25)}..."`,
+            recipientId: response.data.post.authorId || '',
+            actorId: user?.id || '',
+            postId: postId || '',
+            metadata: {
+              postTitle: response.data.post.title || '',
+              postSlug: response.data.post.slug || '',
+              actionUrl: `/posts/${response.data.post.slug}`
+            }
+          })
+        } catch (error) {
+          console.error('Error creating notification:', error);
+        }
+      }
       // Helper function để update nested comments
       const updateCommentsWithReply = (comments: Comment[], targetParentId: string, newReply: Comment): Comment[] => {
         return comments.map(comment => {
