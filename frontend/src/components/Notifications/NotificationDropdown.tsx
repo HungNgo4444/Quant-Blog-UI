@@ -42,10 +42,9 @@ const NotificationDropdown: React.FC = () => {
     if (isAuthenticated) {
       dispatch(fetchUnreadCount());
       
-      // Fetch unread count every 30 seconds
       const interval = setInterval(() => {
         dispatch(fetchUnreadCount());
-      }, 600000);
+      }, 60000);
 
       return () => clearInterval(interval);
     }

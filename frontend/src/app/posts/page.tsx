@@ -324,7 +324,7 @@ export default function PostsPage() {
           return (
             <Card 
                 key={post.id}
-                className="group h-full flex flex-col transition-transform duration-500 hover:scale-[101%] hover:shadow-lg overflow-hidden"
+                className="group h-full flex flex-col transition-transform hover:shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700"
               >
               <div className="flex-1 flex flex-col">
                 <div className="relative">
@@ -339,7 +339,7 @@ export default function PostsPage() {
                       <img
                         src={post.featuredImage}
                         alt={post.title}
-                        className="w-full h-48 object-cover rounded-t-lg group-hover:scale-[102%] transition-transform duration-500 cursor-pointer"
+                        className="w-full h-40 object-cover rounded-t-lg group-hover:scale-[105%] transition-transform duration-300 cursor-pointer"
                       />
                     </Link>
                   )}
@@ -348,23 +348,23 @@ export default function PostsPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 bg-black/30 text-white rounded-lg"
+                    className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-900 dark:text-white rounded-lg p-2 hover:bg-white dark:hover:bg-gray-700"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleToggleSave(post.slug, isSaved);
                     }}
                   >
-                    {isSaved ? <Bookmark className="h-4 w-4" /> : <BookmarkBorder className="h-4 w-4" />}
+                    {isSaved ? <Bookmark className="h-4 w-4 fill-current text-blue-600" /> : <BookmarkBorder className="h-4 w-4" />}
                   </Button>
                 </div>
 
                 
-                  <CardContent className="h-[303px] flex-1 flex flex-col p-4">
+                  <CardContent className="h-72 flex-1 flex flex-col p-4">
                     <div className="mb-3">
                       <Badge 
                         variant="secondary" 
-                        className="mb-2 text-blue-700 bg-blue-100 font-semibold"
+                        className="mb-2 text-xs font-medium text-white bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 dark:text-gray-900 rounded-full px-2.5 py-1"
                       >
                         {post.category?.name || ''}
                       </Badge>
@@ -377,12 +377,12 @@ export default function PostsPage() {
                         sessionStorage.setItem('postsPageURL', window.location.href);
                       }}
                     >
-                      <h3 className="text-lg font-bold mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                      <h3 className="text-base font-bold mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                         {post.title}
                       </h3>
                     </Link>
                     
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">
                       {post.excerpt}
                     </p>
                     <div className="mb-3">
@@ -402,7 +402,7 @@ export default function PostsPage() {
                         <span>{calculateReadingTime(post.content)} phút đọc</span>
                       </div>
                       
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
                         <div className="flex items-center gap-1">
                           <Visibility className="h-3 w-3" />
                           <span>{post.viewCount}</span>

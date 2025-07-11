@@ -40,6 +40,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 // Global variable to store base64 images for current render
 let currentBase64Images: Array<{ id: string; src: string; alt: string }> = [];
 
+// Function to display proper language names
+const getLanguageDisplayName = (language: string): string => {
+  const languageMap: { [key: string]: string } = {
+    'cpp': 'C++',
+    'mql5': 'MQL5',
+    'javascript': 'JavaScript',
+    'typescript': 'TypeScript',
+    'python': 'Python',
+    'html': 'HTML',
+    'css': 'CSS',
+    'bash': 'Bash',
+    'json': 'JSON',
+    'php': 'PHP',
+    'java': 'Java',
+    'sql': 'SQL'
+  };
+  
+  return languageMap[language.toLowerCase()] || language.toUpperCase();
+};
+
 // Function to process content and extract base64 images for separate handling
 const processContentWithImages = (content: string) => {
   currentBase64Images = []; // Reset for each render
@@ -435,7 +455,7 @@ export default function PostDetailPage() {
                       {/* Language badge with copy button */}
                       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                          {dataLanguage}
+                          {getLanguageDisplayName(dataLanguage)}
                         </span>
                         <button
                           onClick={() => navigator.clipboard.writeText(codeContent)}
@@ -603,7 +623,7 @@ export default function PostDetailPage() {
                     {/* Language badge with copy button */}
                     <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        {match[1]}
+                        {getLanguageDisplayName(match[1])}
                       </span>
                       <button
                         onClick={() => navigator.clipboard.writeText(String(children))}

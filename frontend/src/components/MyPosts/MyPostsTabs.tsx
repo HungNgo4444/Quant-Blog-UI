@@ -80,42 +80,50 @@ export default function MyPostsTabs({
   return (
     <div className="w-full">
       {/* Tabs Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${isActive
-                    ? 'border-black text-black dark:border-white dark:text-white'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-        
-        {/* Pagination Info */}
-        {currentPagination && currentPagination.totalItems > 0 && (
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Hiển thị {currentPosts.length} trong tổng số {currentPagination.totalItems} bài viết
-            {currentPagination.totalPages > 1 && (
-              <span className="ml-2">
-                (Trang {currentPagination.currentPage} / {currentPagination.totalPages})
-              </span>
-            )}
-          </div>
-        )}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <nav className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center gap-2 py-2.5 px-4 font-semibold text-sm transition-all rounded-lg flex-1 justify-center
+                    ${isActive
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-700/50'
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">
+                    {tab.id === 'my-posts' ? 'Của tôi' : 'Đã lưu'}
+                  </span>
+                  <span className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+          
+          {/* Pagination Info */}
+          {currentPagination && currentPagination.totalItems > 0 && (
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+              Hiển thị {currentPosts.length} trong tổng số {currentPagination.totalItems} bài viết
+              {currentPagination.totalPages > 1 && (
+                <span className="ml-2">
+                  (Trang {currentPagination.currentPage} / {currentPagination.totalPages})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -213,56 +221,58 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
     const statusConfig = {
       published: {
         label: 'Đã xuất bản',
-        className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+        className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 border border-green-200 dark:border-green-800'
       },
       draft: {
         label: 'Bản nháp',
-        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+        className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800'
       }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${config.className}`}>
         {config.label}
       </span>
     );
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
+      <div className="flex gap-6">
         <div onClick={() => router.push(`/posts/${post.slug}`)} className="cursor-pointer flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer line-clamp-2">
-              {post.title}
-            </h3>
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3 flex-1">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer line-clamp-2 transition-colors">
+                {post.title}
+              </h3>
+            </div>
             {showActions && getStatusBadge(post.status)}
           </div>
           
-          <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-3">
+          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4 leading-relaxed">
             {post.excerpt}
           </p>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
               <span>{formatDate(post.publishedAt || '')}</span>
             </div>
             
-            <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5" />
               <span>{post.viewCount.toLocaleString()}</span>
             </div>
             
-            <div className="flex items-center gap-1">
-              <Heart className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <Heart className="w-3.5 h-3.5" />
               <span>{post.likeCount.toLocaleString()}</span>
             </div>
             
-            <div className="flex items-center gap-1">
-              <MessageCircle className="w-4 h-4" />
+            <div className="flex items-center gap-1.5">
+              <MessageCircle className="w-3.5 h-3.5" />
               <span>{post.commentCount.toLocaleString()}</span>
             </div>
 
@@ -273,11 +283,11 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2">
               {post.tags.slice(0, 3).map((tag: { id: string; name: string; slug: string }) => (
                 <span
                   key={tag.id}
-                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                  className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 >
                   #{tag.name}
                 </span>
@@ -293,35 +303,35 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
 
         {/* Featured Image */}
         {post.featuredImage && (
-          <div className="flex-shrink-0 ml-4">
+          <div className="flex-shrink-0">
             <img
               src={post.featuredImage}
               alt={post.title}
-              className="w-24 h-20 object-cover rounded-md"
+              className="w-28 h-24 object-cover rounded-xl shadow-md"
             />
           </div>
         )}
 
         {/* Actions Menu */}
         {showActions && (
-          <div className="relative ml-4">
+          <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
               <MoreHorizontal className="w-4 h-4 text-gray-500" />
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10" ref={dropdownRef}>
-                <button onClick={() => router.push(`/posts/${post.slug}/edit`)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-10" ref={dropdownRef}>
+                <button onClick={() => router.push(`/posts/${post.slug}/edit`)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left transition-colors">
                   <Edit className="w-4 h-4" />
                   Chỉnh sửa
                 </button>
                 <hr className="my-1 border-gray-200 dark:border-gray-700" />
                 <button 
                   onClick={() => setOpenConfirmDelete(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Xóa
                 </button>
@@ -356,7 +366,7 @@ function EmptyState({ activeTab }: { activeTab: 'my-posts' | 'saved' }) {
       title: 'Chưa có bài viết nào',
       description: 'Bạn chưa viết bài viết nào. Hãy bắt đầu viết bài viết đầu tiên của bạn!',
       actionText: 'Viết bài viết mới',
-      actionHref: '/editor'
+      actionHref: '/posts/create'
     },
     'saved': {
       icon: Bookmark,
@@ -370,22 +380,24 @@ function EmptyState({ activeTab }: { activeTab: 'my-posts' | 'saved' }) {
   const { icon: Icon, title, description, actionText, actionHref } = config[activeTab];
 
   return (
-    <div className="text-center py-12">
-      <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-gray-400" />
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12">
+      <div className="text-center">
+        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+          <Icon className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+          {title}
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
+          {description}
+        </p>
+        <a
+          href={actionHref}
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-900 to-gray-700 text-white text-sm font-semibold rounded-xl hover:from-gray-800 hover:to-gray-600 transition-all shadow-lg hover:shadow-xl"
+        >
+          {actionText}
+        </a>
       </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        {title}
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-        {description}
-      </p>
-      <a
-        href={actionHref}
-        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
-      >
-        {actionText}
-      </a>
     </div>
   );
 }
@@ -393,21 +405,27 @@ function EmptyState({ activeTab }: { activeTab: 'my-posts' | 'saved' }) {
 // Component loading
 function PostsLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {[...Array(3)].map((_, index) => (
-        <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div key={index} className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="animate-pulse">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex gap-6">
               <div className="flex-1">
-                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3"></div>
-                <div className="flex items-center gap-4">
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4 mb-4"></div>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-20"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-14"></div>
                 </div>
               </div>
-              <div className="w-24 h-20 bg-gray-200 dark:bg-gray-700 rounded-md ml-4"></div>
+              <div className="w-28 h-24 bg-gray-200 dark:bg-gray-700 rounded-xl flex-shrink-0"></div>
             </div>
           </div>
         </div>
@@ -494,77 +512,79 @@ function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-center space-x-2 py-6">
-      {/* Previous Button */}
-      <button
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-          currentPage === 1
-            ? 'text-gray-400 cursor-not-allowed'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        Trước
-      </button>
-
-      {/* First page if not visible */}
-      {pageNumbers[0] > 1 && (
-        <>
-          <button
-            onClick={() => handlePageChange(1)}
-            className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-          >
-            1
-          </button>
-          {pageNumbers[0] > 2 && (
-            <span className="px-2 text-gray-500">...</span>
-          )}
-        </>
-      )}
-
-      {/* Page Numbers */}
-      {pageNumbers.map((page) => (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mt-8">
+      <div className="flex items-center justify-center space-x-2">
+        {/* Previous Button */}
         <button
-          key={page}
-          onClick={() => handlePageChange(page)}
-          className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-            page === currentPage
-              ? 'bg-blue-600 text-white'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all border-2 ${
+            currentPage === 1
+              ? 'text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-700'
+              : 'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
           }`}
         >
-          {page}
+          Trước
         </button>
-      ))}
 
-      {/* Last page if not visible */}
-      {pageNumbers[pageNumbers.length - 1] < totalPages && (
-        <>
-          {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-            <span className="px-2 text-gray-500">...</span>
-          )}
+        {/* First page if not visible */}
+        {pageNumbers[0] > 1 && (
+          <>
+            <button
+              onClick={() => handlePageChange(1)}
+              className="px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl transition-all"
+            >
+              1
+            </button>
+            {pageNumbers[0] > 2 && (
+              <span className="px-2 text-gray-500">...</span>
+            )}
+          </>
+        )}
+
+        {/* Page Numbers */}
+        {pageNumbers.map((page) => (
           <button
-            onClick={() => handlePageChange(totalPages)}
-            className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all border-2 min-w-[2.75rem] ${
+              page === currentPage
+                ? 'bg-gradient-to-r from-gray-900 to-gray-700 text-white border-gray-900 dark:border-gray-600 shadow-lg'
+                : 'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
+            }`}
           >
-            {totalPages}
+            {page}
           </button>
-        </>
-      )}
+        ))}
 
-      {/* Next Button */}
-      <button
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-          currentPage === totalPages
-            ? 'text-gray-400 cursor-not-allowed'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        Tiếp
-      </button>
+        {/* Last page if not visible */}
+        {pageNumbers[pageNumbers.length - 1] < totalPages && (
+          <>
+            {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+              <span className="px-2 text-gray-500">...</span>
+            )}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              className="px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 rounded-xl transition-all"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+
+        {/* Next Button */}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-all border-2 ${
+            currentPage === totalPages
+              ? 'text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-700'
+              : 'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500'
+          }`}
+        >
+          Tiếp
+        </button>
+      </div>
     </div>
   );
 } 

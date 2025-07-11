@@ -20,6 +20,8 @@ import {
   Search,
   ChevronDown,
   Edit,
+  BookOpen,
+  Sparkles,
 } from 'lucide-react';
 import NotificationDropdown from '../Notifications/NotificationDropdown';
 
@@ -77,11 +79,15 @@ const Header: React.FC = () => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 transition-all duration-200 ${scrolled ? 'shadow-lg' : 'border-b border-gray-200 dark:border-gray-700'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg shadow-lg border-b border-gray-200/20 dark:border-gray-700/20' 
+        : 'bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm border-b border-gray-200/10 dark:border-gray-700/10'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-3 group">
             <div className="font-bold text-xl text-gray-900 dark:text-white">
               <span className="hidden md:block">QuantBlog</span>
               <span className="md:hidden">QBlog</span>
@@ -89,15 +95,15 @@ const Header: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden mr-auto ml-6 md:flex items-center space-x-8">
+          <nav className="hidden mr-auto ml-8 md:flex items-center space-x-2">
             {navigationItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-gray-900 dark:hover:text-white ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                   item.active 
-                    ? 'text-gray-900 dark:text-white' 
-                    : 'text-gray-600 dark:text-gray-300'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg' 
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 {item.label}
@@ -106,46 +112,47 @@ const Header: React.FC = () => {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Search */}
             {!searchOpen ? (
               <button
                 onClick={handleSearchToggle}
-                className="hidden md:block p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="hidden md:flex w-10 h-10 items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Search className="h-5 w-5" />
               </button>
             ) : (
-              <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-xl p-2 shadow-lg border border-gray-200 dark:border-gray-700">
                 <Input
                   type="text"
                   placeholder="Tìm kiếm..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64"
+                  className="w-64 border-0 bg-transparent focus:ring-0"
                   autoFocus
                 />
                 <button
                   type="submit"
+                  onClick={handleSearchSubmit}
                   disabled={!searchQuery.trim()}
-                  className="hidden md:block p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <Search className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={handleSearchToggle}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <X className="h-4 w-4" />
                 </button>
-              </form>
+              </div>
             )}
 
             {/* Theme toggle */}
             <button
               onClick={handleThemeToggle}
-              className="hidden md:block p-2 !ml-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="hidden md:flex w-10 h-10 items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
@@ -154,9 +161,9 @@ const Header: React.FC = () => {
 
             {/* Write post button (authenticated users) */}
             {isAuthenticated && (
-              <Link href="/posts/create" className="md:flex !ml-1">
-                <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4 md:mr-2" />
+              <Link href="/posts/create">
+                <Button className="hidden md:flex bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 shadow-lg">
+                  <Edit className="h-4 w-4 mr-2" />
                   Viết bài
                 </Button>
               </Link>
@@ -167,44 +174,52 @@ const Header: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {user.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 p-0.5 shadow-lg">
+                    <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-900">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 </button>
 
                 {/* User dropdown menu */}
                 {userMenuOpen && (
-                  <div className="absolute z-50 right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700">
-                    <div className="px-4 py-3">
+                  <div className="absolute z-[60] right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="p-4 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-700">
                       <div className="flex items-center space-x-3">
-                        <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-                          {user.avatar ? (
-                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {user.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 p-0.5 shadow-lg">
+                          <div className="w-full h-full rounded-full overflow-hidden bg-white dark:bg-gray-900">
+                            {user.avatar ? (
+                              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                  {user.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="py-1">
+                    <div className="p-2">
                       <Link
                         href="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <User className="h-4 w-4 mr-3" />
@@ -213,7 +228,7 @@ const Header: React.FC = () => {
                       {user.role === 'admin' && (
                         <Link
                           href="/admin"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                           onClick={() => setUserMenuOpen(false)}
                         >
                           <LayoutDashboard className="h-4 w-4 mr-3" />
@@ -222,17 +237,17 @@ const Header: React.FC = () => {
                       )}
                       <Link
                         href="/my-posts"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                         onClick={() => setUserMenuOpen(false)}
                       >
                         <FileText className="h-4 w-4 mr-3" />
                         Bài viết của tôi
                       </Link>
                     </div>
-                    <div className="py-1">
+                    <div className="p-2 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="flex items-center w-full px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       >
                         <LogOut className="h-4 w-4 mr-3" />
                         Đăng xuất
@@ -244,10 +259,14 @@ const Header: React.FC = () => {
             ) : (
               <div className="hidden md:flex items-center space-x-3">
                 <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Đăng nhập</Button>
+                  <Button variant="ghost" className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Đăng nhập
+                  </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button size="sm" className='bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-700 dark:hover:bg-gray-200'>Đăng ký</Button>
+                  <Button className="bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 shadow-lg">
+                    Đăng ký
+                  </Button>
                 </Link>
               </div>
             )}
@@ -255,7 +274,7 @@ const Header: React.FC = () => {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="md:hidden w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
             </button>
@@ -264,77 +283,64 @@ const Header: React.FC = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden relative !z-50 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="px-2 pt-2 pb-3 space-y-1">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg mt-2 rounded-2xl shadow-xl mx-4 mb-4 relative z-[60]">
+            <div className="p-4 space-y-2">
               {navigationItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`block px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 ${
                     item.active
-                      ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'text-white bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 dark:text-gray-900 shadow-lg'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
-              {/* Search */}
-              {!searchOpen ? (
-                <button
-                  onClick={handleSearchToggle}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
-              ) : (
-                <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2">
-                  <Input
+              
+              {/* Mobile Search */}
+              <div className="pt-2">
+                <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-3">
+                  <Search className="h-5 w-5 text-gray-500" />
+                  <input
                     type="text"
                     placeholder="Tìm kiếm..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64"
-                    autoFocus
+                    className="flex-1 bg-transparent border-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearchSubmit(e);
+                        setMobileMenuOpen(false);
+                      }
+                    }}
                   />
-                  <button
-                    type="submit"
-                    disabled={!searchQuery.trim()}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
-                  >
-                    <Search className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSearchToggle}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </form>
-              )}
+                </div>
+              </div>
 
-              {/* Theme toggle */}
+              {/* Mobile Theme toggle */}
               <button
                 onClick={handleThemeToggle}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-200"
               >
                 {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                <span>{mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}</span>
               </button>
               
               {!isAuthenticated && (
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                <div className="pt-4 space-y-2">
                   <Link
                     href="/auth/login"
-                    className="block w-full text-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="block w-full text-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Đăng nhập
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="block w-full text-center px-3 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-md hover:bg-gray-800 dark:hover:bg-gray-100"
+                    className="block w-full text-center px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-700 text-white rounded-xl hover:from-gray-800 hover:to-gray-600 shadow-lg transition-all duration-200"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Đăng ký
@@ -349,7 +355,7 @@ const Header: React.FC = () => {
       {/* Click outside to close menus */}
       {(userMenuOpen || mobileMenuOpen) && (
         <div
-          className="fixed inset-0 z-30"
+          className="fixed inset-0 z-40 h-screen"
           onClick={() => {
             setUserMenuOpen(false);
             setMobileMenuOpen(false);

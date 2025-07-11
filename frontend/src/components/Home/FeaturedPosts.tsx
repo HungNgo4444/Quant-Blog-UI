@@ -25,7 +25,8 @@ import {
   Eye, 
   ThumbsUp, 
   Clock,
-  MessageCircle
+  MessageCircle,
+  TrendingUp
 } from 'lucide-react';
 
 export default function FeaturedPosts() {
@@ -94,8 +95,8 @@ export default function FeaturedPosts() {
 
   if (error) {
     return (
-      <section className="py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-red-500 text-center">
             {error}
           </p>
@@ -105,26 +106,32 @@ export default function FeaturedPosts() {
   }
 
   return (
-    <section className="py-8 dark:bg-gray-800 bg-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="px-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-2">
-            Bài viết nổi bật
+    <section className="py-16 bg-white dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 text-white dark:text-gray-900 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+              <TrendingUp className="h-4 w-4" />
+              Nổi bật
+            </div>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+            Bài viết được yêu thích nhất
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Những bài viết được yêu thích nhất từ cộng đồng
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Khám phá những bài viết chất lượng cao được cộng đồng đánh giá và chia sẻ nhiều nhất
           </p>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-white dark:bg-gray-700 rounded-xl shadow-sm">
-                <div className="h-48 bg-gray-200 dark:bg-gray-600 animate-pulse rounded-t-xl" />
-                <div className="p-6">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded mb-2 animate-pulse" />
-                  <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded mb-2 animate-pulse" />
-                  <div className="h-16 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
+              <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden">
+                <div className="h-56 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                <div className="p-8">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-3 animate-pulse" />
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-3 animate-pulse" />
+                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                 </div>
               </div>
             ))}
@@ -138,36 +145,39 @@ export default function FeaturedPosts() {
               }}
               className="w-full"
             >
-              <CarouselContent className="-ml-4">
+              <CarouselContent className="-ml-6">
                 {featuredPosts.map((post: Post) => {
                   const isSaved = saveStatus[post.slug] || false;
                   
                   return (
-                    <CarouselItem key={post.id} className="pl-5 basis-full sm:basis-1/2 lg:basis-1/3">
-                      <div className="group bg-white dark:bg-gray-800 rounded-xl hover:shadow-lg hover:scale-[101%] transition-all duration-500 h-full">
+                    <CarouselItem key={post.id} className="pl-6 basis-full sm:basis-1/2 lg:basis-1/3">
+                      <div className="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700 h-full">
                         <div className="relative">
                           {post.featuredImage && (
-                            <div className="h-40 bg-gray-200 dark:bg-gray-700 relative overflow-hidden rounded-t-xl">
+                            <div className="h-48 bg-gray-200 dark:bg-gray-700 relative overflow-hidden">
                               <Link href={`/posts/${post.slug}`}>
                                 <img
                                   src={post.featuredImage}
                                   alt={post.title}
-                                  className="w-full h-full object-cover group-hover:scale-[102%] transition-transform duration-500"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 />
-                              </Link> 
+                              </Link>
+                              
+                              {/* Gradient overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </div>
                           )}
                           
-                          {/* Save button overlay - chỉ hiển thị sau khi mounted */}
+                          {/* Save button overlay */}
                           {mounted && (
-                            <div className="absolute top-2 right-2 bg-black/60 rounded-lg">
+                            <div className="absolute top-3 right-3">
                               <button
                                 onClick={(e) => handleToggleSave(post.slug, isSaved, e)}
-                                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+                                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-900 dark:text-white p-2 rounded-lg shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-all duration-200"
                                 title={isSaved ? 'Bỏ lưu' : 'Lưu bài viết'}
                               >
                                 {isSaved ? (
-                                  <Bookmark className="h-4 w-4 fill-current" />
+                                  <Bookmark className="h-4 w-4 fill-current text-blue-600" />
                                 ) : (
                                   <BookmarkIcon className="h-4 w-4" />
                                 )}
@@ -176,63 +186,70 @@ export default function FeaturedPosts() {
                           )}
                         </div>
                         
-                        <div className="p-6 dark:bg-gray-900 dark:rounded-b-xl flex flex-col justify-between h-56">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 rounded-full">
-                              {post.category?.name || ''}
-                            </span>
-                            <div className="flex items-center text-gray-500 text-sm">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {calculateReadingTime(post.content)} phút đọc
+                        <div className="p-5 flex flex-col justify-between h-64">
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="px-2.5 py-1 text-xs font-medium text-white bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 dark:text-gray-900 rounded-full">
+                                {post.category?.name || ''}
+                              </span>
+                              <div className="flex items-center text-gray-500 text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {calculateReadingTime(post.content)} phút
+                              </div>
                             </div>
+                            
+                            <h3 className="text-base font-bold mb-2 line-clamp-2 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                              <Link
+                                href={`/posts/${post.slug}`}
+                                className="hover:text-gray-700 dark:hover:text-gray-200"
+                              >
+                                {post.title}
+                              </Link>
+                            </h3>
+                            
+                            <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 text-sm leading-relaxed">
+                              {post.excerpt}
+                            </p>
                           </div>
-                          
-                          <h3 className="text-md font-semibold mb-2 line-clamp-2">
-                            <Link
-                              href={`/posts/${post.slug}`}
-                              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                            >
-                              {post.title}
-                            </Link>
-                          </h3>
-                          
-                          <p className="text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 text-sm">
-                            {post.excerpt}
-                          </p>
 
-                          <div className="flex items-center justify-between mt-auto">
-                            <Link href={`/profile/${post.author?.id}`}>
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden">
-                                  {post.author?.avatar ? (
-                                    <img
-                                      src={post.author.avatar}
-                                      alt={post.author.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                      {post.author?.name?.charAt(0)}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Link href={`/profile/${post.author?.id}`}>
+                                <div className="flex items-center gap-2 group-hover:scale-105 transition-transform">
+                                  <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center overflow-hidden border-2 border-white dark:border-gray-700 shadow-md">
+                                    {post.author?.avatar ? (
+                                      <img
+                                        src={post.author.avatar}
+                                        alt={post.author.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                        {post.author?.name?.charAt(0)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                                      {post.author?.name}
                                     </span>
-                                  )}
+                                  </div>
                                 </div>
-                                <span className="text-sm text-gray-600 dark:text-gray-400 truncate hover:text-black dark:hover:text-white transition-colors">
-                                    {post.author?.name}
-                                </span>
-                              </div>
-                            </Link>
-                            <div className="flex items-center gap-3 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                <Eye className="h-3 w-3" />
-                                <span>{post.viewCount || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <ThumbsUp className="h-3 w-3" />
-                                <span>{post.likeCount || 0}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <MessageCircle className="h-3 w-3" />
-                                <span>{post.commentCount || 0}</span>
+                              </Link>
+                              
+                              <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Eye className="h-3 w-3" />
+                                  <span>{post.viewCount || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <ThumbsUp className="h-3 w-3" />
+                                  <span>{post.likeCount || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageCircle className="h-3 w-3" />
+                                  <span>{post.commentCount || 0}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -243,21 +260,21 @@ export default function FeaturedPosts() {
                 })}
               </CarouselContent>
               
-              {/* Navigation buttons with better positioning */}
+              {/* Navigation buttons */}
               <CarouselPrevious 
-                className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white hover:bg-black/80 hover:text-white"
+                className="hidden sm:flex absolute -left-6 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 shadow-lg"
                 style={{
-                  left: '-20px',
-                  width: '45px',
-                  height: '45px',
+                  left: '-24px',
+                  width: '48px',
+                  height: '48px',
                 }}
               />
               <CarouselNext 
-                className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-black opacity-50 text-white hover:bg-black/80 hover:text-white"
+                className="hidden sm:flex absolute -right-6 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 shadow-lg"
                 style={{
-                  right: '-20px',
-                  width: '45px',
-                  height: '45px',
+                  right: '-24px',
+                  width: '48px',
+                  height: '48px',
                 }}
               />
             </Carousel>

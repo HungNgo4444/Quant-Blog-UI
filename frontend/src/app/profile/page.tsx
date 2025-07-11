@@ -187,422 +187,379 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {isSubmitting && <LoadingComponent/>}
-      <h1 className="text-3xl font-bold mb-6">Quản lý tài khoản</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isSubmitting && <LoadingComponent/>}
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Quản lý tài khoản
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Cập nhật thông tin cá nhân và cài đặt bảo mật
+          </p>
+        </div>
 
-      {successMessage && (
-        <Alert className="mb-4">
-          <AlertDescription>{successMessage}</AlertDescription>
-        </Alert>
-      )}
+        {successMessage && (
+          <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20">
+            <AlertDescription className="text-green-800 dark:text-green-200">{successMessage}</AlertDescription>
+          </Alert>
+        )}
 
-      <Card>
-        <CardHeader>
-          <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
-                <Person className="h-4 w-4" />
-                Thông tin cá nhân
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center gap-2">
-                <Security className="h-4 w-4" />
-                Bảo mật
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="profile" className="pt-6">
-              <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="md:col-span-1">
-                    <div className="text-center relative">
-                      <Avatar className="w-32 h-32 mx-auto mb-4">
-                        <AvatarImage src={avatarPreview} alt={user?.name} />
-                        <AvatarFallback className="text-2xl">
-                          {user?.name?.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <input
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        id="avatar-upload"
-                        type="file"
-                        onChange={(e) => handleAvatarChange(e.target.files?.[0] || null)}
-                      />
-                      <label htmlFor="avatar-upload">
-                        <span className="cursor-pointer absolute bottom-[-10px] right-[74px]">
-                          <PhotoCamera className="h-8 w-8 bg-gray-500 text-white rounded-full p-2" />
-                        </span>
-                      </label>
+        <Card className="shadow-lg border-gray-200 dark:border-gray-700">
+          <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <Tabs defaultValue="profile" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+                <TabsTrigger 
+                  value="profile" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm rounded-lg transition-all"
+                >
+                  <Person className="h-4 w-4" />
+                  <span className="hidden sm:inline">Thông tin cá nhân</span>
+                  <span className="sm:hidden">Hồ sơ</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="security" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm rounded-lg transition-all"
+                >
+                  <Security className="h-4 w-4" />
+                  <span className="hidden sm:inline">Bảo mật</span>
+                  <span className="sm:hidden">Mật khẩu</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="profile" className="pt-6">
+                <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    {/* Avatar Section */}
+                    <div className="lg:col-span-1">
+                      <div className="text-center">
+                        <div className="relative inline-block">
+                          <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-white dark:border-gray-700 shadow-lg">
+                            <AvatarImage src={avatarPreview} alt={user?.name} />
+                            <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 text-white dark:text-gray-900">
+                              {user?.name?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <input
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            id="avatar-upload"
+                            type="file"
+                            onChange={(e) => handleAvatarChange(e.target.files?.[0] || null)}
+                          />
+                          <label htmlFor="avatar-upload">
+                            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 text-white dark:text-gray-900 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200">
+                              <PhotoCamera className="h-4 w-4" />
+                            </div>
+                          </label>
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                          Nhấp để thay đổi ảnh đại diện
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Form Section */}
+                    <div className="lg:col-span-3">
+                      {/* Basic Info */}
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Thông tin cơ bản</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Họ và tên</Label>
+                            <Controller
+                              name="name"
+                              control={profileControl}
+                              rules={{ required: 'Tên là bắt buộc' }}
+                              render={({ field }) => (
+                                <div>
+                                  <Input
+                                    {...field}
+                                    id="name"
+                                    className={`mt-1 ${profileErrors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                  />
+                                  {profileErrors.name && (
+                                    <p className="text-xs text-red-500 mt-1">{profileErrors.name.message}</p>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</Label>
+                            <Controller
+                              name="email"
+                              control={profileControl}
+                              rules={{
+                                required: 'Email là bắt buộc',
+                                pattern: {
+                                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                  message: 'Email không hợp lệ',
+                                },
+                              }}
+                              render={({ field }) => (
+                                <div>
+                                  <Input
+                                    {...field}
+                                    id="email"
+                                    type="email"
+                                    className={`mt-1 ${profileErrors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                    disabled
+                                  />
+                                  {profileErrors.email && (
+                                    <p className="text-xs text-red-500 mt-1">{profileErrors.email.message}</p>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <Label htmlFor="bio" className="text-sm font-medium text-gray-700 dark:text-gray-300">Giới thiệu</Label>
+                          <Controller
+                            name="bio"
+                            control={profileControl}
+                            render={({ field }) => (
+                              <Textarea
+                                {...field}
+                                id="bio"
+                                placeholder="Viết một vài dòng về bản thân..."
+                                rows={3}
+                                className="mt-1 border-gray-300 dark:border-gray-600"
+                              />
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Social Links */}
+                      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Liên kết mạng xã hội</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300">Website</Label>
+                            <Controller
+                              name="socialLinks.website"
+                              control={profileControl}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  id="website"
+                                  placeholder="https://yourwebsite.com"
+                                  className="mt-1 border-gray-300 dark:border-gray-600"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="twitter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Twitter</Label>
+                            <Controller
+                              name="socialLinks.twitter"
+                              control={profileControl}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  id="twitter"
+                                  placeholder="@username"
+                                  className="mt-1 border-gray-300 dark:border-gray-600"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="linkedin" className="text-sm font-medium text-gray-700 dark:text-gray-300">LinkedIn</Label>
+                            <Controller
+                              name="socialLinks.linkedin"
+                              control={profileControl}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  id="linkedin"
+                                  placeholder="https://linkedin.com/in/username"
+                                  className="mt-1 border-gray-300 dark:border-gray-600"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="github" className="text-sm font-medium text-gray-700 dark:text-gray-300">GitHub</Label>
+                            <Controller
+                              name="socialLinks.github"
+                              control={profileControl}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  id="github"
+                                  placeholder="https://github.com/username"
+                                  className="mt-1 border-gray-300 dark:border-gray-600"
+                                />
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        className="flex items-center gap-2 bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 shadow-lg"
+                      >
+                        <Save className="h-4 w-4" />
+                        Lưu thay đổi
+                      </Button>
                     </div>
                   </div>
+                </form>
+              </TabsContent>
 
-                  <div className="md:col-span-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <Label htmlFor="name">Họ và tên</Label>
-                        <Controller
-                          name="name"
-                          control={profileControl}
-                          rules={{ required: 'Tên là bắt buộc' }}
-                          render={({ field }) => (
-                            <div>
-                              <Input
-                                {...field}
-                                id="name"
-                                className={profileErrors.name ? 'border-red-500' : ''}
-                              />
-                              {profileErrors.name && (
-                                <p className="text-sm text-red-500 mt-1">{profileErrors.name.message}</p>
+              <TabsContent value="security" className="pt-6">
+                <form onSubmit={handleSecuritySubmit(onSecuritySubmit)}>
+                  <div className="max-w-2xl">
+                    {/* Password Change */}
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Đổi mật khẩu</h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="currentPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">Mật khẩu hiện tại</Label>
+                          <Controller
+                            name="currentPassword"
+                            control={securityControl}
+                            rules={{ required: 'Vui lòng nhập mật khẩu hiện tại' }}
+                            render={({ field }) => (
+                              <div>
+                                <div className="relative mt-1">
+                                  <Input
+                                    {...field}
+                                    id="currentPassword"
+                                    type={showPasswords.current ? 'text' : 'password'}
+                                    className={`pr-10 ${securityErrors.currentPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                    tabIndex={1}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                                    onClick={() => 
+                                      setShowPasswords(prev => ({ ...prev, current: !prev.current }))
+                                    }
+                                  >
+                                    {showPasswords.current ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                  </Button>
+                                </div>
+                                {securityErrors.currentPassword && (
+                                  <p className="text-xs text-red-500 mt-1">{securityErrors.currentPassword.message}</p>
+                                )}
+                              </div>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">Mật khẩu mới</Label>
+                            <Controller
+                              name="newPassword"
+                              control={securityControl}
+                              rules={{
+                                required: 'Vui lòng nhập mật khẩu mới',
+                                validate: validatePassword,
+                              }}
+                              render={({ field }) => (
+                                <div>
+                                  <div className="relative mt-1">
+                                    <Input
+                                      {...field}
+                                      id="newPassword"
+                                      type={showPasswords.new ? 'text' : 'password'}
+                                      className={`pr-10 ${securityErrors.newPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                      tabIndex={2}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                                      onClick={() => 
+                                        setShowPasswords(prev => ({ ...prev, new: !prev.new }))
+                                      }
+                                    >
+                                      {showPasswords.new ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
+                                  {securityErrors.newPassword && (
+                                    <p className="text-xs text-red-500 mt-1">{securityErrors.newPassword.message}</p>
+                                  )}
+                                </div>
                               )}
-                            </div>
-                          )}
-                        />
-                      </div>
+                            />
+                          </div>
 
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Controller
-                          name="email"
-                          control={profileControl}
-                          rules={{
-                            required: 'Email là bắt buộc',
-                            pattern: {
-                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                              message: 'Email không hợp lệ',
-                            },
-                          }}
-                          render={({ field }) => (
-                            <div>
-                              <Input
-                                {...field}
-                                id="email"
-                                type="email"
-                                className={profileErrors.email ? 'border-red-500' : ''}
-                                disabled
-                              />
-                              {profileErrors.email && (
-                                <p className="text-sm text-red-500 mt-1">{profileErrors.email.message}</p>
+                          <div>
+                            <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">Xác nhận mật khẩu</Label>
+                            <Controller
+                              name="confirmPassword"
+                              control={securityControl}
+                              rules={{
+                                required: 'Vui lòng xác nhận mật khẩu',
+                                validate: value => value === newPassword || 'Mật khẩu xác nhận không khớp',
+                              }}
+                              render={({ field }) => (
+                                <div>
+                                  <div className="relative mt-1">
+                                    <Input
+                                      {...field}
+                                      id="confirmPassword"
+                                      type={showPasswords.confirm ? 'text' : 'password'}
+                                      className={`pr-10 ${securityErrors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+                                      tabIndex={3}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                                      onClick={() => 
+                                        setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))
+                                      }
+                                    >
+                                      {showPasswords.confirm ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
+                                  {securityErrors.confirmPassword && (
+                                    <p className="text-xs text-red-500 mt-1">{securityErrors.confirmPassword.message}</p>
+                                  )}
+                                </div>
                               )}
-                            </div>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mb-6">
-                      <Label htmlFor="bio">Giới thiệu</Label>
-                      <Controller
-                        name="bio"
-                        control={profileControl}
-                        render={({ field }) => (
-                          <Textarea
-                            {...field}
-                            id="bio"
-                            placeholder="Viết một vài dòng về bản thân..."
-                            rows={4}
-                          />
-                        )}
-                      />
-                    </div>
-
-                    {/* Social Links */}
-                    <div className="mb-6">
-                      <h3 className="text-lg font-medium mb-4">Liên kết mạng xã hội</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="website">Website</Label>
-                          <Controller
-                            name="socialLinks.website"
-                            control={profileControl}
-                            render={({ field }) => (
-                              <Input
-                                {...field}
-                                id="website"
-                                placeholder="https://yourwebsite.com"
-                              />
-                            )}
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="twitter">Twitter</Label>
-                          <Controller
-                            name="socialLinks.twitter"
-                            control={profileControl}
-                            render={({ field }) => (
-                              <Input
-                                {...field}
-                                id="twitter"
-                                placeholder="@username"
-                              />
-                            )}
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="linkedin">LinkedIn</Label>
-                          <Controller
-                            name="socialLinks.linkedin"
-                            control={profileControl}
-                            render={({ field }) => (
-                              <Input
-                                {...field}
-                                id="linkedin"
-                                placeholder="https://linkedin.com/in/username"
-                              />
-                            )}
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="github">GitHub</Label>
-                          <Controller
-                            name="socialLinks.github"
-                            control={profileControl}
-                            render={({ field }) => (
-                              <Input
-                                {...field}
-                                id="github"
-                                placeholder="https://github.com/username"
-                              />
-                            )}
-                          />
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     <Button
                       type="submit"
-                      className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 text-white dark:text-gray-900"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 bg-gradient-to-r from-gray-900 to-gray-700 text-white hover:from-gray-800 hover:to-gray-600 shadow-lg"
                     >
-                      <Save className="h-4 w-4" />
-                      Lưu thay đổi
+                      <Lock className="h-4 w-4" />
+                      Đổi mật khẩu
                     </Button>
                   </div>
-                </div>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="security" className="pt-6">
-              <form onSubmit={handleSecuritySubmit(onSecuritySubmit)}>
-                <div className="space-y-6">
-                  {/* Password Change */}
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Đổi mật khẩu</h3>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
-                        <Controller
-                          name="currentPassword"
-                          control={securityControl}
-                          rules={{ required: 'Vui lòng nhập mật khẩu hiện tại' }}
-                          render={({ field }) => (
-                            <div>
-                              <div className="relative">
-                                <Input
-                                  {...field}
-                                  id="currentPassword"
-                                  type={showPasswords.current ? 'text' : 'password'}
-                                  className={securityErrors.currentPassword ? 'border-red-500' : ''}
-                                  tabIndex={1}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                  onClick={() => 
-                                    setShowPasswords(prev => ({ ...prev, current: !prev.current }))
-                                  }
-                                >
-                                  {showPasswords.current ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                                </Button>
-                              </div>
-                              {securityErrors.currentPassword && (
-                                <p className="text-sm text-red-500 mt-1">{securityErrors.currentPassword.message}</p>
-                              )}
-                            </div>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="newPassword">Mật khẩu mới</Label>
-                          <Controller
-                            name="newPassword"
-                            control={securityControl}
-                            rules={{
-                              required: 'Vui lòng nhập mật khẩu mới',
-                              validate: validatePassword,
-                            }}
-                            render={({ field }) => (
-                              <div>
-                                <div className="relative">
-                                  <Input
-                                    {...field}
-                                    id="newPassword"
-                                    type={showPasswords.new ? 'text' : 'password'}
-                                    className={securityErrors.newPassword ? 'border-red-500' : ''}
-                                    tabIndex={2}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                    onClick={() => 
-                                      setShowPasswords(prev => ({ ...prev, new: !prev.new }))
-                                    }
-                                  >
-                                    {showPasswords.new ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                                {securityErrors.newPassword && (
-                                  <p className="text-sm text-red-500 mt-1">{securityErrors.newPassword.message}</p>
-                                )}
-                              </div>
-                            )}
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-                          <Controller
-                            name="confirmPassword"
-                            control={securityControl}
-                            rules={{
-                              required: 'Vui lòng xác nhận mật khẩu',
-                              validate: value => value === newPassword || 'Mật khẩu xác nhận không khớp',
-                            }}
-                            render={({ field }) => (
-                              <div>
-                                <div className="relative">
-                                  <Input
-                                    {...field}
-                                    id="confirmPassword"
-                                    type={showPasswords.confirm ? 'text' : 'password'}
-                                    className={`${securityErrors.confirmPassword ? 'border-red-500' : ''}`}
-                                    tabIndex={3}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                    onClick={() => 
-                                      setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))
-                                    }
-                                  >
-                                    {showPasswords.confirm ? <VisibilityOff className="h-4 w-4" /> : <Visibility className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                                {securityErrors.confirmPassword && (
-                                  <p className="text-sm text-red-500 mt-1">{securityErrors.confirmPassword.message}</p>
-                                )}
-                              </div>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <hr className="border-gray-200" />
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 dark:bg-gray-100 text-white dark:text-gray-900"
-                  >
-                    <Lock className="h-4 w-4" />
-                    Đổi mật khẩu
-                  </Button>
-                  {/* Two Factor Authentication */}
-                  {/* <div>
-                    <h3 className="text-lg font-medium mb-4">Xác thực hai yếu tố (2FA)</h3>
-                    
-                    <Controller
-                      name="twoFactorEnabled"
-                      control={securityControl}
-                      render={({ field }) => (
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                          <div>
-                            <Label>Bật xác thực hai yếu tố</Label>
-                            <p className="text-sm text-gray-600">
-                              Tăng cường bảo mật cho tài khoản của bạn
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center gap-2"
-                  >
-                    <Security className="h-4 w-4" />
-                    Cập nhật bảo mật
-                  </Button>
-
-                  <hr className="border-gray-200" /> */}
-
-                  {/* Danger Zone */}
-                  {/* <div>
-                    <h3 className="text-lg font-medium text-red-600 mb-4">Vùng nguy hiểm</h3>
-                    
-                    <Alert className="mb-4 border-yellow-200 bg-yellow-50">
-                      <AlertDescription>
-                        Xóa tài khoản sẽ xóa vĩnh viễn tất cả dữ liệu của bạn. Hành động này không thể hoàn tác.
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <Button
-                      variant="destructive"
-                      onClick={() => setDeleteAccountDialog(true)}
-                    >
-                      Xóa tài khoản
-                    </Button>
-                  </div> */}
-                </div>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardHeader>
-      </Card>
-
-      {/* Delete Account Dialog */}
-      {/* <Dialog open={deleteAccountDialog} onOpenChange={setDeleteAccountDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Xác nhận xóa tài khoản</DialogTitle>
-            <DialogDescription>
-              <Alert className="mb-4 border-red-200 bg-red-50">
-                <AlertDescription className="text-red-800">
-                  Hành động này không thể hoàn tác!
-                </AlertDescription>
-              </Alert>
-              Bạn có chắc chắn muốn xóa tài khoản? Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteAccountDialog(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteAccount}>
-              Xóa tài khoản
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog> */}
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardHeader>
+        </Card>
+      </div>
     </div>
   );
 } 

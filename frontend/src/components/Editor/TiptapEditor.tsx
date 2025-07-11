@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import '../../styles/tiptap.css';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,7 +11,13 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Node } from '@tiptap/core';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+import Typography from '@tiptap/extension-typography';
+import Color from '@tiptap/extension-color';
+import { Node, Mark } from '@tiptap/core';
 
 // Custom CodeBlock extension with language support
 const CustomCodeBlock = Node.create({
@@ -71,6 +77,76 @@ const CustomCodeBlock = Node.create({
   },
 });
 
+// Custom TextStyle extension with inline styles
+const CustomTextStyle = Mark.create({
+  name: 'textStyle',
+
+  addAttributes() {
+    return {
+      fontFamily: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.style.fontFamily || null,
+        renderHTML: (attributes: any) => {
+          if (!attributes.fontFamily) return {}
+          return { style: `font-family: ${attributes.fontFamily}` }
+        },
+      },
+      fontSize: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.style.fontSize || null,
+        renderHTML: (attributes: any) => {
+          if (!attributes.fontSize) return {}
+          return { style: `font-size: ${attributes.fontSize}` }
+        },
+      },
+      color: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.style.color || null,
+        renderHTML: (attributes: any) => {
+          if (!attributes.color) return {}
+          return { style: `color: ${attributes.color}` }
+        },
+      },
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span',
+        getAttrs: (element: any) => {
+          const hasStyles = element.style.fontFamily || element.style.fontSize || element.style.color
+          return hasStyles ? {} : false
+        },
+      },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }: any) {
+    // Build inline styles from attributes
+    const styles: string[] = []
+    
+    if (HTMLAttributes.fontFamily) {
+      styles.push(`font-family: ${HTMLAttributes.fontFamily}`)
+    }
+    if (HTMLAttributes.fontSize) {
+      styles.push(`font-size: ${HTMLAttributes.fontSize}`)
+    }
+    if (HTMLAttributes.color) {
+      styles.push(`color: ${HTMLAttributes.color}`)
+    }
+    
+    // Combine with existing style if any
+    if (HTMLAttributes.style) {
+      styles.push(HTMLAttributes.style)
+    }
+    
+    const finalStyle = styles.length > 0 ? styles.join('; ') : undefined
+    
+    return ['span', { style: finalStyle }, 0]
+  },
+})
+
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
@@ -93,10 +169,9 @@ import {
   Undo,
   Redo,
   Code,
-  CheckBox,
+  TableChart,
 } from '@mui/icons-material';
 import { readFile } from '../../lib/utils';
-import { useState } from 'react';
 
 interface TiptapEditorProps {
   content: string;
@@ -147,7 +222,20 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       }),
       Placeholder.configure({
         placeholder,
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true,
+        includeChildren: true,
+        considerAnyAsEmpty: false,
       }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Typography,
+      CustomTextStyle,
+      Color.configure({ types: [CustomTextStyle.name] }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -167,6 +255,47 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       editor?.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 | 4 | 5 | 6 }).run();
     }
   }, [editor]);
+
+  const setFontFamily = useCallback((fontFamily: string) => {
+    if (fontFamily === 'default') {
+      const currentAttrs = editor?.getAttributes('textStyle') || {};
+      const { fontFamily: _, ...otherAttrs } = currentAttrs;
+      if (Object.keys(otherAttrs).length > 0) {
+        editor?.chain().focus().setMark('textStyle', otherAttrs).run();
+      } else {
+        editor?.chain().focus().unsetMark('textStyle').run();
+      }
+    } else {
+      // Get current attributes
+      const currentAttrs = editor?.getAttributes('textStyle') || {};
+      // Set font family while preserving other attributes
+      editor?.chain().focus().setMark('textStyle', { 
+        ...currentAttrs, 
+        fontFamily 
+      }).run();
+    }
+  }, [editor]);
+
+  const setFontSize = useCallback((fontSize: string) => {
+    if (fontSize === 'default') {
+      const currentAttrs = editor?.getAttributes('textStyle') || {};
+      const { fontSize: _, ...otherAttrs } = currentAttrs;
+      if (Object.keys(otherAttrs).length > 0) {
+        editor?.chain().focus().setMark('textStyle', otherAttrs).run();
+      } else {
+        editor?.chain().focus().unsetMark('textStyle').run();
+      }
+    } else {
+      // Get current attributes
+      const currentAttrs = editor?.getAttributes('textStyle') || {};
+      // Set font size while preserving other attributes
+      editor?.chain().focus().setMark('textStyle', { 
+        ...currentAttrs, 
+        fontSize 
+      }).run();
+    }
+  }, [editor]);
+
 
   const addImage = useCallback(() => {
     if (imageUrl) {
@@ -208,6 +337,38 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     setIsCodeBlockDialogOpen(false);
   }, [editor, selectedLanguage]);
 
+  const insertTable = useCallback(() => {
+    editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }, [editor]);
+
+  const deleteTable = useCallback(() => {
+    editor?.chain().focus().deleteTable().run();
+  }, [editor]);
+
+  const addColumnBefore = useCallback(() => {
+    editor?.chain().focus().addColumnBefore().run();
+  }, [editor]);
+
+  const addColumnAfter = useCallback(() => {
+    editor?.chain().focus().addColumnAfter().run();
+  }, [editor]);
+
+  const deleteColumn = useCallback(() => {
+    editor?.chain().focus().deleteColumn().run();
+  }, [editor]);
+
+  const addRowBefore = useCallback(() => {
+    editor?.chain().focus().addRowBefore().run();
+  }, [editor]);
+
+  const addRowAfter = useCallback(() => {
+    editor?.chain().focus().addRowAfter().run();
+  }, [editor]);
+
+  const deleteRow = useCallback(() => {
+    editor?.chain().focus().deleteRow().run();
+  }, [editor]);
+
   const languages = [
     { value: 'javascript', label: 'JavaScript' },
     { value: 'typescript', label: 'TypeScript' },
@@ -216,11 +377,40 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     { value: 'css', label: 'CSS' },
     { value: 'bash', label: 'Bash' },
     { value: 'json', label: 'JSON' },
-    { value: 'markdown', label: 'Markdown' },
     { value: 'php', label: 'PHP' },
     { value: 'java', label: 'Java' },
     { value: 'cpp', label: 'C++' },
     { value: 'sql', label: 'SQL' },
+    { value: 'mql5', label: 'MQL5' },
+  ];
+
+  const fontFamilies = [
+    { value: 'default', label: 'Inter' },
+    { value: 'Arial, sans-serif', label: 'Arial' },
+    { value: 'Helvetica, sans-serif', label: 'Helvetica' },
+    { value: 'Times New Roman, serif', label: 'Times New Roman' },
+    { value: 'Georgia, serif', label: 'Georgia' },
+    { value: 'Courier New, monospace', label: 'Courier New' },
+    { value: 'Inter, sans-serif', label: 'Inter' },
+    { value: 'Roboto, sans-serif', label: 'Roboto' },
+    { value: 'Open Sans, sans-serif', label: 'Open Sans' },
+    { value: 'Lato, sans-serif', label: 'Lato' },
+    { value: 'Montserrat, sans-serif', label: 'Montserrat' },
+    { value: 'Poppins, sans-serif', label: 'Poppins' },
+  ];
+
+  const fontSizes = [
+    { value: 'default', label: '16' },
+    { value: '12px', label: '12' },
+    { value: '14px', label: '14' },
+    { value: '16px', label: '16' },
+    { value: '18px', label: '18' },
+    { value: '20px', label: '20' },
+    { value: '24px', label: '24' },
+    { value: '28px', label: '28' },
+    { value: '32px', label: '32' },
+    { value: '36px', label: '36' },
+    { value: '48px', label: '48' },
   ];
 
   if (!editor) {
@@ -232,7 +422,8 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       <div className={`border rounded-lg overflow-hidden relative ${className}`}>
         {/* Toolbar */}
         <div className="sticky top-0 z-20 border-b bg-gray-50 dark:bg-gray-800 p-2 shadow-sm backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
-          <div className="flex flex-wrap gap-1 items-center">
+          {/* First row - Typography controls */}
+          <div className="flex flex-wrap gap-1 items-center mb-2">
             {/* Heading Selector */}
             <Select
               value={
@@ -249,7 +440,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Tiêu đề</SelectItem>
+                <SelectItem value="0">Văn bản</SelectItem>
                 <SelectItem value="1">Tiêu đề 1</SelectItem>
                 <SelectItem value="2">Tiêu đề 2</SelectItem>
                 <SelectItem value="3">Tiêu đề 3</SelectItem>
@@ -261,6 +452,43 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
 
             <Separator orientation="vertical" className="h-6" />
 
+            {/* Font Family */}
+            <Select
+              value="default"
+              onValueChange={setFontFamily}
+            >
+              <SelectTrigger className="w-36 h-8 text-xs">
+                <SelectValue placeholder="Font" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontFamilies.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    {font.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Font Size */}
+            <Select
+              value="default"
+              onValueChange={setFontSize}
+            >
+              <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectValue placeholder="Cỡ chữ" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontSizes.map((size) => (
+                  <SelectItem key={size.value} value={size.value}>
+                    {size.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Second row - Formatting controls */}
+          <div className="flex flex-wrap gap-1 items-center">
             {/* Text Formatting */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -396,21 +624,83 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
               <TooltipContent>Danh sách có số</TooltipContent>
             </Tooltip>
 
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Table Controls */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={editor.isActive('taskList') ? 'default' : 'ghost'}
+                  variant={editor.isActive('table') ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => editor.chain().focus().toggleTaskList().run()}
+                  onClick={insertTable}
                   className="h-8 w-8 p-0"
                 >
-                  <CheckBox className="h-4 w-4" />
+                  <TableChart className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Danh sách checkbox</TooltipContent>
+              <TooltipContent>Thêm bảng</TooltipContent>
             </Tooltip>
 
-
+            {editor.isActive('table') && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addColumnBefore}
+                  className="h-8 text-xs px-2"
+                >
+                  +Cột trước
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addColumnAfter}
+                  className="h-8 text-xs px-2"
+                >
+                  +Cột sau
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={deleteColumn}
+                  className="h-8 text-xs px-2"
+                >
+                  -Cột
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addRowBefore}
+                  className="h-8 text-xs px-2"
+                >
+                  +Hàng trước
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addRowAfter}
+                  className="h-8 text-xs px-2"
+                >
+                  +Hàng sau
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={deleteRow}
+                  className="h-8 text-xs px-2"
+                >
+                  -Hàng
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={deleteTable}
+                  className="h-8 text-xs px-2"
+                >
+                  Xóa bảng
+                </Button>
+              </>
+            )}
 
             <Separator orientation="vertical" className="h-6" />
 
