@@ -14,6 +14,16 @@ export class TagsController {
     return this.tagsService.findAll();
   }
 
+  @Get('/featured')
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findFeatured(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.tagsService.findFeatured(page, limit);
+  }
+
   @Get('/admin/all')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Admin: Get all tags with post count' })

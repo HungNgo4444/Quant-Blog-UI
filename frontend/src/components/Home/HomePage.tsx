@@ -9,6 +9,7 @@ import ClientSidePosts from './ClientSidePosts';
 import FeaturedPosts from './FeaturedPosts';
 import { Post } from '../../types';
 import { useAppSelector } from '../../store';
+import '../../styles/hero-section.css';
 
 const AuthenticatedActions = ({ user, mounted }: { user: any; mounted: boolean }) => {
   if (!mounted) {
@@ -81,7 +82,7 @@ const HomePage = () => {
   return (
     <MainLayout>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 py-16 md:py-20 overflow-hidden">
+      <section className="relative bg-image-hero bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 py-16 md:py-20 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40"></div>
         
@@ -94,13 +95,13 @@ const HomePage = () => {
               </div>
             </div>
             
-            <h1 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent leading-tight">
+            <h1 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent leading-tight">
               Chia sẻ kiến thức,
               <br />
               <span className="text-2xl md:text-4xl">kết nối cộng đồng</span>
             </h1>
             
-            <p className="text-lg md:text-xl mb-8 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl mb-8 text-white dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Nơi những ý tưởng được lan tỏa và kiến thức được chia sẻ một cách có ý nghĩa
             </p>
             

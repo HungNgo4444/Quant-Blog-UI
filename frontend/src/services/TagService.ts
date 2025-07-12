@@ -6,6 +6,13 @@ export const getAllTags = async () => {
     return response.data;
 }
 
+export const getFeaturedTags = async (page?: number, limit?: number) => {
+  const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tags/featured`, {
+    params: { page, limit },
+  });
+  return response.data;
+}
+
 export async function getAdminTags(page?: number, limit?: number, search?: string) {
   try {
     const params = new URLSearchParams();

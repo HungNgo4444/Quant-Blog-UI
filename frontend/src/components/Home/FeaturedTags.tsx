@@ -1,6 +1,6 @@
 "use client";
 
-import { getAdminTags } from "frontend/src/services/TagService";
+import { getFeaturedTags } from "frontend/src/services/TagService";
 import { Hash } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -9,13 +9,11 @@ const FeaturedTags = () => {
 
     useEffect(() => {
         const fetchTags = async () => {
-            const tags = await getAdminTags(1, 15, "");
-            setTags(tags.tags);
+            const tags = await getFeaturedTags(1, 15);
+            setTags(tags);
         }
         fetchTags();
     }, []);
-
-    console.log(tags);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700 rounded-2xl mt-10 py-10 px-10">

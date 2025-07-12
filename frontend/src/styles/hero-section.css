@@ -1,0 +1,11 @@
+.bg-image-hero {
+  /* background-image: url('/images/hero-section.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat; */
+
+  background-image: url('https://ncsgroup.vn/wp-content/uploads/2025/06/image-22.svg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}

@@ -23,6 +23,20 @@ export class TagsService {
     return await this.tagsRepository.update(id, updateTagDto);
   }
 
+  async findFeatured(page = 1, limit = 7) {
+    const tags= this.tagsRepository.createQueryBuilder('tag')
+    .select([
+      'tag.id',
+      'tag.name',
+    ])
+    .where('tag.active = :active', { active: true })
+    .offset((page- 1) * limit)
+    .limit(limit)
+    .getRawMany();
+
+    return tags;
+  }
+
   async findAllAdmin(page = 1, limit = 7, search?: string) {
     const queryBuilder = this.tagsRepository
       .createQueryBuilder('tag')
