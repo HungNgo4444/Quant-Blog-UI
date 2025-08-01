@@ -11,6 +11,9 @@ import { Session } from '../entities/session.entity';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { SavedPost } from '../entities/saved-post.entity';
 import { Notification } from '../entities/notification.entity';
+import { Question } from '../entities/question.entity';
+import { Answer } from '../entities/answer.entity';
+import { Vote } from '../entities/vote.entity';
 
 export default registerAs(
   'database',
@@ -33,6 +36,9 @@ export default registerAs(
       ActivityLog,
       SavedPost,
       Notification,
+      Question,
+      Answer,
+      Vote,
     ],
     synchronize: true,
     logging: process.env.NODE_ENV === 'development',

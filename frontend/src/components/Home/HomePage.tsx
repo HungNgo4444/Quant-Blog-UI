@@ -90,7 +90,6 @@ const HomePage = () => {
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex items-center justify-center mb-4">
               <div className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 text-white dark:text-gray-900 px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-medium">
-                <Sparkles className="h-3.5 w-3.5" />
                 Nền tảng chia sẻ kiến thức
               </div>
             </div>

@@ -16,6 +16,7 @@ import { UsersModule } from './modules/users/users.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { QaModule } from './modules/qa/qa.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     CommentsModule,
     TagsModule,
     NotificationsModule,
+    QaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

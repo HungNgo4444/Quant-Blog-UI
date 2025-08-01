@@ -1,6 +1,7 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
+import { toVietnamTime } from "../../lib/timezone";
 import { ThumbsUp, Reply, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -156,13 +157,10 @@ interface CommentItemProps {
             {/* Action Buttons */}
             <div className="flex items-center gap-4 ml-2 mb-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDistanceToNow(
-                  new Date(comment.createdAt),
-                  {
-                    addSuffix: true,
-                    locale: vi
-                  }
-                )}
+                {formatDistanceToNow(toVietnamTime(comment.createdAt), {
+                  addSuffix: true,
+                  locale: vi
+                })}
               </span>
 
               <Button

@@ -240,18 +240,23 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
-      <div className="flex gap-6">
+      <div className="flex gap-6 w-full">
         <div onClick={() => router.push(`/posts/${post.slug}`)} className="cursor-pointer flex-1">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3 flex-1">
+          <div className="flex items-start justify-between mb-3 flex-col md:flex-row">
+            <div className="md:hidden">
+              {showActions && getStatusBadge(post.status)}
+            </div>
+            <div className="flex items-center gap-3 flex-1 mt-2 md:mt-0">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer line-clamp-2 transition-colors">
                 {post.title}
               </h3>
             </div>
-            {showActions && getStatusBadge(post.status)}
+            <div className="hidden md:block">
+              {showActions && getStatusBadge(post.status)}
+            </div>
           </div>
           
-          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-4 leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-400 text-sm !line-clamp-2 mb-4 leading-relaxed">
             {post.excerpt}
           </p>
 
@@ -303,7 +308,7 @@ function PostCard({ post, showActions, onPostDeleted }: PostCardProps) {
 
         {/* Featured Image */}
         {post.featuredImage && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 hidden md:block">
             <img
               src={post.featuredImage}
               alt={post.title}

@@ -103,6 +103,34 @@ body {
   @apply bg-gray-400 dark:bg-gray-500;
 }
 
+/* Table of Contents Scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-300 {
+  scrollbar-color: #d1d5db transparent;
+}
+
+.dark .scrollbar-thumb-gray-600 {
+  scrollbar-color: #4b5563 transparent;
+}
+
+.scrollbar-track-transparent {
+  scrollbar-track-color: transparent;
+}
+
+/* Smooth scroll offset for headings */
+.scroll-mt-24 {
+  scroll-margin-top: 6rem;
+}
+
+/* Table of Contents positioning */
+.toc-offset {
+  top: calc(var(--header-height, 80px) + 1rem);
+  max-height: calc(100vh - var(--header-height, 80px) - 2rem);
+}
+
 /* Markdown editor custom styles */
 .w-md-editor {
   @apply bg-white dark:bg-gray-900;

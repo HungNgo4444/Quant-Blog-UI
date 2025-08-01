@@ -311,3 +311,60 @@ alter table saved_posts
 create unique index "IDX_837a562f71fec3009c9af77ee5"
     on saved_posts (user_id, post_id);
 
+-- QA System Tables
+-- Questions table
+CREATE TABLE questions(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    upvote_count INTEGER DEFAULT 0,
+    downvote_count INTEGER DEFAULT 0,
+    answer_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Answers table
+CREATE TABLE answers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    upvote_count INTEGER DEFAULT 0,
+    downvote_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Votes table
+CREATE TABLE votes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_id UUID NOT NULL,
+    target_type VARCHAR(10) NOT NULL CHECK (target_type IN ('question', 'answer')),
+    vote_type VARCHAR(10) NOT NULL CHECK (vote_type IN ('upvote', 'downvote')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_user_target_vote UNIQUE (user_id, target_id, target_type)
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_questions_user_id ON questions(user_id);
+CREATE INDEX idx_questions_created_at ON questions(created_at DESC);
+CREATE INDEX idx_answers_question_id ON answers(question_id);
+CREATE INDEX idx_answers_user_id ON answers(user_id);
+CREATE INDEX idx_votes_target ON votes(target_id, target_type);
+CREATE INDEX idx_votes_user_target ON votes(user_id, target_id, target_type);
+
+-- Trigger to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_questions_updated_at BEFORE UPDATE ON questions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_answers_updated_at BEFORE UPDATE ON answers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

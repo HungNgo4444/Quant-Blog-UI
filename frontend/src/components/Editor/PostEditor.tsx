@@ -185,8 +185,8 @@ const PostEditor: React.FC<PostEditorProps> = ({
             <TiptapEditor
               content={postData.content}
               onChange={(content) => handleInputChange('content', content)}
-              placeholder="Viết nội dung bài viết của bạn ở đây..."
               className="h-full min-h-[600px]"
+              type='post'
             />
           </div>
 

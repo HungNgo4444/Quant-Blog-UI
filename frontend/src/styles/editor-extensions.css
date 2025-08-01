@@ -1,0 +1,139 @@
+/* Highlight Extension Styles */
+.ProseMirror mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.25em;
+  box-decoration-break: clone;
+}
+
+.ProseMirror mark[data-color] {
+  background-color: var(--highlight-color);
+}
+
+/* Subscript and Superscript Styles */
+.ProseMirror sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+
+.ProseMirror sup {
+  vertical-align: super;
+  font-size: smaller;
+}
+
+/* Background Color Styles */
+.ProseMirror span[style*="background-color"] {
+  padding: 0.1em 0.2em;
+  border-radius: 0.25em;
+  box-decoration-break: clone;
+}
+
+/* Line Height Styles */
+.ProseMirror p[style*="line-height"],
+.ProseMirror h1[style*="line-height"],
+.ProseMirror h2[style*="line-height"],
+.ProseMirror h3[style*="line-height"],
+.ProseMirror h4[style*="line-height"],
+.ProseMirror h5[style*="line-height"],
+.ProseMirror h6[style*="line-height"] {
+  line-height: var(--line-height);
+}
+
+/* Indent Styles */
+.ProseMirror p[style*="text-indent"],
+.ProseMirror h1[style*="text-indent"],
+.ProseMirror h2[style*="text-indent"],
+.ProseMirror h3[style*="text-indent"],
+.ProseMirror h4[style*="text-indent"],
+.ProseMirror h5[style*="text-indent"],
+.ProseMirror h6[style*="text-indent"] {
+  text-indent: var(--text-indent);
+}
+
+/* Toolbar Enhancements */
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toolbar-separator {
+  height: 1.5rem;
+  width: 1px;
+  background-color: #e5e7eb;
+  margin: 0 0.5rem;
+}
+
+.dark .toolbar-separator {
+  background-color: #374151;
+}
+
+/* Color Picker Styles */
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.color-picker-swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.color-picker-swatch:hover {
+  transform: scale(1.1);
+  border-color: #6b7280;
+}
+
+.color-picker-swatch.selected {
+  border-color: #1f2937;
+  box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.2);
+}
+
+.dark .color-picker-swatch.selected {
+  border-color: #f9fafb;
+  box-shadow: 0 0 0 2px rgba(249, 250, 251, 0.2);
+}
+
+/* Responsive Toolbar */
+@media (max-width: 768px) {
+  .toolbar-section {
+    flex-wrap: wrap;
+  }
+  
+  .toolbar-separator {
+    display: none;
+  }
+  
+  .color-picker-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Animation for toolbar interactions */
+.toolbar-button {
+  transition: all 0.2s ease;
+}
+
+.toolbar-button:hover {
+  transform: translateY(-1px);
+}
+
+.toolbar-button:active {
+  transform: translateY(0);
+}
+
+/* Focus states for accessibility */
+.toolbar-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.color-picker-swatch:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+} 

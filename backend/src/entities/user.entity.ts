@@ -12,6 +12,8 @@ import { Like } from './like.entity';
 import { View } from './view.entity';
 import { Session } from './session.entity';
 import { ActivityLog } from './activity-log.entity';
+import { Question } from './question.entity';
+import { Answer } from './answer.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -105,7 +107,7 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  Relations
+  //Relations
   @OneToMany(() => Post, (post) => post.authorId)
   posts: Post[];
 
@@ -123,4 +125,10 @@ export class User {
 
   @OneToMany(() => ActivityLog, (log) => log.user)
   activityLogs: ActivityLog[];
+
+  @OneToMany(() => Question, (question) => question.user)
+  questions: Question[];
+
+  @OneToMany(() => Answer, (answer) => answer.user)
+  answers: Answer[];
 } 

@@ -34,6 +34,8 @@ import Link from 'next/link';
 import { notificationService } from '../../../services/NotificationService';
 import { useSelector } from 'react-redux';
 import { RootState } from 'frontend/src/store';
+import { useTableOfContents, useActiveHeading, generateHeadingId } from '../../../hooks/useTableOfContents';
+import TableOfContents from '../../../components/Posts/TableOfContents';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -138,6 +140,10 @@ export default function PostDetailPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [saved, setSaved] = useState(false);
   const { user } = useSelector((state: RootState) => state.auth);
+
+  // Table of contents
+  const { headings, nestedHeadings } = useTableOfContents(post?.content || '');
+  const activeHeadingId = useActiveHeading(headings);
 
   // Check authentication status
   useEffect(() => {
@@ -342,7 +348,9 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-3">
       {/* Featured Image */}
       {post.featuredImage && (
         <img
@@ -413,6 +421,18 @@ export default function PostDetailPage() {
       </div>
 
       <hr className="mb-6" />
+
+      {/* Mobile Table of Contents */}
+      {headings.length > 0 && (
+        <div className="lg:hidden mb-6">
+          <TableOfContents 
+            headings={headings}
+            nestedHeadings={nestedHeadings}
+            activeId={activeHeadingId}
+            className="mb-6"
+          />
+        </div>
+      )}
 
       {/* Content */}
       <Card className="mb-6">
@@ -534,27 +554,51 @@ export default function PostDetailPage() {
               },
 
               h1({node, children, ...props}: any) {
-                return <h1 className="text-4xl font-bold mb-6 break-words" {...props}>{children}</h1>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 1);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 1, 0);
+                return <h1 id={id} className="text-4xl font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h1>;
               },
 
               h2({node, children, ...props}: any) {
-                return <h2 className="text-3xl font-bold mb-6 break-words" {...props}>{children}</h2>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 2);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 2, 0);
+                return <h2 id={id} className="text-3xl font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h2>;
               },
 
               h3({node, children, ...props}: any) {
-                return <h3 className="text-2xl font-bold mb-6 break-words" {...props}>{children}</h3>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 3);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 3, 0);
+                return <h3 id={id} className="text-2xl font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h3>;
               },
 
               h4({node, children, ...props}: any) {
-                return <h4 className="text-xl font-bold mb-6 break-words" {...props}>{children}</h4>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 4);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 4, 0);
+                return <h4 id={id} className="text-xl font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h4>;
               },
 
               h5({node, children, ...props}: any) {
-                return <h5 className="text-lg font-bold mb-6 break-words" {...props}>{children}</h5>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 5);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 5, 0);
+                return <h5 id={id} className="text-lg font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h5>;
               },
 
               h6({node, children, ...props}: any) {
-                return <h6 className="text-base font-bold mb-6 break-words" {...props}>{children}</h6>;
+                const text = Array.isArray(children) ? children.join('') : String(children);
+                const cleanText = text.trim();
+                const headingIndex = headings.findIndex(h => h.text === cleanText && h.level === 6);
+                const id = headingIndex >= 0 ? headings[headingIndex].id : generateHeadingId(cleanText, 6, 0);
+                return <h6 id={id} className="text-base font-bold mb-6 break-words scroll-mt-24" {...props}>{children}</h6>;
               },
 
               // Handle paragraphs with proper whitespace preservation
@@ -749,6 +793,22 @@ export default function PostDetailPage() {
         </div>
       </div>
       <PostComment postId={post.id} />
+        </div>
+        
+        {/* Table of Contents - Right Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="lg:sticky lg:top-24">
+            {/* Show table of contents only if there are headings */}
+            {headings.length > 0 && (
+              <TableOfContents 
+                headings={headings}
+                nestedHeadings={nestedHeadings}
+                activeId={activeHeadingId}
+              />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
