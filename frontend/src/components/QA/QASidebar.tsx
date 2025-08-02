@@ -10,7 +10,7 @@ import {
   TrendingUp, 
   Clock, 
   Star,
-  User,
+  Users,
   Tag,
   Trophy,
   HelpCircle,
@@ -27,63 +27,29 @@ const QASidebar: React.FC<QASidebarProps> = () => {
   const navigationItems = [
     {
       title: 'Trang chủ',
-      href: '/qa',
+      href: '/community',
       icon: Home,
       exact: true,
     },
     {
       title: 'Câu hỏi của tôi',
-      href: '/qa/my-questions',
+      href: '/community/my-questions',
       icon: MessageCircle,
     },
     {
       title: 'Câu trả lời của tôi',
-      href: '/qa/my-answers',
+      href: '/community/my-answers',
       icon: BookOpen,
     },
-  ];
-
-  const browseItems = [
     {
-      title: 'Phổ biến',
-      href: '/qa?sort=most_voted',
-      icon: TrendingUp,
+      title: 'Người dùng',
+      href: '/community/users',
+      icon: Users,
     },
     {
-      title: 'Mới nhất',
-      href: '/qa?sort=newest',
-      icon: Clock,
-    },
-    {
-      title: 'Chưa trả lời',
-      href: '/qa/unanswered',
+      title: 'Giới thiệu',
+      href: '/community/about',
       icon: HelpCircle,
-    },
-    {
-      title: 'Tags',
-      href: '/qa/tags',
-      icon: Tag,
-    },
-  ];
-
-  const quickStats = [
-    {
-      label: 'Câu hỏi',
-      value: '2,847',
-      icon: MessageCircle,
-      color: 'text-blue-600 dark:text-blue-400',
-    },
-    {
-      label: 'Câu trả lời',
-      value: '8,521',
-      icon: BookOpen,
-      color: 'text-green-600 dark:text-green-400',
-    },
-    {
-      label: 'Người dùng',
-      value: '1,234',
-      icon: User,
-      color: 'text-purple-600 dark:text-purple-400',
     },
   ];
 
@@ -110,7 +76,7 @@ const QASidebar: React.FC<QASidebarProps> = () => {
         {/* Header */}
         <div className="flex items-center gap-2">
           <MessageCircle className="w-6 h-6 text-gray-900 dark:text-gray-100" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Hỏi & Đáp</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Cộng đồng</h2>
         </div>
 
         {/* Main Navigation */}
@@ -134,29 +100,6 @@ const QASidebar: React.FC<QASidebarProps> = () => {
           })}
         </nav>
 
-        {/* Quick Stats */}
-        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Thống kê
-          </h3>
-          <div className="space-y-3">
-            {quickStats.map((stat) => {
-              const IconComponent = stat.icon;
-              return (
-                <div key={stat.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <IconComponent className={`w-4 h-4 ${stat.color}`} />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {stat.value}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Help Section */}
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
@@ -169,7 +112,7 @@ const QASidebar: React.FC<QASidebarProps> = () => {
             Viết câu hỏi rõ ràng và cung cấp ví dụ để nhận được câu trả lời tốt nhất!
           </p>
           <Link 
-            href="/qa/help" 
+            href="/community"
             className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline"
           >
             Tìm hiểu thêm →

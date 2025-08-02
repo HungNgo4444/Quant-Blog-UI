@@ -9,7 +9,7 @@ import {
   UseGuards,
   Request,
   HttpStatus,
-  HttpCode,
+  HttpCode, Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { OptionalAuthGuard } from '../../auth/guards/optional-auth.guard';
@@ -37,8 +37,7 @@ export class AnswerController {
   }
 
   @Get('question/:questionId')
-  async findByQuestion(@Param('questionId') questionId: string, @Request() req) {
-    const userId = req.user?.id;
+  async findByQuestion(@Param('questionId') questionId: string, @Query('userId') userId?: string) {
     const answers = await this.answerService.findByQuestion(questionId, userId);
     return {
       success: true,

@@ -81,7 +81,7 @@ export class QuestionService {
     };
   }
 
-  async findOne(id: string, userId?: string): Promise<Question> {
+  async findOne(id: string): Promise<Question> {
     const queryBuilder = this.questionRepository
       .createQueryBuilder('question')
       .leftJoinAndSelect('question.user', 'user')

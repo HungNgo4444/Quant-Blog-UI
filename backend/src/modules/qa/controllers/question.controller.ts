@@ -47,13 +47,12 @@ export class QuestionController {
 
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req) {
-    const userId = req.user?.id;
-    const question = await this.questionService.findOne(id, userId);
+    const question = await this.questionService.findOne(id);
     
     // Get user's vote status if authenticated
     let userVoteStatus = null;
-    if (userId) {
-      userVoteStatus = await this.questionService.getUserVoteStatus(id, userId);
+    if (question) {
+      userVoteStatus = await this.questionService.getUserVoteStatus(id, question.userId);
     }
 
     return {

@@ -5,6 +5,7 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 import { VoteType } from '../../types/qa.types';
 // import { toast } from 'react-hot-toast';
 import { voteQuestion, voteAnswer } from '../../services/QAService';
+import {toast} from "react-toastify";
 
 interface VoteButtonProps {
   targetId: string;
@@ -47,7 +48,7 @@ const VoteButton: React.FC<VoteButtonProps> = ({
       setIsVoting(true);
 
       if (targetType === 'question') {
-        await voteQuestion(targetId, voteType);
+        const res= await voteQuestion(targetId, voteType);
       } else {
         await voteAnswer(targetId, voteType);
       }
@@ -83,7 +84,10 @@ const VoteButton: React.FC<VoteButtonProps> = ({
 
       onVoteUpdate?.();
     } catch (error) {
-      console.error('Không thể vote. Vui lòng thử lại!');
+      if(error == 'Error: No refresh token available'){
+        toast.error('Bạn cần đăng nhập để thực hiện hành động này!');
+        return;
+      }
       console.error('Vote error:', error);
     } finally {
       setIsVoting(false);

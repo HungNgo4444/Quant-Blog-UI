@@ -4,10 +4,11 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
-  UpdateDateColumn,
+  UpdateDateColumn, JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Question } from './question.entity';
+import { Vote } from './vote.entity';
 
 @Entity('answers')
 export class Answer {
@@ -40,6 +41,7 @@ export class Answer {
   question: Question;
 
   @ManyToOne(() => User, (user) => user.answers, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   // Virtual properties

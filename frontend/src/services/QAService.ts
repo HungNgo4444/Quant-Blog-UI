@@ -84,9 +84,11 @@ export async function voteQuestion(id: string, voteType: VoteType): Promise<Vote
 }
 
 // Answers API
-export async function getAnswers(questionId: string): Promise<AnswersResponse> {
+export async function getAnswers(questionId: string, userId?: string): Promise<AnswersResponse> {
   try {
-    const res = await instanceApi.get(`/qa/answers/question/${questionId}`);
+    const res = await instanceApi.get(`/qa/answers/question/${questionId}`, {
+        params: { userId }
+    });
     return res.data;
   } catch (error) {
     console.error('Error fetching answers:', error);
@@ -160,6 +162,39 @@ export async function getAnswerVoteStatus(answerId: string): Promise<{ data: { v
     return res.data;
   } catch (error) {
     console.error('Error getting answer vote status:', error);
+    throw error;
+  }
+}
+
+// Get user's answers
+export async function getUserAnswers(userId: string, params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: 'newest' | 'oldest' | 'most_voted';
+} = {}): Promise<{
+  data: (Answer & { question: { id: string; title: string } })[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}> {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.append('userId', userId);
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+
+    const res = await instanceApi.get(`/qa/answers/user?${searchParams.toString()}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching user answers:', error);
     throw error;
   }
 } 

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Answer } from '../../../entities/answer.entity';
@@ -17,9 +21,15 @@ export class AnswerService {
     private voteRepository: Repository<Vote>,
   ) {}
 
-  async createAnswer(questionId: string, createAnswerDto: CreateAnswerDto, userId: string): Promise<Answer> {
+  async createAnswer(
+    questionId: string,
+    createAnswerDto: CreateAnswerDto,
+    userId: string,
+  ): Promise<Answer> {
     // Check if question exists
-    const question = await this.questionRepository.findOne({ where: { id: questionId } });
+    const question = await this.questionRepository.findOne({
+      where: { id: questionId },
+    });
     if (!question) {
       throw new NotFoundException('Câu hỏi không tồn tại');
     }
@@ -31,33 +41,47 @@ export class AnswerService {
     });
 
     const savedAnswer = await this.answerRepository.save(answer);
-    
+
     // Update answer count
-    await this.questionRepository.increment({ id: questionId }, 'answer_count', 1);
+    await this.questionRepository.increment(
+      { id: questionId },
+      'answer_count',
+      1,
+    );
 
     return savedAnswer;
   }
 
   async findByQuestion(questionId: string, userId?: string): Promise<Answer[]> {
+    // const queryBuilder = this.answerRepository
+    //   .createQueryBuilder('answer')
+    //   .leftJoinAndSelect('answer.user', 'user')
+    //   .where('answer.question_id = :questionId', { questionId });
+
     const queryBuilder = this.answerRepository
       .createQueryBuilder('answer')
-      .leftJoinAndSelect('answer.user', 'user')
+      .leftJoin('answer.user', 'user')
+      .addSelect(['user.id', 'user.name'])
       .where('answer.question_id = :questionId', { questionId });
 
-    // If user is authenticated, get their vote status for each answer
     if (userId) {
-      queryBuilder.leftJoinAndSelect(
-        'answer.votes',
-        'userVote',
-        'userVote.user_id = :userId AND userVote.target_id = answer.id AND userVote.target_type = :targetType',
-        { userId, targetType: TargetType.ANSWER }
-      );
+      queryBuilder
+        .leftJoin(
+          'votes',
+          'userVote',
+          'userVote.user_id = :userId AND userVote.target_id = answer.id AND userVote.target_type = :targetType',
+          { userId, targetType: TargetType.ANSWER }
+        )
+        .addSelect(['userVote.vote_type']);
     }
 
-    const answers = await queryBuilder.getMany();
+    const answers = await queryBuilder.getRawMany();
 
     // Sort by votes (highest first)
-    return answers.sort((a, b) => (b.upvote_count - b.downvote_count) - (a.upvote_count - a.downvote_count));
+    return answers.sort(
+      (a, b) =>
+        b.answer_upvote_count - b.answer_downvote_count - (a.answer_upvote_count - a.answer_downvote_count),
+    );
   }
 
   async findOne(id: string): Promise<Answer> {
@@ -73,11 +97,17 @@ export class AnswerService {
     return answer;
   }
 
-  async updateAnswer(id: string, updateData: Partial<CreateAnswerDto>, userId: string): Promise<Answer> {
+  async updateAnswer(
+    id: string,
+    updateData: Partial<CreateAnswerDto>,
+    userId: string,
+  ): Promise<Answer> {
     const answer = await this.findOne(id);
-    
+
     if (answer.user_id !== userId) {
-      throw new ForbiddenException('Bạn không có quyền chỉnh sửa câu trả lời này');
+      throw new ForbiddenException(
+        'Bạn không có quyền chỉnh sửa câu trả lời này',
+      );
     }
 
     Object.assign(answer, updateData);
@@ -86,20 +116,30 @@ export class AnswerService {
 
   async deleteAnswer(id: string, userId: string): Promise<void> {
     const answer = await this.findOne(id);
-    
+
     if (answer.user_id !== userId) {
       throw new ForbiddenException('Bạn không có quyền xóa câu trả lời này');
     }
 
     const questionId = answer.question_id;
     await this.answerRepository.remove(answer);
-    
+
     // Update answer count
-    await this.questionRepository.decrement({ id: questionId }, 'answer_count', 1);
+    await this.questionRepository.decrement(
+      { id: questionId },
+      'answer_count',
+      1,
+    );
   }
 
-  async vote(answerId: string, voteType: VoteType, userId: string): Promise<{ success: boolean; message: string }> {
-    const answer = await this.answerRepository.findOne({ where: { id: answerId } });
+  async vote(
+    answerId: string,
+    voteType: VoteType,
+    userId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const answer = await this.answerRepository.findOne({
+      where: { id: answerId },
+    });
     if (!answer) {
       throw new NotFoundException('Câu trả lời không tồn tại');
     }
@@ -117,20 +157,20 @@ export class AnswerService {
       if (existingVote.vote_type === voteType) {
         // Remove vote if clicking the same vote type
         await this.voteRepository.remove(existingVote);
-        
+
         if (voteType === VoteType.UPVOTE) {
           answer.upvote_count = Math.max(0, answer.upvote_count - 1);
         } else {
           answer.downvote_count = Math.max(0, answer.downvote_count - 1);
         }
-        
+
         await this.answerRepository.save(answer);
         return { success: true, message: 'Đã hủy vote' };
       } else {
         // Change vote type
         existingVote.vote_type = voteType;
         await this.voteRepository.save(existingVote);
-        
+
         if (voteType === VoteType.UPVOTE) {
           answer.upvote_count += 1;
           answer.downvote_count = Math.max(0, answer.downvote_count - 1);
@@ -138,7 +178,7 @@ export class AnswerService {
           answer.downvote_count += 1;
           answer.upvote_count = Math.max(0, answer.upvote_count - 1);
         }
-        
+
         await this.answerRepository.save(answer);
         return { success: true, message: 'Đã thay đổi vote' };
       }
@@ -150,21 +190,24 @@ export class AnswerService {
         target_type: TargetType.ANSWER,
         vote_type: voteType,
       });
-      
+
       await this.voteRepository.save(newVote);
-      
+
       if (voteType === VoteType.UPVOTE) {
         answer.upvote_count += 1;
       } else {
         answer.downvote_count += 1;
       }
-      
+
       await this.answerRepository.save(answer);
       return { success: true, message: 'Đã vote thành công' };
     }
   }
 
-  async getUserVoteStatus(answerId: string, userId: string): Promise<VoteType | null> {
+  async getUserVoteStatus(
+    answerId: string,
+    userId: string,
+  ): Promise<VoteType | null> {
     const vote = await this.voteRepository.findOne({
       where: {
         user_id: userId,
@@ -175,4 +218,4 @@ export class AnswerService {
 
     return vote ? vote.vote_type : null;
   }
-} 
+}

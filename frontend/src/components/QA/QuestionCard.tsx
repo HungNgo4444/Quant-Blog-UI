@@ -54,7 +54,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onVoteUpdate }) =
         {/* Content Section */}
         <div className="flex-1 min-w-0">
           <Link 
-            href={`/qa/${question.id}`}
+            href={`/community/${question.id}`}
             className="block group"
           >
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 mb-2">

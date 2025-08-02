@@ -4,8 +4,8 @@ import QASidebar from '../../components/QA/QASidebar';
 import QuestionCompose from '../../components/QA/QuestionCompose';
 
 export const metadata: Metadata = {
-  title: 'Hỏi đáp',
-  description: 'Hỏi đáp',
+  title: 'Cộng đồng',
+  description: 'Cộng đồng',
 };
 
 export default function QALayout({

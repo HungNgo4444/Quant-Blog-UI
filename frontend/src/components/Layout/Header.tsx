@@ -75,7 +75,7 @@ const Header: React.FC = () => {
   const navigationItems = [
     { label: 'Trang chủ', href: '/', active: pathname === '/' },
     { label: 'Bài viết', href: '/posts', active: pathname.startsWith('/posts') },
-    { label: 'Hỏi đáp', href: '/qa', active: pathname === '/qa' },
+    { label: 'Cộng đồng', href: '/community', active: pathname === '/community' },
   ];
 
   return (

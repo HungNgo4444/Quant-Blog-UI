@@ -4,7 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
-  Unique,
+  Unique, JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -47,5 +47,6 @@ export class Vote {
 
   // Relations
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 } 

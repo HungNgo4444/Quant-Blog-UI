@@ -68,3 +68,29 @@ export async function getUserPosts(id: string, page?: number, limit?: number) {
     return { posts: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } };
   }
 }
+
+export async function getCommunityUsers(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort?: 'newest' | 'reputation' | 'most_questions' | 'most_answers';
+} = {}) {
+  try {
+    const searchParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+
+    const res = await instanceApi.get(`/users/community?${searchParams.toString()}`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching community users:', error);
+    return { 
+      users: [], 
+      pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 12 } 
+    };
+  }
+}

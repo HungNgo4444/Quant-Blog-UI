@@ -342,7 +342,7 @@ export default function ProfilePage() {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Liên kết mạng xã hội</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300">Website</Label>
+                            <Label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300">Facebook</Label>
                             <Controller
                               name="socialLinks.website"
                               control={profileControl}
@@ -350,7 +350,7 @@ export default function ProfilePage() {
                                 <Input
                                   {...field}
                                   id="website"
-                                  placeholder="https://yourwebsite.com"
+                                  placeholder="https://facebook.com/yourprofile"
                                   className="mt-1 border-gray-300 dark:border-gray-600"
                                 />
                               )}
