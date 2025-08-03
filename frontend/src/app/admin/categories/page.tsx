@@ -286,7 +286,7 @@ export default function CategoriesPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa danh mục</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa danh mục "<strong>{deletingCategory?.category_name}</strong>"?
+              Bạn có chắc chắn muốn xóa danh mục &quot;<strong>{deletingCategory?.category_name}</strong>&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

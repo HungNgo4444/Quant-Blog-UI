@@ -331,7 +331,7 @@ export default function TagsPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa thẻ</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa thẻ "<strong>{deletingTag?.tag_name}</strong>"?
+              Bạn có chắc chắn muốn xóa thẻ &quot;<strong>{deletingTag?.tag_name}</strong>&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

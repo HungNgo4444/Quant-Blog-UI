@@ -24,12 +24,12 @@ interface CommentItemProps {
     onReplyContentChange: (content: string) => void;
     onSubmitReply: (parentId: string) => void;
     onCancelReply: () => void;
-    isLastInLevel?: boolean; // Thêm prop để biết có phải item cuối cùng trong level
+    isLastInLevel?: boolean;
   }
   
-  const CommentItem: React.FC<CommentItemProps> = React.memo(({ 
+  const CommentItem: React.FC<CommentItemProps> = React.memo(function CommentItem({
     comment, 
-    level = 0, // Default level 0
+    level = 0,
     replyTo,
     replyContent,
     submitting,
@@ -39,7 +39,7 @@ interface CommentItemProps {
     onSubmitReply,
     onCancelReply,
     isLastInLevel = false
-  }) => {
+  })  {
     const [showReplies, setShowReplies] = useState(false);
     const [commentHeight, setCommentHeight] = useState(0);
     const [childrenHeight, setChildrenHeight] = useState(0);

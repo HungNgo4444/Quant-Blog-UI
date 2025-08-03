@@ -411,7 +411,7 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận vô hiệu hóa người dùng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn vô hiệu hóa người dùng "<strong>{deletingUser?.user_name}</strong>"?
+              Bạn có chắc chắn muốn vô hiệu hóa người dùng &quot;<strong>{deletingUser?.user_name}</strong>&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -439,7 +439,7 @@ export default function UsersPage() {
           <DialogHeader>
             <DialogTitle>Xác nhận khôi phục người dùng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn khôi phục người dùng "<strong>{restoringUser?.user_name}</strong>"?
+              Bạn có chắc chắn muốn khôi phục người dùng &quot;<strong>{restoringUser?.user_name}</strong>&quot;?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
